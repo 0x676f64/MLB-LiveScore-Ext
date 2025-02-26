@@ -76,9 +76,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
             `;
             
-            gameBox.addEventListener("click", () => {
-                gamesContainer.innerHTML = ""; // Clear the container
-                gamesContainer.appendChild(gameBox); // Show only the clicked game
+             gameBox.addEventListener("click", () => {
+                window.location.href = `popup.html?gamePk=${game.gamePk}`;
             });
             
             gamesContainer.appendChild(gameBox);
