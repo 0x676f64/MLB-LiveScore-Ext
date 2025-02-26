@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..1000&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+body {
+    font-family: "Afacad Flux", Arial, sans-serif;
+    margin: 0;
+    padding: 10px 20px;
+    background-color: #fff;
+}
+
+#scorebug {
+    text-align: center;
+    padding: 20px;
+    background-color: #fff;
+    color: #000;
+}
+
+#games-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px; /* Reduce spacing between game boxes */
+    padding: 5px; /* Reduce padding */
+}
+
+.game-box {
+    border: 2px solid #333333; /* Thinner border */
+    padding: 5px; /* Less padding */
+    text-align: center;
+    background-color: #ffffff;
+    border-radius: 5px; /* Smaller border radius */
+    font-size: 12px; /* Reduce text size */
+    width: 150px; /* Set a smaller width */
+    height: 100px; /* Set a smaller height */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.game-box:active, .game-box:hover, .game-box:focus,
+.game-box:focus-within {
+    transform: scale(1.03);
+    box-shadow: rgba(0, 0, 0, 1) 0px 0px 10px 1px;
+    transition: transform .2s;
+}
+.game-box h3, p {
+    color: #000;
+}
+
+img {
+    width: 60px;
+    height: 60px;
+}
+
+.team-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.team-logo {
+    width: 25px; /* Smaller logos */
+    height: 25px;
+}
+
+.team-abbr, .team-score {
+    font-size: 20px; /* Reduce font size */
+    margin: 0 5px;
+}
+
+.game-status {
+    font-size: 15px;
+    font-weight: bold;
+    align-self: flex-start;
+    color: red;
+}
