@@ -3,7 +3,7 @@
 body {
     font-family: "Afacad Flux", Arial, sans-serif;
     margin: 0;
-    padding: 10px 20px;
+    padding: 10px 800px;
     background-color: #fff;
 }
 
@@ -22,10 +22,10 @@ body {
 }
 
 .game-box {
-    border: 2px solid #333333; /* Thinner border */
+    border: 2px solid #1d2c43; /* Thinner border */
     padding: 5px; /* Less padding */
     text-align: center;
-    background-color: #ffffff;
+    background-color: #d3e1ff;
     border-radius: 5px; /* Smaller border radius */
     font-size: 12px; /* Reduce text size */
     width: 150px; /* Set a smaller width */
@@ -75,3 +75,4 @@ img {
     align-self: flex-start;
     color: red;
 }
+
