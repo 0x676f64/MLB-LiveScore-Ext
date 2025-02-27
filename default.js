@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gamesContainer = document.getElementById("games-container");
     
     const today = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
-    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1`;
+    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1`; 
     // statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today} is another good link, however
     // date={today} makes it so game-boxes change the second it turns 12am ET. Therefore users
     // recapping late at night, or after a West Coast game, will not see scores for the day 
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
             `;
             
-             gameBox.addEventListener("click", () => {
+            gameBox.addEventListener("click", () => {
                 window.location.href = `popup.html?gamePk=${game.gamePk}`;
             });
             
