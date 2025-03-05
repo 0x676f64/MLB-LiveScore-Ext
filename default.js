@@ -1,12 +1,9 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const gamesContainer = document.getElementById("games-container");
-    
-    const today = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
-    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1`; 
-    // statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today} is another good link, however
-    // date={today} makes it so game-boxes change the second it turns 12am ET. Therefore users
-    // recapping late at night, or after a West Coast game, will not see scores for the day 
-    
+
+    const today = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
+    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1`;
+
     const teamAbbreviations = {
         "Arizona Diamondbacks": "ARI", "Atlanta Braves": "ATL", "Baltimore Orioles": "BAL", "Boston Red Sox": "BOS",
         "Chicago White Sox": "CWS", "Chicago Cubs": "CHC", "Cincinnati Reds": "CIN", "Cleveland Guardians": "CLE",
@@ -17,39 +14,47 @@ document.addEventListener("DOMContentLoaded", async () => {
         "Seattle Mariners": "SEA", "St. Louis Cardinals": "STL", "Tampa Bay Rays": "TB", "Texas Rangers": "TEX",
         "Toronto Blue Jays": "TOR", "Washington Nationals": "WSH"
     };
-    
+
+    function formatGameTime(gameDate) {
+        const dateTime = new Date(gameDate);
+        const hours = dateTime.getHours();
+        const minutes = dateTime.getMinutes();
+        const ampm = hours >= 12 ? "PM" : "AM";
+        return `${(hours % 12) || 12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+    }
+
     async function fetchGameDetails(gamePk) {
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
             const data = await response.json();
-            
+
             if (data && data.liveData) {
                 const linescore = data.liveData.linescore;
-                const inningHalf = linescore.inningHalf ? (linescore.inningHalf === "Top" ? "TOP" : "BOT") : '';
-                const currentInning = linescore.currentInning || '';
+                const inningHalf = linescore.inningHalf ? (linescore.inningHalf === "Top" ? "TOP" : "BOT") : "";
+                const currentInning = linescore.currentInning || "";
                 return `${inningHalf} ${currentInning}`;
             }
         } catch (error) {
-            console.error('Error fetching game details:', error);
+            console.error("Error fetching game details:", error);
         }
-        return 'In Progress';
+        return "In Progress";
     }
-    
+
     try {
         const response = await fetch(apiUrl);
         const data = await response.json();
-        
+
         gamesContainer.innerHTML = ""; // Clear container before adding new data
 
         if (!data.dates.length) {
             gamesContainer.innerHTML = "<p>No games found for today.</p>";
             return;
         }
-        
+
         data.dates[0].games.forEach(async (game) => {
             const gameBox = document.createElement("div");
             gameBox.classList.add("game-box");
-            
+
             const homeTeam = game.teams.home.team.name;
             const awayTeam = game.teams.away.team.name;
             const homeScore = game.teams.home.score || 0;
@@ -57,14 +62,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             let status = game.status.detailedState;
             const homeTeamId = game.teams.home.team.id;
             const awayTeamId = game.teams.away.team.id;
-            
+
             const homeAbbr = teamAbbreviations[homeTeam] || homeTeam;
             const awayAbbr = teamAbbreviations[awayTeam] || awayTeam;
-            
-            if (status === "In Progress") {
+
+            if (status === "Final" || status === "Game Over") {
+                status = "FINAL";
+            } else if (status === "Pre-Game" || status === "Scheduled") {
+                status = formatGameTime(game.gameDate);
+            } else if (status === "In Progress") {
                 status = await fetchGameDetails(game.gamePk);
             }
-            
+
             gameBox.innerHTML = `
                 <div class="game-status">${status}</div>
                 <div class="team-row">
@@ -78,15 +87,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <p class="team-score">${homeScore}</p>
                 </div>
             `;
-            
+
             gameBox.addEventListener("click", () => {
                 window.location.href = `popup.html?gamePk=${game.gamePk}`;
             });
-            
+
             gamesContainer.appendChild(gameBox);
         });
     } catch (error) {
         console.error("Error fetching game data:", error);
         gamesContainer.innerHTML = "<p>Failed to load games.</p>";
     }
+
+    setInterval(() => fetchGameData(gamePk), 15000); // Refresh every 15s
 });
+
