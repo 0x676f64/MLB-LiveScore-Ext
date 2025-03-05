@@ -5,6 +5,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gameInfo = document.createElement("div");
     gameInfo.id = "game-info";
 
+    const awayTeamContainer = document.createElement("div");
+    awayTeamContainer.classList.add("team-container");
+
     // Team elements
     const awayLogo = document.createElement("img");
     awayLogo.id = "away-logo";
@@ -13,6 +16,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const awayRecord = document.createElement("p");
     awayRecord.id = "away-record";
     awayRecord.classList.add("team-record");
+
+    // Add logo and record to away team container
+    awayTeamContainer.appendChild(awayLogo);
+    awayTeamContainer.appendChild(awayRecord);
+
+    // Create game status container for middle section
+    const gameStatusContainer = document.createElement("div");
+    gameStatusContainer.classList.add("game-status");
 
     const awayScore = document.createElement("p");
     awayScore.id = "away-score";
@@ -26,6 +37,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     homeScore.id = "home-score";
     homeScore.classList.add("team-score");
 
+    // Add scores and inning to game status container
+    gameStatusContainer.appendChild(awayScore);
+    gameStatusContainer.appendChild(inningInfo);
+    gameStatusContainer.appendChild(homeScore);
+
+    // Create home team container
+    const homeTeamContainer = document.createElement("div");
+    homeTeamContainer.classList.add("team-container");
+
     const homeLogo = document.createElement("img");
     homeLogo.id = "home-logo";
     homeLogo.classList.add("team-logo");
@@ -34,16 +54,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     homeRecord.id = "home-record";
     homeRecord.classList.add("team-record");
 
-    // Append elements in the correct order
-    gameInfo.appendChild(awayLogo);
-    gameInfo.appendChild(awayRecord);
-    gameInfo.appendChild(awayScore);
-    gameInfo.appendChild(inningInfo);
-    gameInfo.appendChild(homeScore);
-    gameInfo.appendChild(homeLogo);
-    gameInfo.appendChild(homeRecord); 
+    // Add logo and record to home team container
+    homeTeamContainer.appendChild(homeLogo);
+    homeTeamContainer.appendChild(homeRecord);
 
-    popupContainer.appendChild(gameInfo);
+    gameInfo.appendChild(awayTeamContainer);
+    gameInfo.appendChild(gameStatusContainer);
+    gameInfo.appendChild(homeTeamContainer);
+
+popupContainer.appendChild(gameInfo);
 
     // Create player info containers
     const awayPlayerInfo = document.createElement("div");
@@ -99,7 +118,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             justify-content: space-between;
             align-items: center;
             width: 90%;
-            margin-top: 15px;
             padding: 0 10px;
             margin-left: 30px;
         }
@@ -446,7 +464,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
             const data = await response.json();
-            updateScorebug(data);
+            updateScorebug(data); // Update scorebug when refreshing data
             updatePlayerInfo(data);  // Update player info when refreshing data
             renderLivePitchData(data); // Update pitch data when refreshing data
         } catch (error) {
@@ -566,4 +584,3 @@ document.addEventListener("DOMContentLoaded", async () => {
    
     setInterval(() => fetchGameData(gamePk), 15000); // Refresh every 15s
 });
-
