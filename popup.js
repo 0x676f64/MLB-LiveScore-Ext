@@ -362,53 +362,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
             return;
-
-            function renderLivePitchData(data) {
-                // Check if game is live
-                const gameState = data.gameData.status.abstractGameState;
-                if (gameState !== "Live" && gameState !== "In Progress") return;
-            
-                const gameInfo = document.getElementById("game-info");
-            
-                // Create separator line
-                const separator = document.createElement("hr");
-                separator.classList.add("separator-line");
-            
-                // Create pitch data container
-                const pitchDataContainer = document.createElement("div");
-                pitchDataContainer.id = "pitch-data-container";
-            
-                // Get last pitch data
-                const allPlays = data.liveData.plays.allPlays;
-                const lastPlay = allPlays[allPlays.length - 1];
-            
-                if (!lastPlay || !lastPlay.pitchIndex.length) return; // No pitch data available
-            
-                const lastPitch = lastPlay.pitchIndex[lastPlay.pitchIndex.length - 1];
-                const pitchDetails = lastPlay.pitchData[lastPitch];
-            
-                // Get pitcher details
-                const pitcher = data.liveData.boxscore.teams[lastPlay.about.halfInning].pitchers[lastPlay.matchup.pitcher.id];
-            
-                // Extract relevant data
-                const pitcherName = `${pitcher.fullName.split(" ")[0][0]}. ${pitcher.fullName.split(" ")[1]}`;
-                const pitchType = pitchDetails.details.type.description || "Unknown";
-                const pitchVelocity = pitchDetails.startSpeed ? `${pitchDetails.startSpeed.toFixed(1)} MPH` : "N/A";
-                const spinRate = pitchDetails.breaks ? `${pitchDetails.breaks.spinRate} RPM` : "N/A";
-            
-                // Set content
-                pitchDataContainer.innerHTML = `
-                    <p class="pitch-info"><strong>Pitcher:</strong> ${pitcherName}</p>
-                    <p class="pitch-info"><strong>Pitch Type:</strong> ${pitchType}</p>
-                    <p class="pitch-info"><strong>Velocity:</strong> ${pitchVelocity}</p>
-                    <p class="pitch-info"><strong>Spin Rate:</strong> ${spinRate}</p>
-                `;
-            
-                // Insert separator and pitch data below game info
-                gameInfo.appendChild(separator);
-                gameInfo.appendChild(pitchDataContainer);
-            }
-            
         }
 
         // For in-progress games
@@ -481,6 +434,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
         }
+
+        var newContent = `
+            <div>
+                <p>HELP ME I SUCK!</p>
+            </div>
+        `
     }
 
     async function fetchGameData(gamePk) {
@@ -489,6 +448,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const data = await response.json();
             updateScorebug(data);
             updatePlayerInfo(data);  // Update player info when refreshing data
+            renderLivePitchData(data); // Update pitch data when refreshing data
         } catch (error) {
             console.error("Error fetching game data:", error);
         }
@@ -516,6 +476,63 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
 
         updateSVG(count, onBase);
+    }
+
+    function renderLivePitchData(data) {
+        // Check if game is live
+        const gameState = data.gameData.status.abstractGameState;
+        if (gameState !== "Live" && gameState !== "In Progress") return;
+        
+        // Remove any existing pitch data display
+        const existingPitchData = document.getElementById("pitch-data-section");
+        if (existingPitchData) {
+            existingPitchData.remove();
+        }
+        
+        // Create pitch data section
+        const pitchDataSection = document.createElement("div");
+        pitchDataSection.id = "pitch-data-section";
+        
+        // Create separator line
+        const separator = document.createElement("hr");
+        separator.classList.add("separator-line");
+        pitchDataSection.appendChild(separator);
+        
+        // Create pitch data container that will display in a single row
+        const pitchDataContainer = document.createElement("div");
+        pitchDataContainer.id = "pitch-data-container";
+        
+        // Get last pitch data
+        const allPlays = data.liveData.plays.allPlays;
+        const lastPlay = allPlays[allPlays.length - 1];
+        
+        if (!lastPlay || !lastPlay.pitchIndex || !lastPlay.pitchIndex.length) return; // No pitch data available
+        
+        const lastPitchIndex = lastPlay.pitchIndex[lastPlay.pitchIndex.length - 1];
+        const pitchDetails = lastPlay.playEvents[lastPitchIndex];
+        
+        // Get pitcher details
+        const pitcher = data.liveData.plays.currentPlay.matchup.pitcher;
+        
+        // Extract relevant data
+        const pitcherName = `${pitcher.fullName.split(" ")[0][0]}. ${pitcher.fullName.split(" ")[1]}`;
+        const pitchType = pitchDetails.details.type.description || "Unknown";
+        const pitchVelocity = pitchDetails.pitchData.startSpeed ? `${pitchDetails.pitchData.startSpeed.toFixed(1)} MPH` : "N/A";
+        const spinRate = pitchDetails.pitchData.breaks ? `${pitchDetails.pitchData.breaks.spinRate} RPM` : "N/A";
+        
+        // Set content in a single row format
+        pitchDataContainer.innerHTML = `
+            <span class="pitch-info"><strong>Pitcher:</strong> ${pitcherName}</span>
+            <span class="pitch-info"><strong>Pitch:</strong> ${pitchType}</span>
+            <span class="pitch-info"><strong>Velocity:</strong> ${pitchVelocity}</span>
+            <span class="pitch-info"><strong>Spin:</strong> ${spinRate}</span>
+        `;
+        
+        pitchDataSection.appendChild(pitchDataContainer);
+        
+        // Insert after gameplay-info-container
+        const gameplayInfoContainer = document.getElementById("gameplay-info-container");
+        gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoContainer.nextSibling);
     }
 
     function generateSVGField(count, onBase) {
@@ -546,6 +563,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('second-base').style.fill = onBase.second ? '#000' : '#e5decf';
         document.getElementById('third-base').style.fill = onBase.third ? '#000' : '#e5decf';
     }
-
+   
     setInterval(() => fetchGameData(gamePk), 15000); // Refresh every 15s
 });
+
