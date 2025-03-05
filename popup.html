@@ -14,8 +14,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    border: 2px solid #1d2c43;
-    background-color: #d3e1ff;
+    border: 3px solid #0B0F13;
+    background-color: #e5decf;
     padding: 10px;
     position: relative;
     border-radius: 10px;
@@ -25,16 +25,16 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        width: 60%; /* Reduce width to bring elements closer */
+        width: 80%; /* Reduce width to bring elements closer */
         margin-top: 10px;
         gap: 5px; /* Reduce gap to tighten spacing */
         padding: 5px 0;
-        border-bottom: 2px solid #2f4858;
+        border-bottom: 1px solid #0B0F13;
     }
 
     .team-logo {
-        width: 50px; /* Reduce logo size */
-        height: auto;
+        width: 120px; /* Reduce logo size */
+        height: 120px;
     }
 
     .team-score {
@@ -42,20 +42,112 @@
         font-weight: bold;
         min-width: 40px; /* Reduce minimum width */
         text-align: center;
-        color: #1d2c43;
+        color: #0B0F13;
     }
 
     .inning {
         font-size: 1.2rem; /* Slightly reduce font size */
-        font-weight: 500;
+        font-weight: 700;
         min-width: 60px; /* Reduce width to tighten layout */
         text-align: center;
         color: red;
     }
+
+    .player-info {
+    width: 120px;
+    padding: 8px;
+    background-color: transparent;
+    border-radius: 5px;
+    }
+
+    .player-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    }
+
+    .player-position {
+    font-style: italic;
+    margin-bottom: 5px;
+    color: #555;
+    }
+
+    .player-stat {
+    margin: 2px 0;
+    font-size: 0.9em;
+    }
+
+    .lineup {
+        font-size: 12px;
+    }
+
+    .limeup:first-child {
+        font-weight: bold;
+    }
+
+    .hand {
+    color: #db7872; /* Change to your preferred color */
+    font-weight: 400;
+    font-style: italic;
+    }
+
+    .field {
+        color: #D7827E; /* Change to your preferred color */
+        font-weight: 400;
+        font-style: italic;
+    }
+
+    .team-logo {
+    display: block;
+    width: 80px;  /* Adjust as needed */
+    height: 80px;
+    margin: 0 auto;
+}
+
+.team-record {
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    margin-top: 5px;  /* Adds spacing below the logo */
+}
+
+#scoreboard-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.scoreboard {
+    width: auto;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 14px;
+}
+
+.scoreboard th, .scoreboard td {
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+}
+
+.scoreboard th {
+    background-color: #333;
+    color: white;
+}
+
+.away-team {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.home-team {
+    background-color: #e0e0e0;
+    font-weight: bold;
+}
+
+    
     </style>
 </head>
 <body>
            <!-- Games will be dynamically added here -->
-    </div>
 </body>
 </html>
