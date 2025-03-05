@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script defer src="popup.js" defer></script>
     <style>
+
     #popup-container {
     width: 500px;
     height: 560px;
@@ -22,36 +23,58 @@
     }
 
     #game-info {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 80%; /* Reduce width to bring elements closer */
-        margin-top: 10px;
-        gap: 5px; /* Reduce gap to tighten spacing */
-        padding: 5px 0;
-        border-bottom: 1px solid #0B0F13;
-    }
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;  /* Away team | Middle section | Home team */
+    align-items: center;
+    width: 80%;
+    margin-top: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid #0B0F13;
+}
 
-    .team-logo {
-        width: 120px; /* Reduce logo size */
-        height: 120px;
-    }
+/* Create team container for logo and record */
+.team-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 
-    .team-score {
-        font-size: 1.5rem; /* Slightly reduce font size */
-        font-weight: bold;
-        min-width: 40px; /* Reduce minimum width */
-        text-align: center;
-        color: #0B0F13;
-    }
+.team-logo {
+    display: block;
+    width: 80px;
+    height: 80px;
+}
 
-    .inning {
-        font-size: 1.2rem; /* Slightly reduce font size */
-        font-weight: 700;
-        min-width: 60px; /* Reduce width to tighten layout */
-        text-align: center;
-        color: red;
-    }
+.team-record {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* Middle section with scores and inning */
+.game-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.team-score {
+    font-size: 1.5rem;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+    color: #0B0F13;
+}
+
+.inning {
+    font-size: 1.2rem;
+    font-weight: 700;
+    min-width: 60px;
+    text-align: center;
+    color: red;
+}
 
     .player-info {
     width: 120px;
