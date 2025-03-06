@@ -333,8 +333,9 @@ popupContainer.appendChild(gameInfo);
         homePlayerStats.innerHTML = "";
         
         if (gameState === "Final" || gameState === "Game Over") {
-            awayPlayerStats.innerHTML = "<p>Game Finished</p>";
-            homePlayerStats.innerHTML = "<p>Game Finished</p>";
+            awayPlayerStats.innerHTML = `<p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>`;
+            homePlayerStats.innerHTML = `<p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>`;
+            document.getElementById("scorebug-wrapper").style.display = "none";
             return;
         }
         
@@ -474,16 +475,26 @@ popupContainer.appendChild(gameInfo);
     
 
     function updateScorebug(data) {
+        // Check if game is finished and hide scorebug if it is
+        if (data.gameData.status.detailedState === "Final" || data.gameData.status.detailedState === "Game Over") {
+            scorebugContainer.innerHTML = ""; // Clear the scorebug content
+            document.getElementById("scorebug-wrapper").style.display = "none";
+            return;
+        }
+        
+        // Show scorebug wrapper in case it was hidden previously
+        document.getElementById("scorebug-wrapper").style.display = "";
+        
         const currentPlay = data.liveData.plays.currentPlay;
         let count = currentPlay.count || { balls: 0, strikes: 0, outs: 0 };
-
+    
         // Reset balls and strikes at the end of a plate appearance
         if (data.gameData.status.detailedState === "Final" || data.gameData.status.detailedState === "Pre-Game" || data.gameData.status.detailedState === "Scheduled" || currentPlay.result.eventType === "strikeout" || currentPlay.result.eventType === "walk" || currentPlay.result.eventType === "hit" || currentPlay.result.eventType === "field_out") {
             count = { balls: 0, strikes: 0, outs: count.outs };
         }
         
         const onBase = data.liveData.linescore.offense || {};
-
+    
         scorebugContainer.innerHTML = `
             <div class="scorebug">
                 ${generateSVGField(count, onBase)}
@@ -492,7 +503,7 @@ popupContainer.appendChild(gameInfo);
                 </div>
             </div>
         `;
-
+    
         updateSVG(count, onBase);
     }
 
@@ -541,8 +552,8 @@ popupContainer.appendChild(gameInfo);
         // Set content in a single row format
         pitchDataContainer.innerHTML = `
             <span class="pitch-info"><strong>Pitcher:</strong> ${pitcherName}</span>
-            <span class="pitch-info"><strong>Pitch:</strong> ${pitchType}</span>
-            <span class="pitch-info"><strong>Velocity:</strong> ${pitchVelocity}</span>
+            <span class="pitch-info pitch-type"><strong>Pitch:</strong> ${pitchType}</span>
+            <span class="pitch-info pitch-velo"><strong>Velocity:</strong> ${pitchVelocity}</span>
             <span class="pitch-info"><strong>Spin:</strong> ${spinRate}</span>
         `;
         
