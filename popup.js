@@ -328,16 +328,85 @@ popupContainer.appendChild(gameInfo);
         // Clear previous player info
         const awayPlayerStats = document.getElementById("away-player-stats");
         const homePlayerStats = document.getElementById("home-player-stats");
+
+        const topPerformers = data.liveData.boxscore.topPerformers || [];
+
+        // Extract the top 3 performers safely
+        const topPerformerOne = topPerformers[0]?.player?.person?.fullName || "N/A";
+        const topPerformerTwo = topPerformers[1]?.player?.person?.fullName || "N/A";
+        const topPerformerThree = topPerformers[2]?.player?.person?.fullName || "N/A";
         
         awayPlayerStats.innerHTML = "";
         homePlayerStats.innerHTML = "";
-        
+
+       
         if (gameState === "Final" || gameState === "Game Over") {
             awayPlayerStats.innerHTML = `<p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>`;
             homePlayerStats.innerHTML = `<p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>`;
             document.getElementById("scorebug-wrapper").style.display = "none";
-            return;
+        
+            // **Find the gameplay-info-container**
+            const gameplayContainer = document.getElementById("gameplay-info-container");
+            if (!gameplayContainer) return; // Prevents errors if it doesn't exist
+        
+            // **Check if Top Performers already exist**
+            let topPerformersContainer = document.getElementById("top-performers");
+            if (!topPerformersContainer) {
+                topPerformersContainer = document.createElement("div");
+                topPerformersContainer.id = "top-performers";
+                topPerformersContainer.classList.add("top-performers-section"); // Add CSS class
+        
+                // **Extract top performers dynamically**
+                const topPerformers = data.liveData.boxscore.topPerformers || [];
+        
+                if (topPerformers.length < 3) {
+                    console.warn("Not enough top performers available.");
+                    return;
+                }
+        
+                const getPlayerStats = (player) => {
+                    if (!player || !player.person) return { name: "N/A", stats: "No stats available" };
+        
+                    const name = player.person.fullName;
+                    let stats = "No stats available";
+        
+                    if (player.type === "pitcher" && player.stats.pitching) {
+                        stats = `${player.stats.pitching.inningsPitched} IP, ${player.stats.pitching.strikeOuts} K, ${player.stats.pitching.earnedRuns} ER`;
+                    } else if (player.type === "batter" && player.stats.batting) {
+                        stats = `${player.stats.batting.hits}-${player.stats.batting.atBats}, ${player.stats.batting.runs} R, ${player.stats.batting.rbi} RBI`;
+                    }
+        
+                    return { name, stats };
+                };
+        
+                const performerOne = getPlayerStats(topPerformers[0]);
+                const performerTwo = getPlayerStats(topPerformers[1]);
+                const performerThree = getPlayerStats(topPerformers[2]);
+        
+                // **Create HTML**
+                topPerformersContainer.innerHTML = `
+                    <h3 class="top-performers-title">TOP PERFORMERS</h3>
+                    <div class="top-performers-row">
+                        <div class="top-performer">
+                            <p class="performer-name">${performerOne.name}</p>
+                            <p class="performer-stats">${performerOne.stats}</p>
+                        </div>
+                        <div class="top-performer">
+                            <p class="performer-name">${performerTwo.name}</p>
+                            <p class="performer-stats">${performerTwo.stats}</p>
+                        </div>
+                        <div class="top-performer">
+                            <p class="performer-name">${performerThree.name}</p>
+                            <p class="performer-stats">${performerThree.stats}</p>
+                        </div>
+                    </div>
+                `;
+        
+                // **Insert it AFTER gameplay-info-container**
+                gameplayContainer.parentNode.insertBefore(topPerformersContainer, gameplayContainer.nextSibling);
+            }
         }
+        
         
         if (gameState === "Pre-Game" || gameState === "Scheduled") {
             document.getElementById("scorebug-wrapper").style.display = "none";
