@@ -9,9 +9,12 @@ body {
 
 #scorebug {
     text-align: center;
-    padding: 20px;
     background-color: #fff;
     color: #000;
+}
+
+.balls-strikes {
+    font-weight: 400;
 }
 
 #games-container {
@@ -22,10 +25,10 @@ body {
 }
 
 .game-box {
-    border: 2px solid #1d2c43; /* Thinner border */
+    border: 2px solid #0B0F13; /* Thinner border */
     padding: 5px; /* Less padding */
     text-align: center;
-    background-color: #d3e1ff;
+    background-color: #e5decf;
     border-radius: 5px; /* Smaller border radius */
     font-size: 12px; /* Reduce text size */
     width: 150px; /* Set a smaller width */
@@ -44,7 +47,7 @@ body {
     transition: transform .2s;
 }
 .game-box h3, p {
-    color: #000;
+    color: #0B0F13;
 }
 
 img {
@@ -76,3 +79,7 @@ img {
     color: red;
 }
 
+#scorebug {
+    background-color: transparent;
+    top: 150px;
+}

@@ -101,4 +101,3 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     setInterval(() => fetchGameData(gamePk), 15000); // Refresh every 15s
 });
-
