@@ -357,55 +357,71 @@ popupContainer.appendChild(gameInfo);
                 topPerformersContainer.classList.add("top-performers-section"); // Add CSS class
         
                 // **Extract top performers dynamically**
-                const topPerformers = data.liveData.boxscore.topPerformers || [];
+                const topPerformers = data.liveData.boxscore.topPerformers.slice(0, 3); // Ensure we only use the first 3
         
-                if (topPerformers.length < 3) {
-                    console.warn("Not enough top performers available.");
-                    return;
-                }
-        
+                // **Get Player Stats based on Type**
                 const getPlayerStats = (player) => {
-                    if (!player || !player.person) return { name: "N/A", stats: "No stats available" };
+                    if (!player || !player.player) return { name: "N/A", stats: "No stats available" };
         
-                    const name = player.person.fullName;
+                    const name = player.player.person.fullName;
                     let stats = "No stats available";
         
-                    if (player.type === "pitcher" && player.stats.pitching) {
-                        stats = `${player.stats.pitching.inningsPitched} IP, ${player.stats.pitching.strikeOuts} K, ${player.stats.pitching.earnedRuns} ER`;
-                    } else if (player.type === "batter" && player.stats.batting) {
-                        stats = `${player.stats.batting.hits}-${player.stats.batting.atBats}, ${player.stats.batting.runs} R, ${player.stats.batting.rbi} RBI`;
+                    if (player.type === "pitcher" || "starter" && player.player.stats?.pitching?.summary) {
+                        stats = player.player.stats.pitching.summary; // Use summary for pitchers
+                    } else if (player.type === "hitter" && player.player.stats?.batting?.summary) {
+                        stats = player.player.stats.batting.summary; // Use summary for hitters
+                    } else if (player.type === "hitter") {
+                        // If summary is missing, construct a fallback from available batting stats
+                        const batting = player.player.stats.batting;
+                        if (batting) {
+                            stats = `${batting.hits}-${batting.atBats}, ${batting.runs} R, ${batting.rbi} RBI`;
+                        }
                     }
-        
+                
                     return { name, stats };
                 };
         
+                // **Get Stats for the 3 Performers**
                 const performerOne = getPlayerStats(topPerformers[0]);
                 const performerTwo = getPlayerStats(topPerformers[1]);
                 const performerThree = getPlayerStats(topPerformers[2]);
         
                 // **Create HTML**
                 topPerformersContainer.innerHTML = `
-                    <h3 class="top-performers-title">TOP PERFORMERS</h3>
-                    <div class="top-performers-row">
-                        <div class="top-performer">
-                            <p class="performer-name">${performerOne.name}</p>
-                            <p class="performer-stats">${performerOne.stats}</p>
-                        </div>
-                        <div class="top-performer">
-                            <p class="performer-name">${performerTwo.name}</p>
-                            <p class="performer-stats">${performerTwo.stats}</p>
-                        </div>
-                        <div class="top-performer">
-                            <p class="performer-name">${performerThree.name}</p>
-                            <p class="performer-stats">${performerThree.stats}</p>
-                        </div>
+                <h3 class="top-performers-title">TOP PERFORMERS</h3>
+                <div class="top-performers-row">
+                    <div class="top-performer">
+                        <p class="performer-name">
+                            <span>${performerOne.name.split(" ")[0]}</span> 
+                            <span>${performerOne.name.split(" ")[1]}</span>
+                        </p>
+                        <p class="performer-stats">${performerOne.stats}</p>
                     </div>
-                `;
+                    <div class="top-performer">
+                        <p class="performer-name">
+                            <span>${performerTwo.name.split(" ")[0]}</span> 
+                            <span>${performerTwo.name.split(" ")[1]}</span>
+                        </p>
+                        <p class="performer-stats">${performerTwo.stats}</p>
+                    </div>
+                    <div class="top-performer">
+                        <p class="performer-name">
+                            <span>${performerThree.name.split(" ")[0]}</span> 
+                            <span>${performerThree.name.split(" ")[1]}</span>
+                        </p>
+                        <p class="performer-stats">${performerThree.stats}</p>
+                    </div>
+                </div>
+            `;
+
         
                 // **Insert it AFTER gameplay-info-container**
                 gameplayContainer.parentNode.insertBefore(topPerformersContainer, gameplayContainer.nextSibling);
             }
+
+            return;
         }
+        
         
         
         if (gameState === "Pre-Game" || gameState === "Scheduled") {
