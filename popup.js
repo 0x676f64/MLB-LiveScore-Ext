@@ -157,7 +157,7 @@ popupContainer.appendChild(gameInfo);
         .player-position {
             font-style: italic;
             margin-bottom: 5px;
-            color: #555;
+            color: #D7827E;
             font-size: 12px;
         }
         
@@ -424,7 +424,7 @@ popupContainer.appendChild(gameInfo);
         
         
         
-        if (gameState === "Pre-Game" || gameState === "Scheduled") {
+        if (gameState === "Pre-Game" || gameState === "Scheduled" || gameState === "Warmup") {
             document.getElementById("scorebug-wrapper").style.display = "none";
 
             // Display probable pitchers
@@ -612,7 +612,7 @@ popupContainer.appendChild(gameInfo);
         separator.classList.add("separator-line");
         pitchDataSection.appendChild(separator);
         
-        // Create pitch data container that will display in a single row
+        // Create pitch data container
         const pitchDataContainer = document.createElement("div");
         pitchDataContainer.id = "pitch-data-container";
         
@@ -643,12 +643,54 @@ popupContainer.appendChild(gameInfo);
         `;
         
         pitchDataSection.appendChild(pitchDataContainer);
-        
+    
+        // Create pitch description section
+        const pitchDescriptionContainer = document.createElement("div");
+        pitchDescriptionContainer.id = "pitch-description-container";
+    
+        // Get event result, but fallback to pitch description if not available
+        let pitchResult = lastPlay.result?.event || pitchDetails.details.description || "Unknown";
+        let resultClass = "unclassified"; // Default to gray for unknown results
+    
+        // Determine color based on event or description
+        if (pitchResult === "Strikeout" || pitchResult.includes("Called Strike") || pitchResult.includes("Swinging Strike")) {
+            pitchResult = pitchResult === "Strikeout" ? "Strikeout" : "Called Strike";
+            resultClass = "strike";
+        } else if (pitchResult.includes("Ball") || pitchResult.includes("Ball In the Dirt")) {
+            pitchResult = "Ball";
+            resultClass = "ball";
+        } else if (pitchResult.includes("Walk")) {
+            pitchResult = "Walk";
+            resultClass = "ball";
+        } else if (pitchResult.includes("Single") || pitchResult.includes("Double") || pitchResult.includes("Triple") || pitchResult.includes("Home Run")) {
+            pitchResult = lastPlay.result?.description || pitchDetails.details.description;
+            resultClass = "hit";
+        } else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") || pitchResult.includes("Flyout")) {
+            pitchResult = lastPlay.result?.description || pitchDetails.details.description;
+            resultClass = "out";
+        } else if (pitchResult.includes("Foul") || pitchResult.includes("Foul Tip") || pitchResult.includes("Foul Bunt") || pitchResult.includes("Batter Timeout")) {  
+            pitchResult = "Foul Ball";
+            resultClass = "foul";
+        } else if (pitchResult.includes("Pitching Change") || pitchResult.includes("Mound Visit")) {
+            pitchResult = "Pitching Change";
+            resultClass = "change";
+        } else {
+            // Anything not covered falls here
+            resultClass = "unclassified"; // Default gray
+        }
+    
+        // Set pitch description content with color-coded class
+        pitchDescriptionContainer.innerHTML = `
+            <span class="pitch-description ${resultClass}">${pitchResult}</span>
+        `;
+    
+        pitchDataSection.appendChild(pitchDescriptionContainer);
+    
         // Insert after gameplay-info-container
         const gameplayInfoContainer = document.getElementById("gameplay-info-container");
         gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoContainer.nextSibling);
     }
-
+    
     function generateSVGField(count, onBase) {
         return `
             <svg id="field" width="100" height="100" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #e5decf;">
