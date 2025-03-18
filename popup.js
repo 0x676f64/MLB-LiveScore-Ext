@@ -662,22 +662,75 @@ popupContainer.appendChild(gameInfo);
         } else if (pitchResult.includes("Walk")) {
             pitchResult = "Walk";
             resultClass = "ball";
-        } else if (pitchResult.includes("Single") || pitchResult.includes("Double") || pitchResult.includes("Triple") || pitchResult.includes("Home Run")) {
+        } else if (pitchResult.includes("Single") || pitchResult.includes("Double") || 
+                pitchResult.includes("Triple") || pitchResult.includes("Home Run")) {
             pitchResult = lastPlay.result?.description || pitchDetails.details.description;
             resultClass = "hit";
-        } else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") || pitchResult.includes("Flyout")) {
+
+            // Extract hit data if available
+            const hitData = pitchDetails.hitData;
+            if (hitData) {
+                const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
+                const launchAngle = hitData.launchAngle ? `${hitData.launchAngle.toFixed(1)}°` : "N/A";
+                const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
+
+                // Append hit data formatted correctly
+                pitchResult += `<div class="hit-data">
+                    <span><strong>Exit Velo:</strong> ${launchSpeed}</span> |
+                    <span><strong>Launch Angle:</strong> ${launchAngle}</span> |
+                    <span><strong>Total Distance:</strong> ${totalDistance}</span>
+                </div>`;
+            }
+        } else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") || pitchResult.includes("Flyout") || pitchResult.includes("Forceout") || pitchResult.includes("Pop Out") || pitchResult.includes("Lineout") || pitchResult.includes("Sac Fly")) {
             pitchResult = lastPlay.result?.description || pitchDetails.details.description;
             resultClass = "out";
-        } else if (pitchResult.includes("Foul") || pitchResult.includes("Foul Tip") || pitchResult.includes("Foul Bunt") || pitchResult.includes("Batter Timeout")) {  
-            pitchResult = "Foul Ball";
+
+            // Extract hit data if available (for balls put in play leading to outs)
+            const hitData = pitchDetails.hitData;
+            if (hitData) {
+                const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
+                const launchAngle = hitData.launchAngle ? `${hitData.launchAngle.toFixed(1)}°` : "N/A";
+                const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
+
+                // Append hit data formatted correctly
+                pitchResult += `<div class="hit-data">
+                    <span><strong>EV:</strong> ${launchSpeed}</span> |
+                    <span><strong>LA:</strong> ${launchAngle}</span> |
+                    <span><strong>Distance:</strong> ${totalDistance}</span>
+                </div>`;
+            }
+        } else if (
+            pitchResult.includes("Foul") ||
+            pitchResult === "Foul Tip" ||
+            pitchResult === "Foul Bunt" ||
+            pitchResult === "Foul Ball" ||
+            pitchResult === "Foul Out" ||
+            pitchResult === "Foul Strike" ||
+            pitchResult === "Foul Tip Catch"
+        ) {
+            pitchResult = "Foul Ball";  // You can adjust this if you need to display a more specific description
             resultClass = "foul";
-        } else if (pitchResult.includes("Pitching Change") || pitchResult.includes("Mound Visit")) {
-            pitchResult = "Pitching Change";
+        } else if (pitchResult.includes("Pitching Change") || 
+            pitchResult === "Mound Visit" ||
+            pitchResult === "Batter Timeout" ||
+            pitchResult === "Batting Timeout" 
+        ) {
+            pitchResult = "Time Out";
             resultClass = "change";
-        } else {
+        } else if (pitchResult.includes("Stolen Base")
+        ) {
+            pitchResult = "Stolen Base";
+            resultClass = "strike";
+        } else if (pitchResult.includes("Caught Stealing")
+        ) {
+            pitchResult = "Caught Stealing";
+            resultClass = "ball";
+        }  else {
             // Anything not covered falls here
             resultClass = "unclassified"; // Default gray
         }
+
+
     
         // Set pitch description content with color-coded class
         pitchDescriptionContainer.innerHTML = `
