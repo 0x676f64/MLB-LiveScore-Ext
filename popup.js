@@ -344,10 +344,16 @@ popupContainer.appendChild(gameInfo);
 
        
         if (gameState === "Final" || gameState === "Game Over") {
-            awayPlayerStats.innerHTML = `<p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>`;
-            homePlayerStats.innerHTML = `<p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>`;
+            awayPlayerStats.innerHTML = `<p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>` || "N/A" ;
+            homePlayerStats.innerHTML = `<p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>` || "N/A" ;
             document.getElementById("scorebug-wrapper").style.display = "none";
         
+            if (data.gameData.status.detailedState === "Final: Tied") {
+                document.getElementById("awayPlayerStats").style.display = "none";
+                document.getElementById("homePlayerStats").style.display = "none";
+            }
+            
+
             // **Find the gameplay-info-container**
             const gameplayContainer = document.getElementById("gameplay-info-container");
             if (!gameplayContainer) return; // Prevents errors if it doesn't exist
@@ -569,7 +575,10 @@ popupContainer.appendChild(gameInfo);
             if (gameStatusText === "Suspended: Rain") {
                 inningText = "SUSPENDED";
                 inningBoxStyle = "color: red;";
-            } else if (gameStatusText === "Final" || gameStatusText === "Game Over") {
+            } else if (gameStatusText === "Cancelled") {
+                inningText = "RAIN";
+                inningBoxStyle = "color: red;";
+            } else if (gameStatusText === "Final" || gameStatusText === "Game Over" || gameStatusText === "Final: Tied") {
                 inningText = "FINAL";
                 inningBoxStyle = "color: red;";
             } else if (gameStatusText === "Pre-Game" || gameStatusText === "Scheduled") {
@@ -593,7 +602,7 @@ popupContainer.appendChild(gameInfo);
 
     function updateScorebug(data) {
         // Check if the game is finished and hide the scorebug if it is
-        if (data.gameData.status.detailedState === "Final" || data.gameData.status.detailedState === "Game Over") {
+        if (data.gameData.status.detailedState === "Final" || data.gameData.status.detailedState === "Game Over" || data.gameData.status.detailedState === "Final: Tied") {
             scorebugContainer.innerHTML = ""; // Clear the scorebug content
             document.getElementById("scorebug-wrapper").style.display = "none";
             return;

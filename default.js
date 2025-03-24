@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const homeAbbr = gameDetails?.gameData?.teams?.home?.abbreviation || getDefaultAbbr(homeTeam);
                 const awayAbbr = gameDetails?.gameData?.teams?.away?.abbreviation || getDefaultAbbr(awayTeam);
 
-                if (status === "Final" || status === "Game Over") {
+                if (status === "Final" || status === "Game Over" || status === "Completed Early") {
                     status = "FINAL";
                 } else if (status === "Pre-Game" || status === "Scheduled") {
                     status = formatGameTime(game.gameDate);
