@@ -117,19 +117,22 @@ popupContainer.appendChild(gameInfo);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 90%;
+            width: 100%;
             padding: 0 10px;
             margin-left: 30px;
         }
 
-        #home-player-info {
-            margin-left: 25px;
+        #away-player-stats {
+            margin-left: 20px;
         }
         
         #scorebug-wrapper {
             flex: 2;
             display: flex;
             justify-content: center;
+            width: 10%;
+            padding-right: 40px;
+
         }
         
         .player-info {
@@ -189,22 +192,22 @@ popupContainer.appendChild(gameInfo);
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
             const data = await response.json();
-
+    
             if (data && data.gameData && data.liveData) {
                 const game = data.gameData;
                 const linescore = data.liveData.linescore;
-
+    
                 // Team details
                 const awayTeam = game.teams.away;
                 const homeTeam = game.teams.home;
                 const awayScoreText = linescore.teams.away.runs || 0;
                 const homeScoreText = linescore.teams.home.runs || 0;
-
+    
                 // Game status handling
                 let gameStatusText = game.status.detailedState;
                 let inningText = "";
                 let inningBoxStyle = "";
-
+    
                 if (gameStatusText === "Suspended: Rain") {
                     inningText = "SUSPENDED";
                     inningBoxStyle = "color: red;";
@@ -219,21 +222,21 @@ popupContainer.appendChild(gameInfo);
                     const currentInning = linescore.currentInning || "";
                     inningText = `${inningHalf} ${currentInning}`;
                 }
-
+    
                 // Set values to HTML
-                awayLogo.src = `assets/${awayTeam.id}.svg`;
+                awayLogo.src = `https://www.mlbstatic.com/team-logos/${awayTeam.id}.svg`;
                 awayLogo.alt = awayTeam.name;
                 awayScore.textContent = awayScoreText;
                 awayRecord.textContent = `${data.gameData.teams.away.record.wins}-${data.gameData.teams.away.record.losses}`;  // ✅ Correct way
-
-                inningInfo.textContent = inningText;
+    
+                inningInfo.textContent = inningText;  // Ensure inning is updated here
                 inningInfo.style = inningBoxStyle;
-
+    
                 homeScore.textContent = homeScoreText;
-                homeLogo.src = `assets/${homeTeam.id}.svg`;
+                homeLogo.src = `https://www.mlbstatic.com/team-logos/${homeTeam.id}.svg`;
                 homeLogo.alt = homeTeam.name;
                 homeRecord.textContent = `${data.gameData.teams.home.record.wins}-${data.gameData.teams.home.record.losses}`;  // ✅ Correct way
-                
+    
                 // Display current players (hitter/pitcher)
                 updatePlayerInfo(data);
             } else {
@@ -550,9 +553,38 @@ popupContainer.appendChild(gameInfo);
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
             const data = await response.json();
+    
+            // Assuming updateScorebug, updatePlayerInfo, and renderLivePitchData are your other functions
             updateScorebug(data); // Update scorebug when refreshing data
             updatePlayerInfo(data);  // Update player info when refreshing data
             renderLivePitchData(data); // Update pitch data when refreshing data
+    
+            // Game status handling
+            const game = data.gameData;
+            const linescore = data.liveData.linescore;
+            let gameStatusText = game.status.detailedState;
+            let inningText = "";
+            let inningBoxStyle = "";
+    
+            if (gameStatusText === "Suspended: Rain") {
+                inningText = "SUSPENDED";
+                inningBoxStyle = "color: red;";
+            } else if (gameStatusText === "Final" || gameStatusText === "Game Over") {
+                inningText = "FINAL";
+                inningBoxStyle = "color: red;";
+            } else if (gameStatusText === "Pre-Game" || gameStatusText === "Scheduled") {
+                inningText = formatGameTime(game.datetime.dateTime);
+                inningBoxStyle = "color: red;";
+            } else {
+                const inningHalf = linescore.inningHalf ? (linescore.inningHalf === "Top" ? "TOP" : "BOT") : "";
+                const currentInning = linescore.currentInning || "";
+                inningText = `${inningHalf} ${currentInning}`;
+            }
+    
+            // Update the inning info
+            inningInfo.textContent = inningText;
+            inningInfo.style = inningBoxStyle;
+    
         } catch (error) {
             console.error("Error fetching game data:", error);
         }
@@ -560,25 +592,31 @@ popupContainer.appendChild(gameInfo);
     
 
     function updateScorebug(data) {
-        // Check if game is finished and hide scorebug if it is
+        // Check if the game is finished and hide the scorebug if it is
         if (data.gameData.status.detailedState === "Final" || data.gameData.status.detailedState === "Game Over") {
             scorebugContainer.innerHTML = ""; // Clear the scorebug content
             document.getElementById("scorebug-wrapper").style.display = "none";
             return;
         }
-        
+    
+        // Check if the game is in progress (i.e., live play data exists)
+        if (!data.liveData || !data.liveData.plays || !data.liveData.plays.currentPlay) {
+            console.log("No live game data available.");
+            return; // Exit if there's no current play (game not in progress)
+        }
+    
         // Show scorebug wrapper in case it was hidden previously
         document.getElementById("scorebug-wrapper").style.display = "";
-        
+    
         const currentPlay = data.liveData.plays.currentPlay;
         let count = currentPlay.count || { balls: 0, strikes: 0, outs: 0 };
-    
+        
         // Reset balls and strikes at the end of a plate appearance
-        if (data.gameData.status.detailedState === "Final" || data.gameData.status.detailedState === "Pre-Game" || data.gameData.status.detailedState === "Scheduled" || currentPlay.result.eventType === "strikeout" || currentPlay.result.eventType === "walk" || currentPlay.result.eventType === "hit" || currentPlay.result.eventType === "field_out") {
+        if (data.gameData.status.detailedState === "Final" || data.gameData.status.detailedState === "Pre-Game" || data.gameData.status.detailedState === "Scheduled" || currentPlay.result?.eventType === "strikeout" || currentPlay.result?.eventType === "walk" || currentPlay.result?.eventType === "hit" || currentPlay.result?.eventType === "field_out") {
             count = { balls: 0, strikes: 0, outs: count.outs };
         }
-        
-        const onBase = data.liveData.linescore.offense || {};
+    
+        const onBase = data.liveData?.linescore?.offense || {};
     
         scorebugContainer.innerHTML = `
             <div class="scorebug">
@@ -591,6 +629,7 @@ popupContainer.appendChild(gameInfo);
     
         updateSVG(count, onBase);
     }
+    
 
     function renderLivePitchData(data) {
         // Check if game is live
@@ -630,7 +669,7 @@ popupContainer.appendChild(gameInfo);
         
         // Extract relevant data
         const pitcherName = `${pitcher.fullName.split(" ")[0][0]}. ${pitcher.fullName.split(" ")[1]}`;
-        const pitchType = pitchDetails.details.type.description || "Unknown";
+        const pitchType = pitchDetails?.details?.type?.description || "Unknown";
         const pitchVelocity = pitchDetails.pitchData.startSpeed ? `${pitchDetails.pitchData.startSpeed.toFixed(1)} MPH` : "N/A";
         const spinRate = pitchDetails.pitchData.breaks ? `${pitchDetails.pitchData.breaks.spinRate} RPM` : "N/A";
         
@@ -676,9 +715,9 @@ popupContainer.appendChild(gameInfo);
 
                 // Append hit data formatted correctly
                 pitchResult += `<div class="hit-data">
-                    <span><strong>Exit Velo:</strong> ${launchSpeed}</span> |
-                    <span><strong>Launch Angle:</strong> ${launchAngle}</span> |
-                    <span><strong>Total Distance:</strong> ${totalDistance}</span>
+                    <span><strong>EV:</strong> ${launchSpeed}</span> |
+                    <span><strong>LA:</strong> ${launchAngle}</span> |
+                    <span><strong>Distance:</strong> ${totalDistance}</span>
                 </div>`;
             }
         } else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") || pitchResult.includes("Flyout") || pitchResult.includes("Forceout") || pitchResult.includes("Pop Out") || pitchResult.includes("Lineout") || pitchResult.includes("Sac Fly")) {
@@ -724,6 +763,10 @@ popupContainer.appendChild(gameInfo);
         } else if (pitchResult.includes("Caught Stealing")
         ) {
             pitchResult = "Caught Stealing";
+            resultClass = "ball";
+        } else if (pitchResult.includes("Wild Pitch")
+        ) {
+            pitchResult = "Wild Pitch";
             resultClass = "ball";
         }  else {
             // Anything not covered falls here
@@ -773,5 +816,5 @@ popupContainer.appendChild(gameInfo);
         document.getElementById('third-base').style.fill = onBase.third ? '#000' : '#e5decf';
     }
    
-    setInterval(() => fetchGameData(gamePk), 15000); // Refresh every 15s
-});
+    setInterval(() => fetchGameData(gamePk), 2000); // Refresh every 2s
+});                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     

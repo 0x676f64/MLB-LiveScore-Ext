@@ -5,12 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Details</title>
     <link rel="stylesheet" href="style.css">
-    <script defer src="popup.js" defer></script>
+    <script defer src="popup.js" ></script>
+
     <style>
 
+    body {
+        width: 340px;
+        height: 445px;
+        transform: scale(0.8); /* 80% of the original size */
+        transform-origin: top left; /* Ensures it scales from the top left corner */
+    }
+
     #popup-container {
-    width: 500px;
-    height: 560px;
+    width: 400px;
+    height: 500px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -200,7 +208,7 @@
 }
 
 .pitch-velo {
-    color: red;
+    color: #eb6f92;
 }
 
 #top-performers {
@@ -245,7 +253,7 @@
 /* Center and style the pitch description */
 #pitch-description-container {
     text-align: center;
-    margin-top: 50px;
+    margin-top: 20px;
     font-size: 18px;
 }
 
@@ -260,37 +268,37 @@
 /* Colors for different outcomes */
 .ball {
     color: white;
-    background-color: green;
+    background-color: #286983;
 }
 
 .strike {
     color: white;
-    background-color: red;
+    background-color: #ff7477;
 }
 
 .out {
     color: white;
-    background-color: purple;
+    background-color: #575279;
 }
 
 .hit {
     color: white;
-    background-color: blue;
+    background-color: #ea9d34;
 }
 
 .foul {
     color: white;
-    background-color: rgba(128, 128, 128, 0);
+    background-color: #2a283e;
 }
 
 .change {
     color: white;
-    background-color: rgba(128, 128, 128, 0.288);
+    background-color: #2a283e;
 }
 
 .unclassified {
     color: white;
-    background-color: rgba(128, 128, 128, 0);
+    background-color: #2a283e;
 }
 
 .hit-data {
@@ -299,8 +307,8 @@
 }
     
     </style>
+    </div>
 </head>
-<body>
-           <!-- Games will be dynamically added here -->
-</body>
+<button id="backButton">Go Back</button>
+<script src="button.js"></script>
 </html>

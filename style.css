@@ -2,9 +2,11 @@
 
 body {
     font-family: "Afacad Flux", Arial, sans-serif;
+    padding: 5px;
+    overflow-y: auto;
     margin: 0;
-    padding: 10px 800px;
-    background-color: #fff;
+    transform: scale(0.8); /* 80% of the original size */
+    transform-origin: top left; /* Ensures it scales from the top left corner */
 }
 
 #scorebug {
@@ -13,13 +15,17 @@ body {
     color: #000;
 }
 
+#scorebug h2 {
+    text-align: center;
+}
+
 .balls-strikes {
     font-weight: 400;
 }
 
 #games-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px; /* Reduce spacing between game boxes */
     padding: 5px; /* Reduce padding */
 }
@@ -32,7 +38,7 @@ body {
     border-radius: 5px; /* Smaller border radius */
     font-size: 12px; /* Reduce text size */
     width: 150px; /* Set a smaller width */
-    height: 100px; /* Set a smaller height */
+    height: 120px; /* Set a smaller height */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -83,3 +89,15 @@ img {
     background-color: transparent;
     top: 150px;
 }
+
+#backButton {
+    display: block !important;
+    background-color: #191724;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
