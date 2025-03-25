@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gamesContainer = document.getElementById("games-container");
 
     const today = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
-    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1`;
+    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}`;
 
     function formatGameTime(gameDate) {
         const dateTime = new Date(gameDate);
@@ -12,9 +12,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         return `${(hours % 12) || 12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
     }
 
-    function getDefaultAbbr(teamName) {
-        // Create a simple default abbreviation if no specific abbreviation is found
-        return teamName.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 3);
+    async function fetchAbbreviation(teamId) {
+        try {
+            const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`);
+            const data = await response.json();
+            return data.teams[0].abbreviation || "N/A";
+        } catch (error) {
+            console.error("Error fetching abbreviation:", error);
+            return "N/A";
+        }
     }
 
     async function fetchGameDetails(gamePk) {
@@ -46,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            data.dates[0].games.forEach(async (game) => {
+            const gameBoxes = await Promise.all(data.dates[0].games.map(async (game) => {
                 const gameBox = document.createElement("div");
                 gameBox.classList.add("game-box");
 
@@ -58,17 +64,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const homeTeamId = game.teams.home.team.id;
                 const awayTeamId = game.teams.away.team.id;
 
-                // Fetch game details to get abbreviations
-                const gameDetails = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${game.gamePk}/feed/live`)
-                .then(response => response.json())
-                .catch(error => {
-                    console.error("Error fetching game details:", error);
-                    return null;
-                });
-
-                // Get abbreviations from the game details
-                const homeAbbr = gameDetails?.gameData?.teams?.home?.abbreviation || getDefaultAbbr(homeTeam);
-                const awayAbbr = gameDetails?.gameData?.teams?.away?.abbreviation || getDefaultAbbr(awayTeam);
+                const homeAbbr = await fetchAbbreviation(homeTeamId);
+                const awayAbbr = await fetchAbbreviation(awayTeamId);
 
                 if (status === "Final" || status === "Game Over" || status === "Completed Early") {
                     status = "FINAL";
@@ -96,8 +93,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                     window.location.href = `popup.html?gamePk=${game.gamePk}`;
                 });
 
-                gamesContainer.appendChild(gameBox);
+                return { gameBox, gameStatus: status, gameDate: new Date(game.gameDate) };
+            }));
+
+            // Sort games: Live on top, then Scheduled by time, then Final
+            gameBoxes.sort((a, b) => {
+                if (a.gameStatus === "In Progress" && b.gameStatus !== "In Progress") return -1;
+                if (b.gameStatus === "In Progress" && a.gameStatus !== "In Progress") return 1;
+                if (a.gameStatus === "FINAL" && b.gameStatus !== "FINAL") return 1;
+                if (b.gameStatus === "FINAL" && a.gameStatus !== "FINAL") return -1;
+                return a.gameDate - b.gameDate;
             });
+
+            gameBoxes.forEach(({ gameBox }) => gamesContainer.appendChild(gameBox));
         } catch (error) {
             console.error("Error fetching game data:", error);
             gamesContainer.innerHTML = "<p>Failed to load games.</p>";
@@ -115,10 +123,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 function onGameClick(gameId) {
     // Save the current view state
     chrome.storage.local.set({
-      'currentView': 'game',
-      'currentGameId': gameId
+        'currentView': 'game',
+        'currentGameId': gameId
     }, function() {
-      // Navigate to the game view
-      window.location.href = 'popup.html';
+        // Navigate to the game view
+        window.location.href = 'popup.html';
     });
 }
