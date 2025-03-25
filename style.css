@@ -2,11 +2,12 @@
 
 body {
     font-family: "Afacad Flux", Arial, sans-serif;
-    padding: 5px;
-    overflow-y: auto;
     margin: 0;
-    transform: scale(0.8); /* 80% of the original size */
+    transform: scale(0.6); /* 80% of the original size */
     transform-origin: top left; /* Ensures it scales from the top left corner */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 #scorebug {
