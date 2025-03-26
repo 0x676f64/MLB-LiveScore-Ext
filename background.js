@@ -14,3 +14,24 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       return true;
   }
 });
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'fetchStandings') {
+        fetch(request.url)
+            .then(response => response.json())
+            .then(data => {
+                sendResponse({ data: data });
+            })
+            .catch(error => {
+                sendResponse({ error: error.message });
+            });
+        return true; // Indicates we wish to send a response asynchronously
+    }
+});
+
+// In background.js
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "navigate") {
+        chrome.tabs.create({ url: request.url });
+    }
+});

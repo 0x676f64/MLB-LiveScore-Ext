@@ -4,6 +4,12 @@
   "version": "1.0",
   "description": "Displays live MLB scores and stats in a small overlay.",
   "permissions": ["storage", "tabs", "activeTab", "scripting"],
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["navigation.js"]
+    }
+  ],
   "host_permissions": ["https://statsapi.mlb.com/api/v1.1/game/*"],
   "background": {
     "service_worker": "background.js"

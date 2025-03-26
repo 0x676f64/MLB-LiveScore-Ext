@@ -55,6 +55,7 @@ body {
 }
 .game-box h3, p {
     color: #0B0F13;
+    font-size: 20px;
 }
 
 img {
