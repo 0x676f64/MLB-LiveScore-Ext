@@ -9,45 +9,50 @@
 <script src="navigation.js" defer></script>
 <style>
     body {
-        width: 340px;
-        height: 445px;
-        transform: scale(0.8); /* 80% of the original size */
-        transform-origin: top left; /* Ensures it scales from the top left corner */
-        overflow: hidden;
+        width: 315px;
+    }
+
+    .header-container img {
+        margin-left: 9rem;
+        width: 250px;
+        height: 90px;
+        margin-top: 15px;
+        margin-bottom: 15px;
     }
     .nav-container {
-            display: flex;
-            justify-content: space-around;
-            background-color: #e5decf;
-            padding: 10px;
-            position: relative;
-            align-items: center;
-            height: 50px;
-            bottom: 0;
-            width: 100%;
-            align-items: center;
-            margin-right: auto;
-            margin-left: auto;
-            margin-top: 10px;
-            
-        }
-        .nav-container button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
-        }
-        .nav-container svg {
-            height: 28px;
-            width: 28px;
-            fill:rgb(59, 59, 59);
-            transition: fill 0.4s; 
-        }
+        display: flex;
+        justify-content: space-around;
+        background-color: #e5decf;
+        position: relative;
+        align-items: center;
+        padding: 10px;
+        height: 50px;
+        bottom: 0;
+        width: 170%;
+        align-items: center;
+        margin-right: auto;
+        margin-left: auto;
+        margin-top: 10px;
+        
+    }
+    .nav-container button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 10px;
+    }
+    .nav-container svg {
+        height: 28px;
+        width: 28px;
+        fill:rgb(59, 59, 59);
+        transition: fill 0.4s; 
+    }
 
-        .nav-container svg:hover {
-            fill: #D7827E;
-            background-color: #e5decf;
-        }
+    .nav-container svg:hover {
+        fill: #D7827E;
+        background-color: #e5decf;
+    }
+
 </style>
 <body>
     <p>Loading stats ....</p>
