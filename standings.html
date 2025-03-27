@@ -9,12 +9,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="standings.js" defer></script>
     <script src="navigation.js" defer></script>
+    <script>
+        function adjustPopupHeight() {
+        const popupHeight = Math.min(document.body.scrollHeight, 900); // Max allowed is 600px
+        document.body.style.height = `${popupHeight}px`;
+        }
+
+        document.addEventListener('DOMContentLoaded', adjustPopupHeight);
+        window.addEventListener('resize', adjustPopupHeight); // Recalculate on resize
+
+    </script>
         <style>
-            html {
+        html {
             width: 100%;
-            max-width: 300px; /* Ensure HTML element doesn't exceed 180px */
+            max-width: 300px;
             box-sizing: border-box;
-            height: auto;
             scrollbar-width: none;
         }
 
@@ -23,7 +32,6 @@
             box-sizing: border-box;
             overflow-x: hidden;
             overflow-y: hidden;
-            height: 800px;
             overflow: hidden;
             scrollbar-width: none;
             height: 100dvh;
@@ -38,7 +46,8 @@
         }
 
         #standings-container {
-            padding: 10px;
+            padding: 15px;
+            overflow: visible;
         }
 
         #tabs-container {
@@ -75,6 +84,7 @@
             text-align: center;
             margin-bottom: 10px;
             color: #333;
+            font-size: 13px;
         }
 
         .team-row {
@@ -85,12 +95,12 @@
             border-bottom: 1px solid #eee;
             align-items: center;
             width: 100%;
-            font-size: 18px;
+            font-size: 15px;
         }
 
         .team-row:first-of-type {
             font-weight: bold;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .team-row:last-child {
@@ -131,7 +141,9 @@
             fill: #D7827E;
             background-color: #e5decf;
         }
+
         </style>
+        
     </head>
     <body>
        <div id="tabs-container">

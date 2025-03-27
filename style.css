@@ -7,7 +7,7 @@ body {
     transform-origin: top left; /* Ensures it scales from the top left corner */
     display: flex;
     flex-direction: column;
-    height: 100vh;
+  
 }
 
 #scorebug {
