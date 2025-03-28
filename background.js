@@ -35,3 +35,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.tabs.create({ url: request.url });
     }
 });
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "resizePopup" && sender.tab) {
+      chrome.windows.update(sender.tab.windowId, { height: message.height + 20 });
+    }
+  });
+  

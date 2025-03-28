@@ -20,21 +20,23 @@
 
     </script>
         <style>
-        html {
+            
+            html {
             width: 100%;
             max-width: 300px;
             box-sizing: border-box;
             scrollbar-width: none;
+            height: 0;
+            min-height: 0;
         }
 
         body {
             width: 500px;
             box-sizing: border-box;
-            overflow-x: hidden;
-            overflow-y: hidden;
-            overflow: hidden;
             scrollbar-width: none;
-            height: 100dvh;
+            height: 0;
+            min-height: 0;
+            
         }
 
         .header-container img {
@@ -48,6 +50,7 @@
         #standings-container {
             padding: 15px;
             overflow: visible;
+
         }
 
         #tabs-container {
@@ -61,7 +64,7 @@
             padding: 10px 20px;
             margin: 0 10px;
             background-color: #e5decf;
-            border: 1px solid #D7827E;
+            border: px solid #D7827E;
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -74,7 +77,7 @@
 
         .division-container {
             margin-bottom: 20px;
-            border: 1px solid #D7827E;
+            border: 2px solid #D7827E;
             padding: 20px;
             background-color: #e5decf;
             align-items: center;
@@ -83,8 +86,23 @@
         .division-container h2 {
             text-align: center;
             margin-bottom: 10px;
-            color: #333;
-            font-size: 13px;
+            color: #D7827E;
+            font-size: 15px;
+        }
+
+        .wildcard-container {
+            margin-bottom: 20px;
+            border: 2px solid #D7827E;
+            padding: 20px;
+            background-color: #e5decf;
+            align-items: center;
+        }
+
+        .wildcard-container h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #D7827E;
+            font-size: 15px;
         }
 
         .team-row {
@@ -149,6 +167,7 @@
        <div id="tabs-container">
   <button id="al-tab">American League</button>
   <button id="nl-tab">National League</button>
+  <button id="wildcard-tab">Wild Card</button>
 </div>
 <div id="standings-container">
   <!-- Standings will display here -->
