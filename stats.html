@@ -3,27 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>MLB Team Stats</title>
 </head>
  <link rel="stylesheet" href="style.css">
 <script src="navigation.js" defer></script>
+
 <style>
+    html {
+      width: 100%;
+      max-width: 300px;
+      box-sizing: border-box;
+      scrollbar-width: none;
+      height: 0;
+      min-height: 0;
+    }
+
     body {
-        width: 315px;
-        height: 100dvh;
+      font-family: "Rubik", sans-serif;
+      text-align: center;
+      width: 500px;
+      box-sizing: border-box;
     }
 
-    p {
-        padding: 20px;
+    h1 {
+      color: #333;
+      font-weight: 400;
+      font-size: 16px;
     }
 
+   /* Header image styling */
     .header-container img {
-        margin-left: 9rem;
-        width: 250px;
-        height: 90px;
-        margin-top: 15px;
-        margin-bottom: 15px;
+    width: 250px;
+    height: 90px;
+    margin-top: 15px;
+    margin-bottom: 15px;
     }
+
+    /* Grid layout for team logos */
+    #team-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    justify-content: center;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 30px;
+    }
+
+    /* Team logos only */
+    .team-logo {
+    width: 70px;
+    height: 70px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    }
+
+    .team-logo:hover {
+    transform: scale(1.2);
+    }
+
     .nav-container {
         display: flex;
         justify-content: space-around;
@@ -33,7 +71,7 @@
         padding: 10px;
         height: 50px;
         bottom: 0;
-        width: 170%;
+        width: 100%;
         align-items: center;
         margin-right: auto;
         margin-left: auto;
@@ -41,12 +79,14 @@
         overflow: visible;
         
     }
+
     .nav-container button {
         background: none;
         border: none;
         cursor: pointer;
         padding: 10px;
     }
+
     .nav-container svg {
         height: 28px;
         width: 28px;
@@ -61,17 +101,115 @@
 
 </style>
 <body>
-    <p>Loading stats ....</p>
+    <div class="header-container">
+        <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
+    </div>
+    <h1>Select a Team to View Stats</h1>
+
+    <section id="team-grid">
+        <a href="stats-dashboard.html?teamName=Yankees&logo=https://a.espncdn.com/i/teamlogos/mlb/500/nyy.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/nyy.png" alt="Yankees" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Red Sox&logo=https://a.espncdn.com/i/teamlogos/mlb/500/bos.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/bos.png" alt="Red Sox" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Blue Jays&logo=https://a.espncdn.com/i/teamlogos/mlb/500/tor.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/tor.png" alt="Blue Jays" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Rays&logo=https://a.espncdn.com/i/teamlogos/mlb/500/tb.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/tb.png" alt="Rays" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Orioles&logo=https://a.espncdn.com/i/teamlogos/mlb/500/bal.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/bal.png" alt="Orioles" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Guardians&logo=https://a.espncdn.com/i/teamlogos/mlb/500/cle.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/cle.png" alt="Guardians" />
+          </a>
+          <a href="stats-dashboard.html?teamName=White Sox&logo=https://a.espncdn.com/i/teamlogos/mlb/500/cws.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/cws.png" alt="White Sox" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Tigers&logo=https://a.espncdn.com/i/teamlogos/mlb/500/det.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/det.png" alt="Tigers" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Royals&logo=https://a.espncdn.com/i/teamlogos/mlb/500/kc.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/kc.png" alt="Royals" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Twins&logo=https://a.espncdn.com/i/teamlogos/mlb/500/min.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/min.png" alt="Twins" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Astros&logo=https://a.espncdn.com/i/teamlogos/mlb/500/hou.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/hou.png" alt="Astros" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Angels&logo=https://a.espncdn.com/i/teamlogos/mlb/500/laa.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/laa.png" alt="Angels" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Athletics&logo=https://a.espncdn.com/i/teamlogos/mlb/500/oak.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/oak.png" alt="Athletics" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Mariners&logo=https://a.espncdn.com/i/teamlogos/mlb/500/sea.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/sea.png" alt="Mariners" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Rangers&logo=https://a.espncdn.com/i/teamlogos/mlb/500/tex.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/tex.png" alt="Rangers" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Phillies&logo=https://a.espncdn.com/i/teamlogos/mlb/500/phi.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/phi.png" alt="Phillies" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Mets&logo=https://a.espncdn.com/i/teamlogos/mlb/500/nym.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/nym.png" alt="Mets" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Braves&logo=https://a.espncdn.com/i/teamlogos/mlb/500/atl.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/atl.png" alt="Braves" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Marlins&logo=https://a.espncdn.com/i/teamlogos/mlb/500/mia.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/mia.png" alt="Marlins" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Nationals&logo=https://a.espncdn.com/i/teamlogos/mlb/500/was.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/was.png" alt="Nationals" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Cubs&logo=https://a.espncdn.com/i/teamlogos/mlb/500/chc.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/chc.png" alt="Cubs" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Cardinals&logo=https://a.espncdn.com/i/teamlogos/mlb/500/stl.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/stl.png" alt="Cardinals" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Brewers&logo=https://a.espncdn.com/i/teamlogos/mlb/500/mil.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/mil.png" alt="Brewers" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Pirates&logo=https://a.espncdn.com/i/teamlogos/mlb/500/pit.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/pit.png" alt="Pirates" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Reds&logo=https://a.espncdn.com/i/teamlogos/mlb/500/cin.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/cin.png" alt="Reds" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Dodgers&logo=https://a.espncdn.com/i/teamlogos/mlb/500/lad.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/lad.png" alt="Dodgers" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Diamondbacks&logo=https://a.espncdn.com/i/teamlogos/mlb/500/ari.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/ari.png" alt="Diamondbacks" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Padres&logo=https://a.espncdn.com/i/teamlogos/mlb/500/sd.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/sd.png" alt="Padres" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Rockies&logo=https://a.espncdn.com/i/teamlogos/mlb/500/col.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/col.png" alt="Rockies" />
+          </a>
+          <a href="stats-dashboard.html?teamName=Giants&logo=https://a.espncdn.com/i/teamlogos/mlb/500/sf.png">
+            <img class="team-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/sf.png" alt="Giants" />
+          </a>
+      </section>
+
     <div class="nav-container">
         <button id="home-btn" title="Home">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M224-288q45-35 70.5-85T320-480q0-57-25.5-107T224-672q-31 42-47.5 91T160-480q0 52 16.5 101t47.5 91Zm256 128q55 0 106.5-17.5T680-230q-57-46-88.5-111.5T560-480q0-73 31.5-138.5T680-730q-42-35-93.5-52.5T480-800q-55 0-106.5 17.5T280-730q57 46 88.5 111.5T400-480q0 73-31.5 138.5T280-230q42 35 93.5 52.5T480-160Zm256-128q31-42 47.5-91T800-480q0-52-16.5-101T736-672q-45 35-70.5 85T640-480q0 57 25.5 107t70.5 85ZM480-480Zm0 400q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M224-288q45-35 70.5-85T320-480q0-57-25.5-107T224-672q-31 42-47.5 91T160-480q0 52 16.5 101t47.5 91Zm256 128q55 0 106.5-17.5T680-230q-57-46-88.5-111.5T560-480q0-73 31.5-138.5T680-730q-42-35-93.5-52.5T480-800q-55 0-106.5 17.5T280-730q57 46 88.5 111.5T400-480q0 73-31.5 138.5T280-230q42 35 93.5 52.5T480-160Zm256-128q31-42 47.5-91T800-480q0-52-16.5-101T736-672q-45 35-70.5 85T640-480q0 57 25.5 107t70.5 85ZM480-480Zm0 400q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z"/></svg>
         </button>
         <button id="standings-btn" title="Standings">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>
         </button>
         <button id="stats-btn" title="Stats">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M120-120v-80l80-80v160h-80Zm160 0v-240l80-80v320h-80Zm160 0v-320l80 81v239h-80Zm160 0v-239l80-80v319h-80Zm160 0v-400l80-80v480h-80ZM120-327v-113l280-280 160 160 280-280v113L560-447 400-607 120-327Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80l80-80v160h-80Zm160 0v-240l80-80v320h-80Zm160 0v-320l80 81v239h-80Zm160 0v-239l80-80v319h-80Zm160 0v-400l80-80v480h-80ZM120-327v-113l280-280 160 160 280-280v113L560-447 400-607 120-327Z"/></svg>
         </button>
     </div>
+    <script src="script.js"></script>
 </body>
 </html>
