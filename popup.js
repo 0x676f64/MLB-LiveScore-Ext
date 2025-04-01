@@ -1,68 +1,75 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const popupContainer = document.createElement("div");
     popupContainer.id = "popup-container";
-
+  
     const gameInfo = document.createElement("div");
     gameInfo.id = "game-info";
-
+  
     const awayTeamContainer = document.createElement("div");
     awayTeamContainer.classList.add("team-container");
-
+  
     // Team elements
     const awayLogo = document.createElement("img");
     awayLogo.id = "away-logo";
     awayLogo.classList.add("team-logo");
-
+  
     const awayRecord = document.createElement("p");
     awayRecord.id = "away-record";
     awayRecord.classList.add("team-record");
-
+  
     // Add logo and record to away team container
     awayTeamContainer.appendChild(awayLogo);
     awayTeamContainer.appendChild(awayRecord);
-
+  
     // Create game status container for middle section
     const gameStatusContainer = document.createElement("div");
     gameStatusContainer.classList.add("game-status");
-
+  
     const awayScore = document.createElement("p");
     awayScore.id = "away-score";
     awayScore.classList.add("team-score");
-
+  
     const inningInfo = document.createElement("p");
     inningInfo.id = "inning-info";
     inningInfo.classList.add("inning");
-
+  
+    // Create stadium info element - new addition
+    const stadiumInfo = document.createElement("p");
+    stadiumInfo.id = "stadium-info";
+    stadiumInfo.classList.add("stadium");
+    // Example: stadiumInfo.textContent = "Yankee Stadium • Bronx, NY";
+  
     const homeScore = document.createElement("p");
     homeScore.id = "home-score";
     homeScore.classList.add("team-score");
-
-    // Add scores and inning to game status container
+  
+    // Add scores, inning, and stadium info to game status container
     gameStatusContainer.appendChild(awayScore);
     gameStatusContainer.appendChild(inningInfo);
+    gameStatusContainer.appendChild(stadiumInfo); // Add stadium info after inning
     gameStatusContainer.appendChild(homeScore);
-
+  
     // Create home team container
     const homeTeamContainer = document.createElement("div");
     homeTeamContainer.classList.add("team-container");
-
+  
     const homeLogo = document.createElement("img");
     homeLogo.id = "home-logo";
     homeLogo.classList.add("team-logo");
-
+  
     const homeRecord = document.createElement("p");
     homeRecord.id = "home-record";
     homeRecord.classList.add("team-record");
-
+  
     // Add logo and record to home team container
     homeTeamContainer.appendChild(homeLogo);
     homeTeamContainer.appendChild(homeRecord);
-
+  
     gameInfo.appendChild(awayTeamContainer);
     gameInfo.appendChild(gameStatusContainer);
     gameInfo.appendChild(homeTeamContainer);
-
-popupContainer.appendChild(gameInfo);
+  
+    popupContainer.appendChild(gameInfo);
 
     // Create player info containers
     const awayPlayerInfo = document.createElement("div");
@@ -227,16 +234,16 @@ popupContainer.appendChild(gameInfo);
                 awayLogo.src = `https://www.mlbstatic.com/team-logos/${awayTeam.id}.svg`;
                 awayLogo.alt = awayTeam.name;
                 awayScore.textContent = awayScoreText;
-                awayRecord.textContent = `${data.gameData.teams.away.record.wins}-${data.gameData.teams.away.record.losses}`;  // ✅ Correct way
+                awayRecord.textContent = `${data.gameData.teams.away.record.wins}-${data.gameData.teams.away.record.losses}`;
     
-                inningInfo.textContent = inningText;  // Ensure inning is updated here
+                inningInfo.textContent = inningText;
                 inningInfo.style = inningBoxStyle;
     
                 homeScore.textContent = homeScoreText;
                 homeLogo.src = `https://www.mlbstatic.com/team-logos/${homeTeam.id}.svg`;
                 homeLogo.alt = homeTeam.name;
-                homeRecord.textContent = `${data.gameData.teams.home.record.wins}-${data.gameData.teams.home.record.losses}`;  // ✅ Correct way
-    
+                homeRecord.textContent = `${data.gameData.teams.home.record.wins}-${data.gameData.teams.home.record.losses}`;
+                
                 // Display current players (hitter/pitcher)
                 updatePlayerInfo(data);
             } else {
