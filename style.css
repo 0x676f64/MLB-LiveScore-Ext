@@ -53,10 +53,6 @@ body {
     box-shadow: rgba(0, 0, 0, 1) 0px 0px 10px 1px;
     transition: transform .2s;
 }
-.game-box h3, p {
-    color: #0B0F13;
-    font-size: 20px;
-}
 
 img {
     width: 60px;
@@ -101,5 +97,13 @@ img {
     font-size: 14px;
     cursor: pointer;
     border-radius: 5px;
+  }
+
+  .top-performers-title {
+    font-size: 20px;
+  }
+
+  .player-info {
+    font-size: 14px;
   }
   
