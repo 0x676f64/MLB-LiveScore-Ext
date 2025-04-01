@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.body.prepend(headerContainer);
 
     const today = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
-    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}`;
+    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1`;
 
     function formatGameTime(gameDate) {
         const dateTime = new Date(gameDate);

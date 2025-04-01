@@ -3,48 +3,116 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Get team info from URL
   const urlParams = new URLSearchParams(window.location.search);
-  const teamName = urlParams.get('team');
+  const teamShortName = urlParams.get('teamName');
   const teamLogo = urlParams.get('logo');
   
-  // Add team city parameter to your URL or parse from teamName
-  const teamCity = urlParams.get('city'); // New parameter
+  var teamNames = {
+    "Arizona Diamondbacks": "ARI",
+    "Atlanta Braves": "ATL",
+    "Baltimore Orioles": "BAL",
+    "Boston Red Sox": "BOS",
+    "Chicago White Sox": "CWS",
+    "Chicago Cubs": "CHC",
+    "Cincinnati Reds": "CIN",
+    "Cleveland Guardians": "CLE",
+    "Colorado Rockies": "COL",
+    "Detroit Tigers": "DET",
+    "Houston Astros": "HOU",
+    "Kansas City Royals": "KC",
+    "Los Angeles Angels": "LAA",
+    "Los Angeles Dodgers": "LAD",
+    "Miami Marlins": "MIA",
+    "Milwaukee Brewers": "MIL",
+    "Minnesota Twins": "MIN",
+    "New York Yankees": "NYY",
+    "New York Mets": "NYM",
+    "Oakland Athletics": "OAK",
+    "Philadelphia Phillies": "PHI",
+    "Pittsburgh Pirates": "PIT",
+    "San Diego Padres": "SD",
+    "San Francisco Giants": "SF",
+    "Seattle Mariners": "SEA",
+    "St. Louis Cardinals": "STL",
+    "Tampa Bay Rays": "TB",
+    "Texas Rangers": "TEX",
+    "Toronto Blue Jays": "TOR",
+    "Washington Nationals": "WSH"
+  };
 
-  // Create and add team logo
-  const headerLogo = document.createElement('img');
-  headerLogo.src = teamLogo;
-  headerLogo.alt = `${teamName} Logo`;
-  headerLogo.style.width = '150px';
-  headerLogo.style.height = 'auto';
-  document.body.prepend(headerLogo);
+  const fullTeamName = Object.keys(teamNames).find(name => name.includes(teamShortName));
 
-  // Add header section
-  const headerContainer = document.createElement("div");
-  headerContainer.classList.add("header-container");
-  headerContainer.innerHTML = `
-      <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
-  `;
-  document.body.prepend(headerContainer);
+  if (!fullTeamName) {
+    alert('Invalid team!');
+    return;
+  }
 
-  // Create team header with city and name
-  const headerTitle = document.createElement('div');
-  headerTitle.classList.add('team-header');
+  // Fix for cities with multiple words
+  let cityParts = [];
+  let teamNameParts = [];
   
-  if (teamCity) {
-    // If we have both city and team name, display them with proper styling
-    headerTitle.innerHTML = `
-      <h1>
-        <span class="team-city">${teamCity}</span>
-        <span class="team-name">${teamName}</span>
-      </h1>
-    `;
+  // Special cases for teams with multi-word cities
+  if (fullTeamName.startsWith("New York")) {
+    cityParts = ["New York"];
+    teamNameParts = fullTeamName.replace("New York ", "").split(' ');
+  } else if (fullTeamName.startsWith("San Francisco")) {
+    cityParts = ["San Francisco"];
+    teamNameParts = fullTeamName.replace("San Francisco ", "").split(' ');
+  } else if (fullTeamName.startsWith("San Diego")) {
+    cityParts = ["San Diego"];
+    teamNameParts = fullTeamName.replace("San Diego ", "").split(' ');
+  } else if (fullTeamName.startsWith("St. Louis")) {
+    cityParts = ["St. Louis"];
+    teamNameParts = fullTeamName.replace("St. Louis ", "").split(' ');
+  } else if (fullTeamName.startsWith("Los Angeles")) {
+    cityParts = ["Los Angeles"];
+    teamNameParts = fullTeamName.replace("Los Angeles ", "").split(' ');
+  } else if (fullTeamName.startsWith("Kansas City")) {
+    cityParts = ["Kansas City"];
+    teamNameParts = fullTeamName.replace("Kansas City ", "").split(' ');
+  } else if (fullTeamName.startsWith("Tampa Bay")) {
+    cityParts = ["Tampa Bay"];
+    teamNameParts = fullTeamName.replace("Tampa Bay ", "").split(' ');
   } else {
-    // Fallback to just team name
-    headerTitle.innerHTML = `<h1>${teamName}</h1>`;
+    // Default case for cities with one word
+    const allParts = fullTeamName.split(' ');
+    cityParts = [allParts[0]];
+    teamNameParts = allParts.slice(1);
   }
   
-  headerContainer.appendChild(headerTitle);
+  const city = cityParts.join(' ');
+  const teamName = teamNameParts.join(' ');
 
-  // Placeholder for future content
-  const content = document.createElement('p');
-  content.textContent = 'Select a tab to view team stats.';
+  // Create all elements first
+  // 1. statsheader-container
+  const statsheaderContainer = document.createElement("div");
+  statsheaderContainer.classList.add("statsheader-container");
+  statsheaderContainer.innerHTML = `
+      <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
+  `;
+  
+  // 2 & 3. team-city and team-name elements
+  const cityElement = document.createElement('div');
+  cityElement.classList.add('team-city');
+  cityElement.textContent = city;
+  
+  const nameElement = document.createElement('div');
+  nameElement.classList.add('team-name');
+  nameElement.textContent = teamName;
+  
+  // 4. logo image
+  const headerLogo = document.createElement('img');
+  headerLogo.src = teamLogo;
+  headerLogo.alt = `${fullTeamName} Logo`;
+  headerLogo.style.width = '150px';
+  headerLogo.style.height = 'auto';
+  
+  // 5. nav-container (adding a placeholder since it was mentioned in your order)
+  const navContainer = document.createElement('div');
+  navContainer.classList.add('nav-container');
+  
+  // Now add everything to the document in the correct order
+  document.body.prepend(statsheaderContainer); // 1
+  document.body.insertBefore(nameElement, statsheaderContainer.nextSibling); // 3
+  document.body.insertBefore(cityElement, nameElement); // 2
+  document.body.insertBefore(headerLogo, nameElement.nextSibling); // 4
 });
