@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const headerLogo = document.createElement('img');
   headerLogo.src = teamLogo;
   headerLogo.alt = `${fullTeamName} Logo`;
-  headerLogo.style.width = '150px';
+  headerLogo.style.width = '130px';
   headerLogo.style.height = 'auto';
   
   // 5. nav-container (adding a placeholder since it was mentioned in your order)
@@ -121,28 +121,29 @@ document.addEventListener('DOMContentLoaded', function() {
   statsContainer.classList.add('stats-container');
   statsContainer.style.width = '80%';
   statsContainer.style.margin = '20px auto';
-  statsContainer.style.border = '1px solid #ddd';
+  statsContainer.style.border = '3px solid #000';
   statsContainer.style.borderRadius = '8px';
   statsContainer.style.overflow = 'hidden';
   statsContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+  statsContainer.style.padding = '10px';
+  statsContainer.style.backgroundColor = '#E5DECF';
+  statsContainer.style.fontFamily = 'Roboto Condensed';
   
   // Create tabs container
   const tabsContainer = document.createElement('div');
   tabsContainer.classList.add('tabs-container');
   tabsContainer.style.display = 'flex';
-  tabsContainer.style.borderBottom = '1px solid #ddd';
   tabsContainer.style.justifyContent = 'center'; // Center the tabs
   
   // Create batting tab
   const battingTab = document.createElement('div');
-  battingTab.classList.add('tab');
-  battingTab.classList.add('active');
+  battingTab.classList.add('tab', 'active');
   battingTab.textContent = 'BATTING';
   battingTab.style.padding = '15px 20px';
   battingTab.style.fontWeight = 'bold';
   battingTab.style.cursor = 'pointer';
-  battingTab.style.backgroundColor = '#f8f8f8';
-  battingTab.style.borderBottom = '3px solid #057AFF';
+  battingTab.style.backgroundColor = '#E5DECF';
+  battingTab.style.transition = 'all 0.3s ease'; 
   
   // Create pitching tab
   const pitchingTab = document.createElement('div');
@@ -151,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
   pitchingTab.style.padding = '15px 20px';
   pitchingTab.style.fontWeight = 'bold';
   pitchingTab.style.cursor = 'pointer';
+  battingTab.style.backgroundColor = 'transparent';
   
   // Add tabs to container
   tabsContainer.appendChild(battingTab);
@@ -291,38 +293,30 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentStatsDisplay = createStatsDisplay(battingData);
   contentContainer.appendChild(currentStatsDisplay);
   
-  // Add event listeners to tabs
   battingTab.addEventListener('click', function() {
-    // Update active tab styles
     battingTab.classList.add('active');
-    battingTab.style.backgroundColor = '#f8f8f8';
-    battingTab.style.borderBottom = '3px solid #057AFF';
-    
+    battingTab.style.backgroundColor = '#f8f8f8'; // Active color
+  
     pitchingTab.classList.remove('active');
-    pitchingTab.style.backgroundColor = '';
-    pitchingTab.style.borderBottom = '';
-    
-    // Update content
+    pitchingTab.style.backgroundColor = 'transparent';
+  
     contentContainer.innerHTML = '';
     currentStatsDisplay = createStatsDisplay(battingData);
     contentContainer.appendChild(currentStatsDisplay);
   });
   
   pitchingTab.addEventListener('click', function() {
-    // Update active tab styles
     pitchingTab.classList.add('active');
-    pitchingTab.style.backgroundColor = '#f8f8f8';
-    pitchingTab.style.borderBottom = '3px solid #057AFF';
-    
+    pitchingTab.style.backgroundColor = '#f8f8f8'; // Active color
+  
     battingTab.classList.remove('active');
-    battingTab.style.backgroundColor = '';
-    battingTab.style.borderBottom = '';
-    
-    // Update content
+    battingTab.style.backgroundColor = 'transparent';
+  
     contentContainer.innerHTML = '';
     currentStatsDisplay = createStatsDisplay(pitchingData);
     contentContainer.appendChild(currentStatsDisplay);
   });
+  
   
   // Assemble the stats container
   statsContainer.appendChild(tabsContainer);
