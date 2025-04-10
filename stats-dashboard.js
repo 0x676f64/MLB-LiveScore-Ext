@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const teamShortName = urlParams.get('teamName');
   const teamLogo = urlParams.get('logo');
   
+  // Team names dictionary
   var teamNames = {
     "Arizona Diamondbacks": "ARI",
     "Atlanta Braves": "ATL",
@@ -37,6 +38,40 @@ document.addEventListener('DOMContentLoaded', function() {
     "Texas Rangers": "TEX",
     "Toronto Blue Jays": "TOR",
     "Washington Nationals": "WSH"
+  };
+
+  // Map of team IDs to use with the API
+  const teamIds = {
+    "Arizona Diamondbacks": 109,
+    "Atlanta Braves": 144,
+    "Baltimore Orioles": 110,
+    "Boston Red Sox": 111,
+    "Chicago White Sox": 145,
+    "Chicago Cubs": 112,
+    "Cincinnati Reds": 113,
+    "Cleveland Guardians": 114,
+    "Colorado Rockies": 115,
+    "Detroit Tigers": 116,
+    "Houston Astros": 117,
+    "Kansas City Royals": 118,
+    "Los Angeles Angels": 108,
+    "Los Angeles Dodgers": 119,
+    "Miami Marlins": 146,
+    "Milwaukee Brewers": 158,
+    "Minnesota Twins": 142,
+    "New York Yankees": 147,
+    "New York Mets": 121,
+    "Oakland Athletics": 133,
+    "Philadelphia Phillies": 143,
+    "Pittsburgh Pirates": 134,
+    "San Diego Padres": 135,
+    "San Francisco Giants": 137,
+    "Seattle Mariners": 136,
+    "St. Louis Cardinals": 138,
+    "Tampa Bay Rays": 139,
+    "Texas Rangers": 140,
+    "Toronto Blue Jays": 141,
+    "Washington Nationals": 120
   };
 
   const fullTeamName = Object.keys(teamNames).find(name => name.includes(teamShortName));
@@ -81,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const city = cityParts.join(' ');
   const teamName = teamNameParts.join(' ');
+  const teamId = teamIds[fullTeamName];
 
   // Create all elements first
   // 1. statsheader-container
@@ -152,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
   pitchingTab.style.padding = '15px 20px';
   pitchingTab.style.fontWeight = 'bold';
   pitchingTab.style.cursor = 'pointer';
-  battingTab.style.backgroundColor = 'transparent';
+  pitchingTab.style.backgroundColor = 'transparent';
   
   // Add tabs to container
   tabsContainer.appendChild(battingTab);
@@ -162,38 +198,175 @@ document.addEventListener('DOMContentLoaded', function() {
   const contentContainer = document.createElement('div');
   contentContainer.classList.add('content-container');
   contentContainer.style.padding = '20px 10px'; // Reduced horizontal padding
-  
-  // Sample pitching data (placeholder values)
-  const pitchingData = {
-    'xBA': { value: '.249', percentile: 68 },
-    'xSLG': { value: '.415', percentile: 72 },
-    'Hard Hit%': { value: '40.2%', percentile: 65 },
-    'Exit Velo': { value: '89.3', percentile: 63 },
-    'Barrel%': { value: '8.5%', percentile: 70 },
-    'xwOBA': { value: '.320', percentile: 75 },
-    'GB%': { value: '43.8%', percentile: 55 },
-    'Chase%': { value: '31.2%', percentile: 80 },
-    'Whiff%': { value: '25.7%', percentile: 78 },
-    'Launch Angle Sweet Spot%': { value: '32.6%', percentile: 62 }
-  };
-  
-  // Sample batting data (placeholder values)
-  const battingData = {
-    'AVG': { value: '.272', percentile: 82 },
-    'OBP': { value: '.342', percentile: 78 },
-    'SLG': { value: '.478', percentile: 85 },
-    'OPS': { value: '.820', percentile: 83 },
-    'wRC+': { value: '125', percentile: 87 },
-    'BB%': { value: '9.4%', percentile: 66 },
-    'K%': { value: '21.3%', percentile: 60 },
-    'ISO': { value: '.206', percentile: 79 },
-    'BABIP': { value: '.305', percentile: 63 },
-    'wOBA': { value: '.355', percentile: 82 }
-  };
 
+  // Loading indicator
+  const loadingIndicator = document.createElement('div');
+  loadingIndicator.textContent = 'Loading team stats...';
+  loadingIndicator.style.textAlign = 'center';
+  loadingIndicator.style.padding = '20px';
+  loadingIndicator.style.fontWeight = 'bold';
+  contentContainer.appendChild(loadingIndicator);
+  
+  // Function to get color based on percentile (blue-gray-red gradient)
+  function getPercentileColor(percentile) {
+    // Convert percentile to a value between 0 and 1
+    const value = percentile / 100;
+    
+    // Calculate RGB values for a blue-gray-red gradient
+    let r, g, b;
+    
+    if (value <= 0.5) {
+      // Blue (0%) to Gray (50%)
+      // As value increases from 0 to 0.5, blue decreases and red/green increase
+      const factor = value * 2; // Scale to 0-1 range
+      r = Math.round(128 * factor);
+      g = Math.round(128 * factor);
+      b = Math.round(255 - (127 * factor));
+    } else {
+      // Gray (50%) to Red (100%)
+      // As value increases from 0.5 to 1, green/blue decrease and red increases
+      const factor = (value - 0.5) * 2; // Scale to 0-1 range
+      r = Math.round(128 + (127 * factor));
+      g = Math.round(128 - (128 * factor));
+      b = Math.round(128 - (128 * factor));
+    }
+    
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+  
+  // Function to fetch team stats
+  async function fetchTeamStats() {
+    try {
+      // Fetch hitting stats for all teams
+      const hittingResponse = await fetch('https://statsapi.mlb.com/api/v1/teams/stats?season=2025&group=hitting&stats=season&sportId=1');
+      const hittingData = await hittingResponse.json();
+      
+      // Fetch pitching stats for all teams
+      const pitchingResponse = await fetch('https://statsapi.mlb.com/api/v1/teams/stats?season=2025&group=pitching&stats=season&sportId=1');
+      const pitchingData = await pitchingResponse.json();
+      
+      return { hitting: hittingData, pitching: pitchingData };
+    } catch (error) {
+      console.error('Error fetching team stats:', error);
+      return null;
+    }
+  }
+  
+  // Function to process stats and calculate percentiles
+  function processStats(allStats, statGroup) {
+    // Check if we have valid data
+    if (!allStats || !allStats.stats) {
+      console.error('Invalid stats data:', allStats);
+      return null;
+    }
+    
+    // Get the team's stats
+    const teamStats = allStats.stats.find(team => team.teamId === teamId);
+    if (!teamStats || !teamStats.stats || !teamStats.stats.stats) {
+      console.error('Team stats not found for ID:', teamId);
+      return null;
+    }
+    
+    // Extract the relevant stats based on the group
+    let relevantStats = {};
+    const statKeys = statGroup === 'hitting' ? 
+      ['runs', 'homeRuns', 'strikeOuts', 'baseOnBalls', 'hits', 'avg', 'ops', 'stolenBases', 'totalBases', 'rbi', 'leftOnBase'] :
+      ['runs', 'homeRuns', 'hits', 'avg', 'ops', 'era', 'stolenBases', 'strikePercentage', 'whip', 'groundIntoDoublePlay', 'holds'];
+    
+    // Collect all values for each stat to calculate percentiles
+    const allValues = {};
+    statKeys.forEach(key => allValues[key] = []);
+    
+    // Collect all teams' stats, ensuring they exist
+    allStats.stats.forEach(team => {
+      if (team.stats && team.stats.stats) {
+        statKeys.forEach(key => {
+          if (team.stats.stats[key] !== undefined) {
+            const value = team.stats.stats[key];
+            allValues[key].push(value);
+          }
+        });
+      }
+    });
+    
+    // Calculate percentile for each stat
+    statKeys.forEach(key => {
+      // Skip if the team doesn't have this stat
+      if (teamStats.stats.stats[key] === undefined) {
+        console.warn(`Stat "${key}" not found for team ${teamId}`);
+        return;
+      }
+      
+      const teamValue = teamStats.stats.stats[key];
+      
+      // Skip if we don't have enough values to calculate percentile
+      if (allValues[key].length < 2) {
+        console.warn(`Not enough values for stat "${key}" to calculate percentile`);
+        relevantStats[key] = {
+          value: formatStatValue(key, teamValue),
+          percentile: 50 // Default to middle if not enough data
+        };
+        return;
+      }
+      
+      const allTeamValues = allValues[key].sort((a, b) => a - b);
+      
+      // Find the position of the team's value
+      let position = allTeamValues.indexOf(teamValue);
+      if (position === -1) {
+        // If exact match not found, find the closest position
+        position = 0;
+        for (let i = 0; i < allTeamValues.length; i++) {
+          if (allTeamValues[i] > teamValue) {
+            break;
+          }
+          position = i;
+        }
+      }
+      
+      // Calculate percentile (position / total * 100)
+      const percentile = Math.round((position / (allTeamValues.length - 1)) * 100);
+      
+      // For some stats, higher is worse (strikeOuts, era, etc.), so invert percentile
+      const invertedStats = ['strikeOuts', 'era', 'whip', 'groundIntoDoublePlay'];
+      const finalPercentile = invertedStats.includes(key) ? 100 - percentile : percentile;
+      
+      relevantStats[key] = {
+        value: formatStatValue(key, teamValue),
+        percentile: finalPercentile
+      };
+    });
+    
+    return relevantStats;
+  }
+  
+  // Function to format stat values for display
+  function formatStatValue(key, value) {
+    if (key === 'avg' || key === 'ops') {
+      return value.toFixed(3);
+    } else if (key === 'era' || key === 'whip') {
+      return value.toFixed(2);
+    } else if (key === 'strikePercentage') {
+      return (value * 100).toFixed(1) + '%';
+    } else {
+      return value.toString();
+    }
+  }
+  
   // Function to create the stats display
   function createStatsDisplay(data) {
     const statsDisplay = document.createElement('div');
+    
+    // Check if we have valid data
+    if (!data || Object.keys(data).length === 0) {
+      const errorMessage = document.createElement('div');
+      errorMessage.style.textAlign = 'center';
+      errorMessage.style.padding = '20px';
+      errorMessage.style.fontWeight = 'bold';
+      errorMessage.textContent = 'No stats available for this team.';
+      statsDisplay.appendChild(errorMessage);
+      return statsDisplay;
+    }
     
     // Loop through the stats data
     for (const [stat, values] of Object.entries(data)) {
@@ -208,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Create stat name element
       const statName = document.createElement('div');
       statName.classList.add('stat-name');
-      statName.textContent = stat;
+      statName.textContent = formatStatName(stat);
       statName.style.width = '160px'; // Reduced from 200px
       statName.style.fontWeight = 'bold';
       statName.style.paddingLeft = '5px'; // Minimal left padding
@@ -262,61 +435,123 @@ document.addEventListener('DOMContentLoaded', function() {
     return statsDisplay;
   }
   
-  // Function to get color based on percentile (blue-gray-red gradient)
-  function getPercentileColor(percentile) {
-    // Convert percentile to a value between 0 and 1
-    const value = percentile / 100;
+  // Function to format stat names for display
+  function formatStatName(stat) {
+    const nameMap = {
+      'runs': 'Runs',
+      'homeRuns': 'Home Runs',
+      'strikeOuts': 'Strikeouts',
+      'baseOnBalls': 'Walks',
+      'hits': 'Hits',
+      'avg': 'AVG',
+      'ops': 'OPS',
+      'stolenBases': 'Stolen Bases',
+      'totalBases': 'Total Bases',
+      'rbi': 'RBI',
+      'leftOnBase': 'Left On Base',
+      'era': 'ERA',
+      'strikePercentage': 'Strike %',
+      'whip': 'WHIP',
+      'groundIntoDoublePlay': 'GIDP',
+      'holds': 'Holds'
+    };
     
-    // Calculate RGB values for a blue-gray-red gradient
-    let r, g, b;
-    
-    if (value <= 0.5) {
-      // Blue (0%) to Gray (50%)
-      // As value increases from 0 to 0.5, blue decreases and red/green increase
-      const factor = value * 2; // Scale to 0-1 range
-      r = Math.round(128 * factor);
-      g = Math.round(128 * factor);
-      b = Math.round(255 - (127 * factor));
-    } else {
-      // Gray (50%) to Red (100%)
-      // As value increases from 0.5 to 1, green/blue decrease and red increases
-      const factor = (value - 0.5) * 2; // Scale to 0-1 range
-      r = Math.round(128 + (127 * factor));
-      g = Math.round(128 - (128 * factor));
-      b = Math.round(128 - (128 * factor));
-    }
-    
-    return `rgb(${r}, ${g}, ${b})`;
+    return nameMap[stat] || stat;
   }
   
-  // Initially show batting stats
-  let currentStatsDisplay = createStatsDisplay(battingData);
-  contentContainer.appendChild(currentStatsDisplay);
+  // Create mock data for development/testing when the API isn't available
+  function createMockStats() {
+    const mockHittingStats = {
+      'runs': { value: '325', percentile: 75 },
+      'homeRuns': { value: '89', percentile: 82 },
+      'strikeOuts': { value: '432', percentile: 68 },
+      'baseOnBalls': { value: '215', percentile: 77 },
+      'hits': { value: '510', percentile: 65 },
+      'avg': { value: '.262', percentile: 70 },
+      'ops': { value: '.762', percentile: 72 },
+      'stolenBases': { value: '57', percentile: 80 },
+      'totalBases': { value: '842', percentile: 73 },
+      'rbi': { value: '310', percentile: 69 },
+      'leftOnBase': { value: '352', percentile: 55 }
+    };
+    
+    const mockPitchingStats = {
+      'runs': { value: '284', percentile: 62 },
+      'homeRuns': { value: '75', percentile: 65 },
+      'hits': { value: '485', percentile: 58 },
+      'avg': { value: '.245', percentile: 63 },
+      'ops': { value: '.712', percentile: 60 },
+      'era': { value: '3.75', percentile: 68 },
+      'stolenBases': { value: '38', percentile: 72 },
+      'strikePercentage': { value: '66.7%', percentile: 75 },
+      'whip': { value: '1.25', percentile: 70 },
+      'groundIntoDoublePlay': { value: '52', percentile: 67 },
+      'holds': { value: '67', percentile: 78 }
+    };
+    
+    return { hitting: mockHittingStats, pitching: mockPitchingStats };
+  }
   
-  battingTab.addEventListener('click', function() {
-    battingTab.classList.add('active');
-    battingTab.style.backgroundColor = '#f8f8f8'; // Active color
-  
-    pitchingTab.classList.remove('active');
-    pitchingTab.style.backgroundColor = 'transparent';
-  
+  // Fetch the stats and update the UI
+  fetchTeamStats().then(allStats => {
+    let hittingStats, pitchingStats;
+    
+    if (!allStats) {
+      console.warn('Failed to load stats from API, using mock data');
+      const mockData = createMockStats();
+      hittingStats = mockData.hitting;
+      pitchingStats = mockData.pitching;
+    } else {
+      // Process hitting stats
+      hittingStats = processStats(allStats.hitting, 'hitting');
+      
+      // Process pitching stats
+      pitchingStats = processStats(allStats.pitching, 'pitching');
+      
+      // If we couldn't process the stats, use mock data
+      if (!hittingStats || !pitchingStats) {
+        console.warn('Failed to process stats from API, using mock data');
+        const mockData = createMockStats();
+        hittingStats = mockData.hitting;
+        pitchingStats = mockData.pitching;
+      }
+    }
+    
+    // Remove loading indicator
     contentContainer.innerHTML = '';
-    currentStatsDisplay = createStatsDisplay(battingData);
+    
+    // Initially show batting stats
+    let currentStatsDisplay = createStatsDisplay(hittingStats);
     contentContainer.appendChild(currentStatsDisplay);
+    
+    // Add tab event listeners
+    battingTab.addEventListener('click', function() {
+      battingTab.classList.add('active');
+      battingTab.style.backgroundColor = '#f8f8f8'; // Active color
+    
+      pitchingTab.classList.remove('active');
+      pitchingTab.style.backgroundColor = 'transparent';
+    
+      contentContainer.innerHTML = '';
+      currentStatsDisplay = createStatsDisplay(hittingStats);
+      contentContainer.appendChild(currentStatsDisplay);
+    });
+    
+    pitchingTab.addEventListener('click', function() {
+      pitchingTab.classList.add('active');
+      pitchingTab.style.backgroundColor = '#f8f8f8'; // Active color
+    
+      battingTab.classList.remove('active');
+      battingTab.style.backgroundColor = 'transparent';
+    
+      contentContainer.innerHTML = '';
+      currentStatsDisplay = createStatsDisplay(pitchingStats);
+      contentContainer.appendChild(currentStatsDisplay);
+    });
+  }).catch(error => {
+    console.error('Error processing stats:', error);
+    contentContainer.innerHTML = '<div style="text-align: center; padding: 20px;">An error occurred while loading stats. Please try again later.</div>';
   });
-  
-  pitchingTab.addEventListener('click', function() {
-    pitchingTab.classList.add('active');
-    pitchingTab.style.backgroundColor = '#f8f8f8'; // Active color
-  
-    battingTab.classList.remove('active');
-    battingTab.style.backgroundColor = 'transparent';
-  
-    contentContainer.innerHTML = '';
-    currentStatsDisplay = createStatsDisplay(pitchingData);
-    contentContainer.appendChild(currentStatsDisplay);
-  });
-  
   
   // Assemble the stats container
   statsContainer.appendChild(tabsContainer);
