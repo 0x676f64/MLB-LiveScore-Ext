@@ -1,0 +1,463 @@
+document.addEventListener('DOMContentLoaded', function() {
+  const root = document.getElementById('root');
+
+  // Get team info from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const teamShortName = urlParams.get('teamName');
+  const teamLogo = urlParams.get('logo');
+  
+  // Team names dictionary
+  var teamNames = {
+    "Arizona Diamondbacks": "ARI",
+    "Atlanta Braves": "ATL",
+    "Baltimore Orioles": "BAL",
+    "Boston Red Sox": "BOS",
+    "Chicago White Sox": "CWS",
+    "Chicago Cubs": "CHC",
+    "Cincinnati Reds": "CIN",
+    "Cleveland Guardians": "CLE",
+    "Colorado Rockies": "COL",
+    "Detroit Tigers": "DET",
+    "Houston Astros": "HOU",
+    "Kansas City Royals": "KC",
+    "Los Angeles Angels": "LAA",
+    "Los Angeles Dodgers": "LAD",
+    "Miami Marlins": "MIA",
+    "Milwaukee Brewers": "MIL",
+    "Minnesota Twins": "MIN",
+    "New York Yankees": "NYY",
+    "New York Mets": "NYM",
+    "Oakland Athletics": "OAK",
+    "Philadelphia Phillies": "PHI",
+    "Pittsburgh Pirates": "PIT",
+    "San Diego Padres": "SD",
+    "San Francisco Giants": "SF",
+    "Seattle Mariners": "SEA",
+    "St. Louis Cardinals": "STL",
+    "Tampa Bay Rays": "TB",
+    "Texas Rangers": "TEX",
+    "Toronto Blue Jays": "TOR",
+    "Washington Nationals": "WSH"
+  };
+
+  // Map of team IDs to use with the API
+  const teamIds = {
+    "Arizona Diamondbacks": 109,
+    "Atlanta Braves": 144,
+    "Baltimore Orioles": 110,
+    "Boston Red Sox": 111,
+    "Chicago White Sox": 145,
+    "Chicago Cubs": 112,
+    "Cincinnati Reds": 113,
+    "Cleveland Guardians": 114,
+    "Colorado Rockies": 115,
+    "Detroit Tigers": 116,
+    "Houston Astros": 117,
+    "Kansas City Royals": 118,
+    "Los Angeles Angels": 108,
+    "Los Angeles Dodgers": 119,
+    "Miami Marlins": 146,
+    "Milwaukee Brewers": 158,
+    "Minnesota Twins": 142,
+    "New York Yankees": 147,
+    "New York Mets": 121,
+    "Oakland Athletics": 133,
+    "Philadelphia Phillies": 143,
+    "Pittsburgh Pirates": 134,
+    "San Diego Padres": 135,
+    "San Francisco Giants": 137,
+    "Seattle Mariners": 136,
+    "St. Louis Cardinals": 138,
+    "Tampa Bay Rays": 139,
+    "Texas Rangers": 140,
+    "Toronto Blue Jays": 141,
+    "Washington Nationals": 120
+  };
+
+  const fullTeamName = Object.keys(teamNames).find(name => name.includes(teamShortName));
+
+  if (!fullTeamName) {
+    alert('Invalid team!');
+    return;
+  }
+
+  // Fix for cities with multiple words
+  let cityParts = [];
+  let teamNameParts = [];
+  
+  // Special cases for teams with multi-word cities
+  if (fullTeamName.startsWith("New York")) {
+    cityParts = ["New York"];
+    teamNameParts = fullTeamName.replace("New York ", "").split(' ');
+  } else if (fullTeamName.startsWith("San Francisco")) {
+    cityParts = ["San Francisco"];
+    teamNameParts = fullTeamName.replace("San Francisco ", "").split(' ');
+  } else if (fullTeamName.startsWith("San Diego")) {
+    cityParts = ["San Diego"];
+    teamNameParts = fullTeamName.replace("San Diego ", "").split(' ');
+  } else if (fullTeamName.startsWith("St. Louis")) {
+    cityParts = ["St. Louis"];
+    teamNameParts = fullTeamName.replace("St. Louis ", "").split(' ');
+  } else if (fullTeamName.startsWith("Los Angeles")) {
+    cityParts = ["Los Angeles"];
+    teamNameParts = fullTeamName.replace("Los Angeles ", "").split(' ');
+  } else if (fullTeamName.startsWith("Kansas City")) {
+    cityParts = ["Kansas City"];
+    teamNameParts = fullTeamName.replace("Kansas City ", "").split(' ');
+  } else if (fullTeamName.startsWith("Tampa Bay")) {
+    cityParts = ["Tampa Bay"];
+    teamNameParts = fullTeamName.replace("Tampa Bay ", "").split(' ');
+  } else {
+    // Default case for cities with one word
+    const allParts = fullTeamName.split(' ');
+    cityParts = [allParts[0]];
+    teamNameParts = allParts.slice(1);
+  }
+  
+  const city = cityParts.join(' ');
+  const teamName = teamNameParts.join(' ');
+  const teamId = teamIds[fullTeamName];
+
+  // Create all elements first
+  // 1. statsheader-container
+  const statsheaderContainer = document.createElement("div");
+  statsheaderContainer.classList.add("statsheader-container");
+  statsheaderContainer.innerHTML = `
+      <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
+  `;
+  
+  // 2 & 3. team-city and team-name elements
+  const cityElement = document.createElement('div');
+  cityElement.classList.add('team-city');
+  cityElement.textContent = city;
+  
+  const nameElement = document.createElement('div');
+  nameElement.classList.add('team-name');
+  nameElement.textContent = teamName;
+  
+  // 4. logo image
+  const headerLogo = document.createElement('img');
+  headerLogo.src = teamLogo;
+  headerLogo.alt = `${fullTeamName} Logo`;
+  headerLogo.style.width = '130px';
+  headerLogo.style.height = 'auto';
+  
+  // 5. nav-container (adding a placeholder since it was mentioned in your order)
+  const navContainer = document.createElement('div');
+  navContainer.classList.add('nav-container');
+  
+  // Now add everything to the document in the correct order
+  document.body.prepend(statsheaderContainer); // 1
+  document.body.insertBefore(nameElement, statsheaderContainer.nextSibling); // 3
+  document.body.insertBefore(cityElement, nameElement); // 2
+  document.body.insertBefore(headerLogo, nameElement.nextSibling); // 4
+  
+  // Add stats container below the logo
+  const statsContainer = document.createElement('div');
+  statsContainer.classList.add('stats-container');
+  statsContainer.style.width = '80%';
+  statsContainer.style.margin = '20px auto';
+  statsContainer.style.border = '3px solid #000';
+  statsContainer.style.borderRadius = '8px';
+  statsContainer.style.overflow = 'hidden';
+  statsContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+  statsContainer.style.padding = '10px';
+  statsContainer.style.backgroundColor = '#E5DECF';
+  statsContainer.style.fontFamily = 'Roboto Condensed';
+  
+  // Create tabs container
+  const tabsContainer = document.createElement('div');
+  tabsContainer.classList.add('tabs-container');
+  tabsContainer.style.display = 'flex';
+  tabsContainer.style.justifyContent = 'center'; // Center the tabs
+  
+  // Create batting tab
+  const battingTab = document.createElement('div');
+  battingTab.classList.add('tab', 'active');
+  battingTab.textContent = 'BATTING';
+  battingTab.style.padding = '15px 20px';
+  battingTab.style.fontWeight = 'bold';
+  battingTab.style.cursor = 'pointer';
+  battingTab.style.backgroundColor = '#E5DECF';
+  battingTab.style.transition = 'all 0.3s ease'; 
+  
+  // Create pitching tab
+  const pitchingTab = document.createElement('div');
+  pitchingTab.classList.add('tab');
+  pitchingTab.textContent = 'PITCHING';
+  pitchingTab.style.padding = '15px 20px';
+  pitchingTab.style.fontWeight = 'bold';
+  pitchingTab.style.cursor = 'pointer';
+  pitchingTab.style.backgroundColor = 'transparent';
+  
+  // Add tabs to container
+  tabsContainer.appendChild(battingTab);
+  tabsContainer.appendChild(pitchingTab);
+  
+  // Create content container
+  const contentContainer = document.createElement('div');
+  contentContainer.classList.add('content-container');
+  contentContainer.style.padding = '20px 10px'; // Reduced horizontal padding
+
+  // Loading indicator
+  const loadingIndicator = document.createElement('div');
+  loadingIndicator.textContent = 'Loading team stats...';
+  loadingIndicator.style.textAlign = 'center';
+  loadingIndicator.style.padding = '20px';
+  loadingIndicator.style.fontWeight = 'bold';
+  contentContainer.appendChild(loadingIndicator);
+  
+  // Function to get color based on percentile (blue-gray-red gradient)
+  function getPercentileColor(percentile) {
+    // Convert percentile to a value between 0 and 1
+    const value = percentile / 100;
+    
+    // Calculate RGB values for a blue-gray-red gradient
+    let r, g, b;
+    
+    if (value <= 0.5) {
+      // Blue (0%) to Gray (50%)
+      // As value increases from 0 to 0.5, blue decreases and red/green increase
+      const factor = value * 2; // Scale to 0-1 range
+      r = Math.round(128 * factor);
+      g = Math.round(128 * factor);
+      b = Math.round(255 - (127 * factor));
+    } else {
+      // Gray (50%) to Red (100%)
+      // As value increases from 0.5 to 1, green/blue decrease and red increases
+      const factor = (value - 0.5) * 2; // Scale to 0-1 range
+      r = Math.round(128 + (127 * factor));
+      g = Math.round(128 - (128 * factor));
+      b = Math.round(128 - (128 * factor));
+    }
+    
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+  
+  // Function to fetch team stats
+  async function fetchTeamStats() {
+    try {
+      // Fetch hitting stats for all teams
+      const hittingResponse = await fetch('https://statsapi.mlb.com/api/v1/teams/stats?season=2025&group=hitting&stats=season&sportId=1');
+      const hittingData = await hittingResponse.json();
+      
+      // Fetch pitching stats for all teams
+      const pitchingResponse = await fetch('https://statsapi.mlb.com/api/v1/teams/stats?season=2025&group=pitching&stats=season&sportId=1');
+      const pitchingData = await pitchingResponse.json();
+      
+      return { hitting: hittingData, pitching: pitchingData };
+    } catch (error) {
+      console.error('Error fetching team stats:', error);
+      return null;
+    }
+  }
+  
+  // Function to process stats and calculate percentiles
+  function processStats(allStats, statGroup) {
+    // Get the team's stats
+    const teamStats = allStats.stats.find(team => team.teamId === teamId);
+    if (!teamStats) return null;
+    
+    // Extract the relevant stats based on the group
+    let relevantStats = {};
+    const statKeys = statGroup === 'hitting' ? 
+      ['runs', 'homeRuns', 'strikeOuts', 'baseOnBalls', 'hits', 'avg', 'ops', 'stolenBases', 'totalBases', 'rbi', 'leftOnBase'] :
+      ['runs', 'homeRuns', 'hits', 'avg', 'ops', 'era', 'stolenBases', 'strikePercentage', 'whip', 'groundIntoDoublePlay', 'holds'];
+    
+    // Collect all values for each stat to calculate percentiles
+    const allValues = {};
+    statKeys.forEach(key => allValues[key] = []);
+    
+    // Collect all teams' stats
+    allStats.stats.forEach(team => {
+      statKeys.forEach(key => {
+        const value = team.stats.stats[key] || 0;
+        allValues[key].push(value);
+      });
+    });
+    
+    // Calculate percentile for each stat
+    statKeys.forEach(key => {
+      const teamValue = teamStats.stats.stats[key] || 0;
+      const allTeamValues = allValues[key].sort((a, b) => a - b);
+      
+      // Find the position of the team's value
+      const position = allTeamValues.indexOf(teamValue);
+      
+      // Calculate percentile (position / total * 100)
+      const percentile = Math.round((position / (allTeamValues.length - 1)) * 100);
+      
+      // For some stats, higher is worse (strikeOuts, era, etc.), so invert percentile
+      const invertedStats = ['strikeOuts', 'era', 'whip', 'groundIntoDoublePlay'];
+      const finalPercentile = invertedStats.includes(key) ? 100 - percentile : percentile;
+      
+      // Format value for display
+      let displayValue = teamValue;
+      if (key === 'avg' || key === 'ops' || key === 'whip') {
+        displayValue = teamValue.toFixed(3);
+      } else if (key === 'era') {
+        displayValue = teamValue.toFixed(2);
+      } else if (key === 'strikePercentage') {
+        displayValue = (teamValue * 100).toFixed(1) + '%';
+      }
+      
+      relevantStats[key] = {
+        value: displayValue,
+        percentile: finalPercentile
+      };
+    });
+    
+    return relevantStats;
+  }
+  
+  // Function to create the stats display
+  function createStatsDisplay(data) {
+    const statsDisplay = document.createElement('div');
+    
+    // Loop through the stats data
+    for (const [stat, values] of Object.entries(data)) {
+      // Create row for each stat
+      const statRow = document.createElement('div');
+      statRow.classList.add('stat-row');
+      statRow.style.display = 'flex';
+      statRow.style.alignItems = 'center';
+      statRow.style.marginBottom = '15px';
+      statRow.style.padding = '5px 0';
+      
+      // Create stat name element
+      const statName = document.createElement('div');
+      statName.classList.add('stat-name');
+      statName.textContent = formatStatName(stat);
+      statName.style.width = '160px'; // Reduced from 200px
+      statName.style.fontWeight = 'bold';
+      statName.style.paddingLeft = '5px'; // Minimal left padding
+      
+      // Create stat value element
+      const statValue = document.createElement('div');
+      statValue.classList.add('stat-value');
+      statValue.textContent = values.value;
+      statValue.style.width = '60px';
+      statValue.style.textAlign = 'center';
+      statValue.style.fontWeight = 'bold';
+      
+      // Create percentile bar container
+      const percentileContainer = document.createElement('div');
+      percentileContainer.classList.add('percentile-container');
+      percentileContainer.style.flex = '1';
+      percentileContainer.style.height = '16px';
+      percentileContainer.style.backgroundColor = '#f0f0f0';
+      percentileContainer.style.borderRadius = '8px';
+      percentileContainer.style.overflow = 'hidden';
+      percentileContainer.style.position = 'relative';
+      percentileContainer.style.marginLeft = '10px'; // Reduced margin
+      
+      // Create percentile bar
+      const percentileBar = document.createElement('div');
+      percentileBar.classList.add('percentile-bar');
+      percentileBar.style.width = `${values.percentile}%`;
+      percentileBar.style.height = '100%';
+      percentileBar.style.backgroundColor = getPercentileColor(values.percentile);
+      
+      // Create percentile label
+      const percentileLabel = document.createElement('div');
+      percentileLabel.classList.add('percentile-label');
+      percentileLabel.textContent = values.percentile;
+      percentileLabel.style.position = 'absolute';
+      percentileLabel.style.top = '0';
+      percentileLabel.style.right = '8px';
+      percentileLabel.style.fontSize = '12px';
+      percentileLabel.style.fontWeight = 'bold';
+      percentileLabel.style.color = '#333';
+      
+      // Assemble the row
+      percentileContainer.appendChild(percentileBar);
+      percentileContainer.appendChild(percentileLabel);
+      statRow.appendChild(statName);
+      statRow.appendChild(statValue);
+      statRow.appendChild(percentileContainer);
+      statsDisplay.appendChild(statRow);
+    }
+    
+    return statsDisplay;
+  }
+  
+  // Function to format stat names for display
+  function formatStatName(stat) {
+    const nameMap = {
+      'runs': 'Runs',
+      'homeRuns': 'Home Runs',
+      'strikeOuts': 'Strikeouts',
+      'baseOnBalls': 'Walks',
+      'hits': 'Hits',
+      'avg': 'AVG',
+      'ops': 'OPS',
+      'stolenBases': 'Stolen Bases',
+      'totalBases': 'Total Bases',
+      'rbi': 'RBI',
+      'leftOnBase': 'Left On Base',
+      'era': 'ERA',
+      'strikePercentage': 'Strike %',
+      'whip': 'WHIP',
+      'groundIntoDoublePlay': 'GIDP',
+      'holds': 'Holds'
+    };
+    
+    return nameMap[stat] || stat;
+  }
+  
+  // Fetch the stats and update the UI
+  fetchTeamStats().then(allStats => {
+    if (!allStats) {
+      contentContainer.innerHTML = '<div style="text-align: center; padding: 20px;">Failed to load stats. Please try again later.</div>';
+      return;
+    }
+    
+    // Process hitting stats
+    const hittingStats = processStats(allStats.hitting, 'hitting');
+    
+    // Process pitching stats
+    const pitchingStats = processStats(allStats.pitching, 'pitching');
+    
+    // Remove loading indicator
+    contentContainer.innerHTML = '';
+    
+    // Initially show batting stats
+    let currentStatsDisplay = createStatsDisplay(hittingStats);
+    contentContainer.appendChild(currentStatsDisplay);
+    
+    // Add tab event listeners
+    battingTab.addEventListener('click', function() {
+      battingTab.classList.add('active');
+      battingTab.style.backgroundColor = '#f8f8f8'; // Active color
+    
+      pitchingTab.classList.remove('active');
+      pitchingTab.style.backgroundColor = 'transparent';
+    
+      contentContainer.innerHTML = '';
+      currentStatsDisplay = createStatsDisplay(hittingStats);
+      contentContainer.appendChild(currentStatsDisplay);
+    });
+    
+    pitchingTab.addEventListener('click', function() {
+      pitchingTab.classList.add('active');
+      pitchingTab.style.backgroundColor = '#f8f8f8'; // Active color
+    
+      battingTab.classList.remove('active');
+      battingTab.style.backgroundColor = 'transparent';
+    
+      contentContainer.innerHTML = '';
+      currentStatsDisplay = createStatsDisplay(pitchingStats);
+      contentContainer.appendChild(currentStatsDisplay);
+    });
+  }).catch(error => {
+    console.error('Error processing stats:', error);
+    contentContainer.innerHTML = '<div style="text-align: center; padding: 20px;">An error occurred while loading stats. Please try again later.</div>';
+  });
+  
+  // Assemble the stats container
+  statsContainer.appendChild(tabsContainer);
+  statsContainer.appendChild(contentContainer);
+  
+  // Add stats container to the document after the logo
+  document.body.insertBefore(statsContainer, headerLogo.nextSibling);
+});
