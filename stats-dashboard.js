@@ -254,119 +254,56 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to process stats and calculate percentiles
   function processStats(allStats, statGroup) {
-    // Check if we have valid data
-    if (!allStats || !allStats.stats) {
-      console.error('Invalid stats data:', allStats);
-      return null;
-    }
-    
-    // Get the team's stats
-    const teamStats = allStats.stats.find(team => team.teamId === teamId);
-    if (!teamStats || !teamStats.stats || !teamStats.stats.stats) {
-      console.error('Team stats not found for ID:', teamId);
-      return null;
-    }
-    
-    // Extract the relevant stats based on the group
-    let relevantStats = {};
     const statKeys = statGroup === 'hitting' ? 
       ['runs', 'homeRuns', 'strikeOuts', 'baseOnBalls', 'hits', 'avg', 'ops', 'stolenBases', 'totalBases', 'rbi', 'leftOnBase'] :
       ['runs', 'homeRuns', 'hits', 'avg', 'ops', 'era', 'stolenBases', 'strikePercentage', 'whip', 'groundIntoDoublePlay', 'holds'];
-    
-    // Collect all values for each stat to calculate percentiles
+  
+    const splitStats = allStats.stats[0].splits;
+    const teamSplit = splitStats.find(s => s.team.id === teamId);
+    if (!teamSplit) return null;
+  
     const allValues = {};
     statKeys.forEach(key => allValues[key] = []);
-    
-    // Collect all teams' stats, ensuring they exist
-    allStats.stats.forEach(team => {
-      if (team.stats && team.stats.stats) {
-        statKeys.forEach(key => {
-          if (team.stats.stats[key] !== undefined) {
-            const value = team.stats.stats[key];
-            allValues[key].push(value);
-          }
-        });
-      }
+  
+    splitStats.forEach(split => {
+      statKeys.forEach(key => {
+        const val = parseFloat(split.stat[key]) || 0;
+        allValues[key].push(val);
+      });
     });
-    
-    // Calculate percentile for each stat
+  
+    let relevantStats = {};
     statKeys.forEach(key => {
-      // Skip if the team doesn't have this stat
-      if (teamStats.stats.stats[key] === undefined) {
-        console.warn(`Stat "${key}" not found for team ${teamId}`);
-        return;
-      }
-      
-      const teamValue = teamStats.stats.stats[key];
-      
-      // Skip if we don't have enough values to calculate percentile
-      if (allValues[key].length < 2) {
-        console.warn(`Not enough values for stat "${key}" to calculate percentile`);
-        relevantStats[key] = {
-          value: formatStatValue(key, teamValue),
-          percentile: 50 // Default to middle if not enough data
-        };
-        return;
-      }
-      
-      const allTeamValues = allValues[key].sort((a, b) => a - b);
-      
-      // Find the position of the team's value
-      let position = allTeamValues.indexOf(teamValue);
-      if (position === -1) {
-        // If exact match not found, find the closest position
-        position = 0;
-        for (let i = 0; i < allTeamValues.length; i++) {
-          if (allTeamValues[i] > teamValue) {
-            break;
-          }
-          position = i;
-        }
-      }
-      
-      // Calculate percentile (position / total * 100)
-      const percentile = Math.round((position / (allTeamValues.length - 1)) * 100);
-      
-      // For some stats, higher is worse (strikeOuts, era, etc.), so invert percentile
+      const teamValue = parseFloat(teamSplit.stat[key]) || 0;
+      const sorted = allValues[key].slice().sort((a, b) => a - b);
+      const position = sorted.indexOf(teamValue);
+      const percentile = Math.round((position / (sorted.length - 1)) * 100);
+  
       const invertedStats = ['strikeOuts', 'era', 'whip', 'groundIntoDoublePlay'];
       const finalPercentile = invertedStats.includes(key) ? 100 - percentile : percentile;
-      
+  
+      let displayValue = teamValue;
+      if (['avg', 'ops', 'whip'].includes(key)) {
+        displayValue = teamValue.toFixed(3);
+      } else if (key === 'era') {
+        displayValue = teamValue.toFixed(2);
+      } else if (key === 'strikePercentage') {
+        displayValue = (teamValue * 100).toFixed(1) + '%';
+      }
+  
       relevantStats[key] = {
-        value: formatStatValue(key, teamValue),
+        value: displayValue,
         percentile: finalPercentile
       };
     });
-    
+  
     return relevantStats;
   }
   
-  // Function to format stat values for display
-  function formatStatValue(key, value) {
-    if (key === 'avg' || key === 'ops') {
-      return value.toFixed(3);
-    } else if (key === 'era' || key === 'whip') {
-      return value.toFixed(2);
-    } else if (key === 'strikePercentage') {
-      return (value * 100).toFixed(1) + '%';
-    } else {
-      return value.toString();
-    }
-  }
   
   // Function to create the stats display
   function createStatsDisplay(data) {
     const statsDisplay = document.createElement('div');
-    
-    // Check if we have valid data
-    if (!data || Object.keys(data).length === 0) {
-      const errorMessage = document.createElement('div');
-      errorMessage.style.textAlign = 'center';
-      errorMessage.style.padding = '20px';
-      errorMessage.style.fontWeight = 'bold';
-      errorMessage.textContent = 'No stats available for this team.';
-      statsDisplay.appendChild(errorMessage);
-      return statsDisplay;
-    }
     
     // Loop through the stats data
     for (const [stat, values] of Object.entries(data)) {
@@ -459,63 +396,18 @@ document.addEventListener('DOMContentLoaded', function() {
     return nameMap[stat] || stat;
   }
   
-  // Create mock data for development/testing when the API isn't available
-  function createMockStats() {
-    const mockHittingStats = {
-      'runs': { value: '325', percentile: 75 },
-      'homeRuns': { value: '89', percentile: 82 },
-      'strikeOuts': { value: '432', percentile: 68 },
-      'baseOnBalls': { value: '215', percentile: 77 },
-      'hits': { value: '510', percentile: 65 },
-      'avg': { value: '.262', percentile: 70 },
-      'ops': { value: '.762', percentile: 72 },
-      'stolenBases': { value: '57', percentile: 80 },
-      'totalBases': { value: '842', percentile: 73 },
-      'rbi': { value: '310', percentile: 69 },
-      'leftOnBase': { value: '352', percentile: 55 }
-    };
-    
-    const mockPitchingStats = {
-      'runs': { value: '284', percentile: 62 },
-      'homeRuns': { value: '75', percentile: 65 },
-      'hits': { value: '485', percentile: 58 },
-      'avg': { value: '.245', percentile: 63 },
-      'ops': { value: '.712', percentile: 60 },
-      'era': { value: '3.75', percentile: 68 },
-      'stolenBases': { value: '38', percentile: 72 },
-      'strikePercentage': { value: '66.7%', percentile: 75 },
-      'whip': { value: '1.25', percentile: 70 },
-      'groundIntoDoublePlay': { value: '52', percentile: 67 },
-      'holds': { value: '67', percentile: 78 }
-    };
-    
-    return { hitting: mockHittingStats, pitching: mockPitchingStats };
-  }
-  
   // Fetch the stats and update the UI
   fetchTeamStats().then(allStats => {
-    let hittingStats, pitchingStats;
-    
     if (!allStats) {
-      console.warn('Failed to load stats from API, using mock data');
-      const mockData = createMockStats();
-      hittingStats = mockData.hitting;
-      pitchingStats = mockData.pitching;
-    } else {
-      // Process hitting stats
-      hittingStats = processStats(allStats.hitting, 'hitting');
-      
-      // Process pitching stats
-      pitchingStats = processStats(allStats.pitching, 'pitching');
-      
-      // If we couldn't process the stats, use mock data
-      if (!hittingStats || !pitchingStats) {
-        console.warn('Failed to process stats from API, using mock data');
-        const mockData = createMockStats();
-        hittingStats = mockData.hitting;
-        pitchingStats = mockData.pitching;
-      }
+      contentContainer.innerHTML = '<div style="text-align: center; padding: 20px;">Failed to load stats. Please try again later.</div>';
+      return;
     }
+    
+    // Process hitting stats
+    const hittingStats = processStats(allStats.hitting, 'hitting');
+    
+    // Process pitching stats
+    const pitchingStats = processStats(allStats.pitching, 'pitching');
     
     // Remove loading indicator
     contentContainer.innerHTML = '';
