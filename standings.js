@@ -19,6 +19,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Resize the popup to fit content
         chrome.runtime.sendMessage({ action: "resizePopup", height });
       });
+
+      function adjustBodyHeight() {
+        const body = document.body;
+        const html = document.documentElement;
+
+        // Calculate the total height of the content
+        const totalHeight = Math.max(
+            body.scrollHeight, body.offsetHeight,
+            html.clientHeight, html.scrollHeight, html.offsetHeight
+        );
+
+        // Set the body's height to the total content height
+        body.style.height = totalHeight + 'px';
+    }
+
+    // Call the function when the page loads and when the content changes
+    window.onload = adjustBodyHeight;
+    // If you dynamically add content, call adjustBodyHeight() after adding it.
       
 
     // Add header section

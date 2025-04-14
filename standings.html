@@ -20,24 +20,22 @@
 
     </script>
         <style>
-            
-            html {
-            width: 100%;
-            max-width: 300px;
-            box-sizing: border-box;
-            scrollbar-width: none;
-            height: 0;
-            min-height: 0;
-        }
+           html {
+        width: 100%;
+        max-width: 300px;
+        box-sizing: border-box;
+        scrollbar-width: none;
+        height: auto;
+    }
 
-        body {
-            width: 500px;
-            box-sizing: border-box;
-            scrollbar-width: none;
-            height: 0;
-            min-height: 0;
-            
-        }
+    body {
+        width: 500px;
+        box-sizing: border-box;
+        scrollbar-width: none;
+        margin: 0;
+        padding: 0;
+        height: auto; /* Let JavaScript control the height */
+    }
 
         .header-container img {
             margin-left: 8rem;
@@ -126,21 +124,18 @@
         }
 
         .nav-container {
-            display: flex;
-            justify-content: space-around;
-            background-color: #e5decf;
-            padding: 10px;
-            position: relative;
-            align-items: center;
-            height: 100dvh;
-            bottom: 0;
-            width: 97%;
-            align-items: center;
-            margin-right: auto;
-            margin-left: auto;
-            margin-top: 10px;
-            
-        }
+        display: flex;
+        justify-content: space-around;
+        background-color: #e5decf;
+        padding: 10px;
+        position: relative; /* Keep it relative */
+        width: 97%;
+        align-items: center;
+        margin-right: auto;
+        margin-left: auto;
+        margin-top: 10px;
+        height: auto;
+    }
         .nav-container button {
             background: none;
             border: none;
