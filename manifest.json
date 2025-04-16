@@ -17,9 +17,9 @@
   "action": {
     "default_popup": "default.html",
     "default_icon": {
-      "16": "assets/robo.jpg",
-      "48": "assets/robo.jpg",
-      "128": "assets/robo.jpg"
+      "16": "assets/binbot.png",
+      "48": "assets/binbot.png",
+      "128": "assets/Group 1.png"
     }
   }
 }
