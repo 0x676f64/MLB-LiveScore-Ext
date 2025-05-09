@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Player Stats</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f8;
+            color: #333;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .search-container input {
+            padding: 12px 20px;
+            width: 70%;
+            border: 2px solid #ddd;
+            border-radius: 30px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-container input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .search-container button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 25px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .search-container button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .player-container {
+            display: none;
+            margin-top: 40px;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .player-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 20px;
+            border: 3px solid #2563eb;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .player-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .player-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .player-position {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .stats-container {
+            margin-top: 30px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+        }
+
+        .stat-name {
+            width: 120px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        .stat-value {
+            width: 60px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .stat-slider-container {
+            flex: 1;
+            padding: 0 20px;
+        }
+
+        .stat-slider {
+            width: 100%;
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-slider-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            border-radius: 5px;
+        }
+
+        .stat-percentile {
+            width: 60px;
+            text-align: right;
+        }
+
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            font-style: italic;
+            color: #666;
+            display: none;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fed7d7;
+            display: none;
+        }
+
+       .nav-container {
+            display: flex;
+            justify-content: space-around;
+            background-color: #e5decf;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            align-items: center;
+        }
+
+        .nav-container button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .nav-container svg {
+            height: 28px;
+            width: 28px;
+            fill: rgb(59, 59, 59);
+            transition: fill 0.4s;
+        }
+
+        .nav-container svg:hover {
+            fill: #D7827E;
+            background-color: #e5decf;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <input type="text" id="playerSearch" placeholder="Enter Player Name">
+        <button id="searchButton">Search</button>
+    </div>
+
+    <div class="loading" id="loading">Searching for player...</div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="player-container" id="playerContainer">
+        <div class="player-image" id="playerImage">
+            </div>
+        <div class="player-name" id="playerName"></div>
+        <div class="player-position" id="playerPosition"></div>
+
+        <div class="stats-container" id="statsContainer">
+            </div>
+    </div>
+
+    <div class="nav-container">
+        <button id="home-btn" title="Home">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M224-288q45-35 70.5-85T320-480q0-57-25.5-107T224-672q-31 42-47.5 91T160-480q0 52 16.5 101t47.5 91Zm256 128q55 0 106.5-17.5T680-230q-57-46-88.5-111.5T560-480q0-73 31.5-138.5T680-730q-42-35-93.5-52.5T480-800q-55 0-106.5 17.5T280-730q57 46 88.5 111.5T400-480q0 73-31.5-138.5T280-230q42 35 93.5 52.5T480-160Zm256-128q31-42 47.5-91T800-480q0-52-16.5-101T736-672q-45 35-70.5 85T640-480q0 57 25.5 107t70.5 85ZM480-480Zm0 400q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z"/></svg>
+        </button>
+        <button id="standings-btn" title="Standings">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>
+        </button>
+        <button id="stats-btn" title="Stats">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80l80-80v160h-80Zm160 0v-240l80-80v320h-80Zm160 0v-320l80 81v239h-80Zm160 0v-239l80-80v319h-80Zm160 0v-400l80-80v480h-80ZM120-327v-113l280-280 160 160 280-280v113L560-447 400-607 120-327Z"/></svg>
+        </button>
+    </div>
+
+   <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const playerSearchInput = document.getElementById('playerSearch');
+            const searchButton = document.getElementById('searchButton');
+            const playerContainer = document.getElementById('playerContainer');
+            const playerImageDiv = document.getElementById('playerImage');
+            const playerNameElement = document.getElementById('playerName');
+            const playerPositionElement = document.getElementById('playerPosition');
+            const statsContainer = document.getElementById('statsContainer');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+
+            searchButton.addEventListener('click', searchPlayer);
+            playerSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchPlayer();
+                }
+            });
+
+            async function searchPlayer() {
+                const searchTerm = playerSearchInput.value.trim();
+                if (!searchTerm) {
+                    showError('Please enter a player name');
+                    return;
+                }
+
+                resetDisplay();
+                loading.style.display = 'block';
+
+                try {
+                    const players = await searchPlayers(searchTerm);
+                    console.log('Players:', players); // Debugging line
+
+                    if (players.length === 0) {
+                        showError('No player found with that name');
+                        return;
+                    }
+
+                    const player = players[0];
+                    console.log('Selected Player ID:', player.id); // Debugging line
+                    const playerDetails = await getPlayerDetails(player.id);
+                    console.log('Player Details:', playerDetails); // Debugging line
+                    const playerHittingStats = await getPlayerStats(player.id, 'hitting', 2025);
+                    const playerPitchingStats = await getPlayerStats(player.id, 'pitching', 2025);
+                    const allHittingPlayersData = await fetchAllPlayerStats('hitting', 2025);
+                    const allPitchingPlayersData = await fetchAllPlayerStats('pitching', 2025);
+
+                    displayPlayerInfo(playerDetails, playerHittingStats, allHittingPlayersData, playerPitchingStats, allPitchingPlayersData);
+
+                    loading.style.display = 'none';
+                    playerContainer.style.display = 'block';
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError('An error occurred while fetching player data');
+                    loading.style.display = 'none';
+                }
+            }
+
+            async function searchPlayers(name) {
+                const response = await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(name)}&sportId=1`);
+                if (!response.ok) throw new Error('Failed to search for players');
+                const data = await response.json();
+                return data.people || [];
+            }
+
+            async function getPlayerDetails(playerId) {
+                const response = await fetch(`https://statsapi.mlb.com/api/v1/people/${playerId}`);
+                if (!response.ok) throw new Error('Failed to get player details');
+                const data = await response.json();
+                return data.people[0];
+            }
+
+            async function getPlayerStats(playerId, group = 'hitting', year = 2025) {
+            const response = await fetch(`https://statsapi.mlb.com/api/v1/people/${playerId}/stats?stats=statsSingleSeason&season=${year}&group=${group}&sportId=1`);
+            if (!response.ok) throw new Error(`Failed to get player ${group} stats for ${year}`);
+            const data = await response.json();
+            return data.stats[0]?.splits[0]?.stat || {};
+            }
+
+        async function fetchAllPlayerStats(group, year = 2025) {
+            try {
+                const response = await fetch(`https://statsapi.mlb.com/api/v1/stats?stats=season&group=${group}&sportId=1&season=${year}`);
+                if (!response.ok) throw new Error(`Failed to fetch all ${group} stats for ${year}`);
+                const data = await response.json();
+                return data.stats[0]?.splits?.map(split => ({ id: split.player.id, stats: split.stat })) || [];
+            } catch (error) {
+                console.error(`Error fetching all ${group} stats:`, error);
+                return [];
+            }
+            }
+
+            function calculatePlayerPercentile(playerValue, allPlayersValues, higherIsBetter = true) {
+                const validValues = allPlayersValues.filter(value => typeof value === 'number');
+                if (validValues.length === 0) return 50;
+
+                const sortedValues = [...validValues].sort((a, b) => a - b);
+                const position = sortedValues.indexOf(playerValue);
+                const totalPlayers = sortedValues.length;
+
+                if (totalPlayers > 1) {
+                    const rawPercentile = (position / (totalPlayers - 1)) * 100;
+                    return higherIsBetter ? Math.round(rawPercentile) : Math.round(100 - rawPercentile);
+                } else {
+                    return 50; // Only one player with this stat
+                }
+            }
+
+            function getPercentileColor(percentile) {
+                if (percentile <= 50) {
+                    const ratio = percentile / 50;
+                    const blue = 255 * (1 - ratio);
+                    const gray = 128 * ratio;
+                    return `rgb(${Math.round(gray)}, ${Math.round(gray)}, ${Math.round(blue)})`;
+                } else {
+                    const ratio = (percentile - 50) / 50;
+                    const gray = 128 * (1 - ratio);
+                    const red = 255 * ratio;
+                    return `rgb(${Math.round(red)}, ${Math.round(gray)}, ${Math.round(gray)})`;
+                }
+            }
+
+            function displayPlayerInfo(player, hittingStats, allHittingData, pitchingStats, allPitchingData) {
+                playerNameElement.textContent = `${player.firstName} ${player.lastName}`;
+                playerPositionElement.textContent = player.primaryPosition?.name || 'Position Unknown';
+                playerImageDiv.innerHTML = `<img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_150,h_150,c_fill,q_auto:best/v1/people/${player.id}/headshot/67/current" alt="${player.fullName}" onerror="this.onerror=null; this.src='assets/mlb_logo.svg'">`;
+
+                statsContainer.innerHTML = '';
+                const isPitcher = player.primaryPosition?.type === 'Pitcher';
+                const currentStats = isPitcher ? pitchingStats : hittingStats;
+                const allPlayersCurrentData = isPitcher ? allPitchingData : allHittingData;
+                const statConfigList = isPitcher ? getPitchingStatConfig() : getHittingStatConfig();
+
+                statConfigList.forEach(statConfig => {
+                    if (currentStats.hasOwnProperty(statConfig.name)) {
+                        const statValue = parseFloat(currentStats[statConfig.name]);
+                        if (!isNaN(statValue)) {
+                            const allValuesForStat = allPlayersCurrentData
+                                .map(p => parseFloat(p.stats[statConfig.name]))
+                                .filter(value => !isNaN(value));
+
+                            const higherIsBetter = isPitcher ? !statConfig.goodLow : statConfig.goodHigh;
+                            const percentile = calculatePlayerPercentile(statValue, allValuesForStat, higherIsBetter);
+                            const displayValue = statConfig.format ? statConfig.format(statValue) : statValue;
+
+                            const statItem = document.createElement('div');
+                            statItem.className = 'stat-item';
+                            statItem.innerHTML = `
+                                <div class="stat-name">${statConfig.display}</div>
+                                <div class="stat-value">${displayValue}</div>
+                                <div class="stat-slider-container">
+                                    <div class="stat-slider">
+                                        <div class="stat-slider-fill" style="width: ${percentile}%; background-color: ${getPercentileColor(percentile)};"></div>
+                                </div>
+                            </div>
+                            <div class="stat-percentile">${percentile}%</div>
+                            `;
+                            statsContainer.appendChild(statItem);
+                        }
+                    }
+                });
+
+                if (statsContainer.children.length === 0) {
+                    statsContainer.textContent = `No ${isPitcher ? 'pitching' : 'hitting'} stats available for 2025.`;
+                }
+            }
+
+            function getHittingStatConfig() {
+                return [
+                    { name: 'avg', display: 'Batting Average', format: (v) => parseFloat(v).toFixed(3).replace(/^0+/, ''), goodHigh: true },
+                    { name: 'homeRuns', display: 'Home Runs', goodHigh: true },
+                    { name: 'rbi', display: 'RBI', goodHigh: true },
+                    { name: 'stolenBases', display: 'Stolen Bases', goodHigh: true },
+                    { name: 'obp', display: 'On-base %', format: (v) => parseFloat(v).toFixed(3).replace(/^0+/, ''), goodHigh: true },
+                    { name: 'slg', display: 'Slugging %', format: (v) => parseFloat(v).toFixed(3).replace(/^0+/, ''), goodHigh: true },
+                    { name: 'ops', display: 'OPS', format: (v) => parseFloat(v).toFixed(3).replace(/^0+/, ''), goodHigh: true },
+                    { name: 'hits', display: 'Hits', goodHigh: true },
+                    { name: 'doubles', display: 'Doubles', goodHigh: true },
+                    { name: 'triples', display: 'Triples', goodHigh: true },
+                    { name: 'strikeOuts', display: 'Strikeouts', goodLow: true },
+                    { name: 'leftOnBase', display: 'Left On Base', goodLow: true },
+                    { name: 'baseOnBalls', display: 'Walks', goodHigh: true },
+                    { name: 'totalBases', display: 'Total Bases', goodHigh: true },
+                ];
+            }
+
+            function getPitchingStatConfig() {
+                return [
+                    { name: 'era', display: 'ERA', format: (v) => parseFloat(v).toFixed(2), goodLow: true },
+                    { name: 'whip', display: 'WHIP', format: (v) => parseFloat(v).toFixed(3), goodLow: true },
+                    { name: 'wins', display: 'Wins', goodHigh: true },
+                    { name: 'losses', display: 'Losses', goodLow: true },
+                    { name: 'strikeOuts', display: 'Strikeouts', goodHigh: true },
+                    { name: 'inningsPitched', display: 'IP', goodHigh: true },
+                    { name: 'hitsAllowed', display: 'Hits Allowed', goodLow: true },
+                    { name: 'runsAllowed', display: 'Runs Allowed', goodLow: true },
+                    { name: 'homeRunsAllowed', display: 'HR Allowed', goodLow: true },
+                    { name: 'walksAllowed', display: 'Walks Allowed', goodLow: true },
+                    { name: 'saves', display: 'Saves', goodHigh: true },
+                    { name: 'holds', display: 'Holds', goodHigh: true },
+                    { name: 'groundIntoDoublePlay', display: 'GIDP', goodHigh: true },
+                ];
+            }
+
+            function resetDisplay() {
+                errorMessage.style.display = 'none';
+                errorMessage.textContent = '';
+                playerContainer.style.display = 'none';
+                loading.style.display = 'none';
+            }
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

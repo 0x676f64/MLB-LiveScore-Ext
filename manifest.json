@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "statBot",
+  "name": "binBot",
   "version": "1.0",
-  "description": "Displays live MLB scores and stats in a small overlay.",
+  "description": "View live scores, stats, and results for all things Baseball in real time.",
   "permissions": ["storage", "tabs", "activeTab", "scripting"],
   "content_scripts": [
     {

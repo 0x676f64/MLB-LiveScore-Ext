@@ -286,7 +286,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Function to process stats and calculate percentiles
   function processStats(allStats, statGroup) {
     const statKeys = statGroup === 'hitting' ? 
         ['runs', 'homeRuns', 'strikeOuts', 'baseOnBalls', 'hits', 'avg', 'ops', 'stolenBases', 'totalBases', 'rbi', 'leftOnBase'] :
@@ -313,32 +312,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const position = sorted.indexOf(teamValue);
         let percentile = Math.round((position / (sorted.length - 1)) * 100);
 
-        // Define "good high" and "good low" lists
-        const goodLowStats = [
-            'era',
-            'whip',
-            'groundIntoDoublePlay'
-        ];
+        // Define "good high" and "good low" logic based on statGroup
+        if (statGroup === 'hitting') {
+            const goodLowHitting = ['strikeOuts', 'leftOnBase'];
+            const goodHighHitting = ['runs', 'homeRuns', 'baseOnBalls', 'hits', 'avg', 'ops', 'stolenBases', 'totalBases', 'rbi'];
 
-        const goodHighStats = [
-            'runs',
-            'homeRuns',
-            'hits',
-            'avg',
-            'ops',
-            'rbi',
-            'stolenBases',
-            'holds',
-            'totalBases',
-            'baseOnBalls'
-        ];
-        
-        //strikeouts are good high for batting, good low for pitching.
-        if (statGroup === 'hitting' && key === 'strikeOuts') {
-            percentile = 100 - percentile;
-        } else if (statGroup === 'pitching' && key === 'strikeOuts'){
-        } else if (goodLowStats.includes(key)) {
-            percentile = 100 - percentile;
+            if (goodLowHitting.includes(key)) {
+                percentile = 100 - percentile;
+            }
+        } else if (statGroup === 'pitching') {
+            const goodLowPitching = ['runs', 'homeRuns', 'hits', 'avg', 'ops', 'era', 'stolenBases', 'whip'];
+            const goodHighPitching = ['strikeOuts', 'groundIntoDoublePlay', 'holds'];
+
+            if (goodLowPitching.includes(key)) {
+                percentile = 100 - percentile;
+            }
         }
 
         let displayValue = teamValue;
@@ -358,7 +346,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     return relevantStats;
 }
-  
   // Function to create the stats display
   function createStatsDisplay(data, animate = false) {
     const statsDisplay = document.createElement('div');
