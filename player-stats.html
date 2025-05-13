@@ -9,7 +9,7 @@
     <style>
         html {
             width: 100%;
-            max-width: 300px;
+            max-width: 500px;
             box-sizing: border-box;
             scrollbar-width: none;
             height: auto;
@@ -59,7 +59,7 @@
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 18px;
             outline: none;
             transition: all 0.3s;
         }
@@ -76,7 +76,7 @@
             border-radius: 20px;
             padding: 8px 15px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             transition: background-color 0.3s;
         }
 
@@ -137,24 +137,30 @@
         }
 
         .player-name {
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 2.5rem;
+            font-weight: 600;
             margin-bottom: 5px;
+            font-family: "Roboto Condensed", sans-serif;
         }
 
         .player-position {
-            font-size: 14px;
+            font-size: 1.3rem;
             color: #666;
             margin-bottom: 15px;
+            font-weight: 300;
+            font-family: "Roboto Condensed", sans-serif;
         }
 
         .stats-container {
             margin-top: 15px;
             padding: 10px; /* Add padding around the entire stats container */
-            border: 1px solid #eee; /* Optional: Add a subtle border */
-            border-radius: 5px; /* Optional: Add rounded corners */
+            border: 3px solid #000; /* Optional: Add a subtle border */
+            border-radius: 8px; /* Optional: Add rounded corners */
             box-sizing: border-box; /* Ensure padding doesn't increase width */
             width: 100%; /* Take full width of player container */
+            font-family: "Roboto Condensed", sans-serif;
+            background-color: rgb(229, 222, 207);
+            overflow: hidden;
         }
 
         .stat-item {
@@ -162,22 +168,23 @@
             align-items: center;
             margin-bottom: 8px; /* Slightly reduced margin */
             padding: 6px; /* Slightly reduced padding */
-            background-color: #f8f8f8;
+            background-color: rgb(229, 222, 207);
             border-radius: 3px;
+            font-size: 14px;
         }
 
         .stat-name {
             width: 80px;
             font-weight: bold;
             text-align: left;
-            font-size: 12px;
+            font-size: 15px;
         }
 
         .stat-value {
             width: 40px;
             font-weight: bold;
             text-align: center;
-            font-size: 12px;
+            font-size: 15px;
         }
 
         .stat-slider-container {
@@ -203,7 +210,7 @@
         .stat-percentile {
             width: 40px;
             text-align: right;
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .nav-container {
@@ -442,7 +449,7 @@
                     <div class="stat-name">${statConfig.display}</div>
                     <div class="stat-value">${displayValue}</div>
                     <div style="flex-grow: 1; position: relative; display: flex; align-items: center; margin-left: 10px;">
-                        <div class="percentile-bar" style="background: ${sliderColor}; height: 8px; border-radius: 4px; width: 0%;">
+                        <div class="percentile-bar" style="background: ${sliderColor}; height: 16px; border-radius: 8px; width: 0%;">
                             <div class="percentile-circle" style="position: absolute; width: 20px; height: 20px; background-color: ${sliderColor}; border-radius: 50%; top: -6px; left: -10px; display: flex; justify-content: center; align-items: center; color: white; font-size: 10px; font-weight: bold;">
                                 ${Math.round(percentile)}
                             </div>
