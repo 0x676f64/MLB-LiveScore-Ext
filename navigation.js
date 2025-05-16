@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const homeBtn = document.getElementById("home-btn");
     const standingsBtn = document.getElementById("standings-btn");
     const statsBtn = document.getElementById("stats-btn");
+    const playerBtn = document.getElementById("player-btn");
 
     // Navigation function
     const navigateTo = (page) => {
@@ -25,6 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (statsBtn) {
         statsBtn.addEventListener("click", () => {
             navigateTo("stats.html");
+        });
+    }
+
+    if (playerBtn) {
+        playerBtn.addEventListener("click", () => {
+            navigateTo("player-stats.html");
         });
     }
 });

@@ -93,141 +93,131 @@ document.addEventListener("DOMContentLoaded", async () => {
             standingsContainer.innerHTML = "";
 
             if (league === "WC") {
-                // Wild Card standings logic
-                const alWildcardTeams = [];
-                const nlWildcardTeams = [];
+            const alWildcardTeams = [];
+            const nlWildcardTeams = [];
 
-                // Collect Wild Card eligible teams
-                data.records.forEach(record => {
-                    if ([201, 202, 200].includes(record.division.id)) {
-                        alWildcardTeams.push(...record.teamRecords
-                            .filter(team => !team.divisionRank || parseInt(team.divisionRank) > 3)
-                        );
-                    }
-                    if ([204, 205, 203].includes(record.division.id)) {
-                        nlWildcardTeams.push(...record.teamRecords
-                            .filter(team => !team.divisionRank || parseInt(team.divisionRank) > 3)
-                        );
+            data.records.forEach(record => {
+                record.teamRecords.forEach(team => {
+                    if (team.wildCardRank) {
+                        if (record.league.id === 103 && parseInt(team.wildCardRank) <= 3) {
+                            alWildcardTeams.push(team);
+                        } else if (record.league.id === 104 && parseInt(team.wildCardRank) <= 3) {
+                            nlWildcardTeams.push(team);
+                        }
                     }
                 });
+            });
 
-                // Sort Wild Card teams by winning percentage
-                const sortAlWildcardTeams = alWildcardTeams.sort((a, b) => 
-                    parseFloat(b.winningPercentage) - parseFloat(a.winningPercentage)
-                );
-                const sortNlWildcardTeams = nlWildcardTeams.sort((a, b) => 
-                    parseFloat(b.winningPercentage) - parseFloat(a.winningPercentage)
-                );
+            // Sort Wild Card teams by their wildCardRank
+            const sortAlWildcardTeams = alWildcardTeams.sort((a, b) => parseInt(a.wildCardRank) - parseInt(b.wildCardRank));
+            const sortNlWildcardTeams = nlWildcardTeams.sort((a, b) => parseInt(a.wildCardRank) - parseInt(b.wildCardRank));
 
-                // Create Wild Card containers
-                const createWildcardStandings = (wildcardTeams, leagueName) => {
-                    const wildcardContainer = document.createElement("div");
-                    wildcardContainer.classList.add("wildcard-container");
+            // Create Wild Card containers
+            const createWildcardStandings = (wildcardTeams, leagueName) => {
+                const wildcardContainer = document.createElement("div");
+                wildcardContainer.classList.add("wildcard-container");
 
-                    const wildcardTitle = document.createElement("h2");
-                    wildcardTitle.textContent = `${leagueName} WILD CARD`;
-                    wildcardContainer.appendChild(wildcardTitle);
+                const wildcardTitle = document.createElement("h2");
+                wildcardTitle.textContent = `${leagueName} WILD CARD`;
+                wildcardContainer.appendChild(wildcardTitle);
 
-                    // Add header row
-                    const headerRow = document.createElement("div");
-                    headerRow.classList.add("team-row");
-                    headerRow.innerHTML = `
-                        <span>Team</span>
-                        <span>Wins</span>
-                        <span>Losses</span>
-                        <span>WC Rank</span>
-                        <span>Pct</span>
+                // Add header row
+                const headerRow = document.createElement("div");
+                headerRow.classList.add("team-row");
+                headerRow.innerHTML = `
+                    <span>Team</span>
+                    <span>Wins</span>
+                    <span>Losses</span>
+                    <span>WC Rank</span>
+                    <span>Pct</span>
+                `;
+                wildcardContainer.appendChild(headerRow);
+
+                // Create team rows
+                wildcardTeams.forEach(team => {
+                    const teamRow = document.createElement("div");
+                    teamRow.classList.add("team-row");
+                    teamRow.innerHTML = `
+                        <span>${team.team.name}</span>
+                        <span>${team.wins}</span>
+                        <span>${team.losses}</span>
+                        <span>${team.wildCardRank}</span>
+                        <span>${parseFloat(team.winningPercentage).toFixed(3)}</span>
                     `;
-                    wildcardContainer.appendChild(headerRow);
-
-                    // Take top 3 Wild Card teams
-                    const top3Teams = wildcardTeams.slice(0, 3);
-                    const gamesBackArray = calculateGamesBack(top3Teams);
-
-                    // Create team rows
-                    top3Teams.forEach((team, index) => {
-                        const teamRow = document.createElement("div");
-                        teamRow.classList.add("team-row");
-                        teamRow.innerHTML = `
-                            <span>${team.team.name}</span>
-                            <span>${team.wins}</span>
-                            <span>${team.losses}</span>
-                            <span>${index + 1}</span>
-                            <span>${parseFloat(team.winningPercentage).toFixed(3)}</span>
-                        `;
-                        wildcardContainer.appendChild(teamRow);
-                    });
-
-                    return wildcardContainer;
-                };
-
-                // Create and append Wild Card standings
-                const alWildcardStandings = createWildcardStandings(sortAlWildcardTeams, "AL");
-                const nlWildcardStandings = createWildcardStandings(sortNlWildcardTeams, "NL");
-
-                standingsContainer.appendChild(alWildcardStandings);
-                standingsContainer.appendChild(nlWildcardStandings);
-            } else {
-                // Existing division standings logic
-                data.records.filter(record =>
-                    (league === "AL" && [201, 202, 200].includes(record.division.id)) ||
-                    (league === "NL" && [204, 205, 203].includes(record.division.id))
-                ).forEach(record => {
-                    const divisionContainer = document.createElement("div");
-                    divisionContainer.classList.add("division-container");
-
-                    const divisionTitle = document.createElement("h2");
-                    divisionTitle.textContent = getDivisionName(record.division.id);
-                    divisionContainer.appendChild(divisionTitle);
-
-                    // Sort teams by winning percentage
-                    const sortedTeams = record.teamRecords.sort((a, b) => 
-                        parseFloat(b.winningPercentage) - parseFloat(a.winningPercentage)
-                    );
-
-                    // Calculate Games Back
-                    const gamesBackArray = calculateGamesBack(sortedTeams);
-
-                    // Add header row
-                    const headerRow = document.createElement("div");
-                    headerRow.classList.add("team-row");
-                    headerRow.innerHTML = `
-                        <span>Team</span>
-                        <span>Wins</span>
-                        <span>Losses</span>
-                        <span>GB</span>
-                        <span>Pct</span>
-                    `;
-                    divisionContainer.appendChild(headerRow);
-
-                    // Create team rows
-                    sortedTeams.forEach((team, index) => {
-                        const teamRow = document.createElement("div");
-                        teamRow.classList.add("team-row");
-                        teamRow.innerHTML = `
-                            <span>${team.team.name}</span>
-                            <span>${team.wins}</span>
-                            <span>${team.losses}</span>
-                            <span>${gamesBackArray[index]}</span>
-                            <span>${parseFloat(team.winningPercentage).toFixed(3)}</span>
-                        `;
-                        divisionContainer.appendChild(teamRow);
-                    });
-
-                    standingsContainer.appendChild(divisionContainer);
+                    wildcardContainer.appendChild(teamRow);
                 });
-            }
 
-            // Update active tab styling
-            alTab.classList.toggle("active", league === "AL");
-            nlTab.classList.toggle("active", league === "NL");
-            wildcardTab.classList.toggle("active", league === "WC");
+                return wildcardContainer;
+            };
 
-        } catch (error) {
-            console.error("Error loading standings:", error);
-            standingsContainer.innerHTML = "<p>Failed to load standings. Please try again later.</p>";
+            // Create and append Wild Card standings
+            const alWildcardStandings = createWildcardStandings(sortAlWildcardTeams, "AL");
+            const nlWildcardStandings = createWildcardStandings(sortNlWildcardTeams, "NL");
+
+            standingsContainer.appendChild(alWildcardStandings);
+            standingsContainer.appendChild(nlWildcardStandings);
+
+        } else {
+            // Existing division standings logic (remains the same)
+            data.records.filter(record =>
+                (league === "AL" && [201, 202, 200].includes(record.division.id)) ||
+                (league === "NL" && [204, 205, 203].includes(record.division.id))
+            ).forEach(record => {
+                const divisionContainer = document.createElement("div");
+                divisionContainer.classList.add("division-container");
+
+                const divisionTitle = document.createElement("h2");
+                divisionTitle.textContent = getDivisionName(record.division.id);
+                divisionContainer.appendChild(divisionTitle);
+
+                // Sort teams by winning percentage
+                const sortedTeams = record.teamRecords.sort((a, b) =>
+                    parseFloat(b.winningPercentage) - parseFloat(a.winningPercentage)
+                );
+
+                // Calculate Games Back
+                const gamesBackArray = calculateGamesBack(sortedTeams);
+
+                // Add header row
+                const headerRow = document.createElement("div");
+                headerRow.classList.add("team-row");
+                headerRow.innerHTML = `
+                    <span>Team</span>
+                    <span>Wins</span>
+                    <span>Losses</span>
+                    <span>GB</span>
+                    <span>Pct</span>
+                `;
+                divisionContainer.appendChild(headerRow);
+
+                // Create team rows
+                sortedTeams.forEach((team, index) => {
+                    const teamRow = document.createElement("div");
+                    teamRow.classList.add("team-row");
+                    teamRow.innerHTML = `
+                        <span>${team.team.name}</span>
+                        <span>${team.wins}</span>
+                        <span>${team.losses}</span>
+                        <span>${gamesBackArray[index]}</span>
+                        <span>${parseFloat(team.winningPercentage).toFixed(3)}</span>
+                    `;
+                    divisionContainer.appendChild(teamRow);
+                });
+
+                standingsContainer.appendChild(divisionContainer);
+            });
         }
+
+        // Update active tab styling
+        alTab.classList.toggle("active", league === "AL");
+        nlTab.classList.toggle("active", league === "NL");
+        wildcardTab.classList.toggle("active", league === "WC");
+
+    } catch (error) {
+        console.error("Error loading standings:", error);
+        standingsContainer.innerHTML = "<p>Failed to load standings. Please try again later.</p>";
     }
+}
 
     // Tab click event listeners
     alTab.addEventListener("click", () => loadStandings("AL"));

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "binBot",
-  "version": "1.0",
+  "version": "1.1",
   "description": "View live scores, stats, and results for all things Baseball in real time.",
-  "permissions": ["storage", "tabs", "activeTab", "scripting"],
+  "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": ["*://*/*"],
