@@ -60,26 +60,32 @@ document.addEventListener('DOMContentLoaded', function() {
             const playerDetails = await getPlayerDetails(player.id);
             const playerHittingStats = await getPlayerStats(player.id, 'hitting', 2025);
             const playerPitchingStats = await getPlayerStats(player.id, 'pitching', 2025);
-            
+
+            // Get recent stats for hot/cold indicators
+            const recentHittingStats = await getPlayerRecentStats(player.id, 'hitting', 7);
+            const recentPitchingStats = await getPlayerRecentStats(player.id, 'pitching', 3);
+
             // Get the player's team info to determine games played
             const playerTeamInfo = await getPlayerTeam(player.id);
-            
+
             // Fetch all players' stats
             const allHittingPlayersData = await fetchAllPlayerStats('hitting', 2025);
             const allPitchingPlayersData = await fetchAllPlayerStats('pitching', 2025);
-            
+
             // Fetch team standings to get games played for each team
             const teamStandings = await fetchTeamStandings(2025);
-            
+
             // Filter qualified players and display player info
             displayPlayerInfo(
-                playerDetails, 
-                playerHittingStats, 
-                allHittingPlayersData, 
-                playerPitchingStats, 
-                allPitchingPlayersData, 
-                playerTeamInfo, 
-                teamStandings
+                playerDetails,
+                playerHittingStats,
+                allHittingPlayersData,
+                playerPitchingStats,
+                allPitchingPlayersData,
+                playerTeamInfo,
+                teamStandings,
+                recentHittingStats,
+                recentPitchingStats
             );
 
             loading.style.display = 'none';
@@ -112,7 +118,90 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = await response.json();
         return data.stats[0]?.splits[0]?.stat || {};
     }
-    
+
+    async function getPlayerRecentStats(playerId, group = 'hitting', games = 7) {
+        try {
+            // For hitting: last 7 games; For pitching: last 3 games
+            const gamesToFetch = group === 'hitting' ? 7 : 3;
+
+            const response = await fetch(`https://statsapi.mlb.com/api/v1/people/${playerId}/stats?stats=gameLog&group=${group}&season=2025&gameType=R&limit=${gamesToFetch}`);
+            if (!response.ok) throw new Error(`Failed to get player recent ${group} stats`);
+            const data = await response.json();
+
+            // Get the game log splits (most recent games first)
+            const recentGames = data.stats[0]?.splits || [];
+
+            if (recentGames.length === 0) {
+                return {
+                    stats: {},
+                    gamesCount: 0
+                };
+            }
+
+            // Aggregate stats across the recent games
+            const aggregatedStats = {};
+
+            if (group === 'hitting') {
+                // Initialize hitting stats
+                let atBats = 0;
+                let hits = 0;
+
+                // Sum up stats from recent games
+                recentGames.forEach(game => {
+                    atBats += parseInt(game.stat.atBats || 0);
+                    hits += parseInt(game.stat.hits || 0);
+                });
+
+                // Calculate batting average
+                const avg = atBats > 0 ? hits / atBats : 0;
+
+                aggregatedStats.avg = avg;
+                aggregatedStats.atBats = atBats;
+                aggregatedStats.hits = hits;
+            } else {
+                // Initialize pitching stats
+                let earnedRuns = 0;
+                let inningsPitched = 0;
+
+                // Sum up stats from recent games
+                recentGames.forEach(game => {
+                    earnedRuns += parseInt(game.stat.earnedRuns || 0);
+
+                    // Parse innings pitched (handle fractional innings)
+                    const ipString = game.stat.inningsPitched || "0";
+                    let innings = 0;
+
+                    if (ipString.includes('.')) {
+                        const [fullInnings, partialInnings] = ipString.split('.');
+                        innings = parseInt(fullInnings) + (parseInt(partialInnings) / 3); // Convert .1 to 1/3, .2 to 2/3
+                    } else {
+                        innings = parseInt(ipString);
+                    }
+
+                    inningsPitched += innings;
+                });
+
+                // Calculate ERA (earned runs average)
+                const era = inningsPitched > 0 ? (earnedRuns / inningsPitched) * 9 : 0;
+
+                aggregatedStats.era = era;
+                aggregatedStats.inningsPitched = inningsPitched;
+                aggregatedStats.earnedRuns = earnedRuns;
+            }
+
+            return {
+                stats: aggregatedStats,
+                gamesCount: recentGames.length
+            };
+        } catch (error) {
+            console.error('Error fetching recent stats:', error);
+            return {
+                stats: {},
+                gamesCount: 0
+            };
+        }
+    }
+
     async function getPlayerTeam(playerId) {
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1/people/${playerId}?hydrate=currentTeam`);
@@ -124,13 +213,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
     }
-    
+
     async function fetchTeamStandings(year = 2025) {
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=${year}`);
             if (!response.ok) throw new Error(`Failed to fetch team standings for ${year}`);
             const data = await response.json();
-            
+
             // Create a map of teamId -> gamesPlayed
             const teamGamesMap = {};
             data.records.forEach(record => {
@@ -138,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     teamGamesMap[teamRecord.team.id] = teamRecord.gamesPlayed;
                 });
             });
-            
+
             return teamGamesMap;
         } catch (error) {
             console.error('Error fetching team standings:', error);
@@ -162,13 +251,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return [];
         }
     }
-    
+
     // Function to determine if a player is qualified based on PA/IP threshold
     function isQualifiedPlayer(playerStats, teamGamesPlayed, isPitcher, isReliefPitcher = false) {
         if (!teamGamesPlayed || teamGamesPlayed <= 0) {
             return false; // Cannot determine qualification if team games is unknown
         }
-        
+
         if (isPitcher) {
             const inningsPitched = parseFloat(playerStats.inningsPitched || 0);
             const threshold = isReliefPitcher ? 0.297 : 1.0;
@@ -178,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return (plateAppearances / teamGamesPlayed) >= 3.1;
         }
     }
-    
+
     // Function to filter all players to only qualified ones
     function filterQualifiedPlayers(allPlayersData, teamStandings, isPitcher) {
         return allPlayersData.filter(playerData => {
@@ -186,10 +275,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!teamId || !teamStandings[teamId]) {
                 return false;
             }
-            
+
             const teamGamesPlayed = teamStandings[teamId];
-            const isReliefPitcher = isPitcher && playerData.stats.gamesStarted < (playerData.stats.gamesPlayed / 2);
-            
+            const isReliefPitcher = isPitcher && (playerData.stats.gamesStarted || 0) < ((playerData.stats.gamesPlayed || 0) / 2);
+
             return isQualifiedPlayer(playerData.stats, teamGamesPlayed, isPitcher, isReliefPitcher);
         });
     }
@@ -200,14 +289,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const sortedValues = [...validValues].sort((a, b) => a - b);
         let position = sortedValues.findIndex(value => value >= playerValue);
-        
+
         // If the exact value isn't found, the player would be after all smaller values
         if (position === -1) {
             position = sortedValues.length;
         }
-        
+
         const totalPlayers = sortedValues.length;
-        
+
         if (totalPlayers > 1) {
             const rawPercentile = (position / totalPlayers) * 100;
             return higherIsBetter ? Math.round(rawPercentile) : Math.round(100 - rawPercentile);
@@ -220,10 +309,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function getPercentileColor(percentile) {
         // Convert percentile to a value between 0 and 1
         const value = percentile / 100;
-        
+
         // Calculate RGB values for a blue-gray-red gradient
         let r, g, b;
-        
+
         if (value <= 0.5) {
             // Blue (0%) to Gray (50%)
             // As value increases from 0 to 0.5, blue decreases and red/green increase
@@ -239,33 +328,34 @@ document.addEventListener('DOMContentLoaded', function() {
             g = Math.round(128 - (128 * factor));
             b = Math.round(128 - (128 * factor));
         }
-        
+
         return `rgb(${r}, ${g}, ${b})`;
     }
 
-    function displayPlayerInfo(player, hittingStats, allHittingData, pitchingStats, allPitchingData, playerTeam, teamStandings) {
+    function displayPlayerInfo(player, hittingStats, allHittingData, pitchingStats, allPitchingData, playerTeam, teamStandings, recentHittingStats, recentPitchingStats) {
         playerNameElement.textContent = `${player.firstName} ${player.lastName}`;
         playerPositionElement.textContent = player.primaryPosition?.name || 'Position Unknown';
         playerImageDiv.innerHTML = `<img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_150,h_150,c_fill,q_auto:best/v1/people/${player.id}/headshot/67/current" alt="${player.fullName}" onerror="this.onerror=null; this.src='assets/mlb_logo.svg'">`;
 
         statsContainer.innerHTML = '';
         const isPitcher = player.primaryPosition?.type === 'Pitcher';
-        const isReliefPitcher = isPitcher && pitchingStats.gamesStarted < (pitchingStats.gamesPlayed / 2);
         const currentStats = isPitcher ? pitchingStats : hittingStats;
-        
+        const isReliefPitcher = isPitcher && (currentStats.gamesStarted || 0) < ((currentStats.gamesPlayed || 0) / 2);
+
+
         // Get the player's team games played
         const teamGamesPlayed = playerTeam && teamStandings[playerTeam.id] ? teamStandings[playerTeam.id] : 0;
-        
+
         // Determine if the player is qualified
         const isQualified = isQualifiedPlayer(currentStats, teamGamesPlayed, isPitcher, isReliefPitcher);
-        
+
         // Filter all players to only qualified ones for percentile calculation
         const qualifiedPlayers = filterQualifiedPlayers(
-            isPitcher ? allPitchingData : allHittingData, 
-            teamStandings, 
+            isPitcher ? allPitchingData : allHittingData,
+            teamStandings,
             isPitcher
         );
-        
+
         // Stats configuration based on player type
         const statConfigList = isPitcher ? getPitchingStatConfig() : getHittingStatConfig();
 
@@ -276,24 +366,110 @@ document.addEventListener('DOMContentLoaded', function() {
         qualificationStatus.style.padding = '8px';
         qualificationStatus.style.borderRadius = '4px';
         qualificationStatus.style.textAlign = 'center';
-        
+
         if (isQualified) {
             qualificationStatus.textContent = `✓ Qualified (${qualifiedPlayers.length} qualified ${isPitcher ? 'pitchers' : 'batters'})`;
             qualificationStatus.style.backgroundColor = '#e8f5e9';
             qualificationStatus.style.color = '#2e7d32';
         } else {
             const threshold = isPitcher ? (isReliefPitcher ? '0.297' : '1.0') : '3.1';
-            const actual = isPitcher 
+            const actual = isPitcher
                 ? ((parseFloat(currentStats.inningsPitched) || 0) / teamGamesPlayed).toFixed(2)
                 : ((parseInt(currentStats.plateAppearances) || 0) / teamGamesPlayed).toFixed(2);
-                
+
             qualificationStatus.textContent = `✗ Not Qualified (${actual}/${threshold} ${isPitcher ? 'IP' : 'PA'} per team game)`;
             qualificationStatus.style.backgroundColor = '#ffebee';
             qualificationStatus.style.color = '#c62828';
         }
-        
+
         statsContainer.appendChild(qualificationStatus);
-        
+
+        // Display recent performance (hot/cold) indicator
+        const recentPerformance = document.createElement('div');
+        recentPerformance.className = 'recent-performance';
+        recentPerformance.style.marginBottom = '15px';
+        recentPerformance.style.padding = '8px';
+        recentPerformance.style.borderRadius = '4px';
+        recentPerformance.style.display = 'flex';
+        recentPerformance.style.alignItems = 'center';
+        recentPerformance.style.justifyContent = 'center';
+        recentPerformance.style.gap = '5px';
+
+       // Show recent performance based on player type
+        if (isPitcher) {
+            const recentERA = recentPitchingStats.stats.era;
+            const seasonERA = parseFloat(pitchingStats.era || 0);
+            const gamesCount = recentPitchingStats.gamesCount;
+
+            if (gamesCount > 0 && !isNaN(recentERA) && recentPitchingStats.stats.inningsPitched > 0) { // Ensure there are innings to calculate ERA
+                const recentERADisplay = recentERA.toFixed(2);
+
+                let indicator, color, bgColor;
+
+                // Pitcher: Hot (<3.00 ERA), Steady (3.00-3.90 ERA), Cold (>3.90 ERA)
+                if (recentERA < 3.00) {
+                    indicator = '🔥 HOT';
+                    color = '#d32f2f'; // Red for hot (good for pitchers)
+                    bgColor = '#ffebee';
+                } else if (recentERA >= 3.00 && recentERA <= 3.90) {
+                    indicator = '⚖️ STEADY';
+                    color = '#616161'; // Gray for steady
+                    bgColor = '#f5f5f5';
+                } else {
+                    indicator = '❄️ COLD';
+                    color = '#1976d2'; // Blue for cold (bad for pitchers)
+                    bgColor = '#e3f2fd';
+                }
+
+                recentPerformance.style.backgroundColor = bgColor;
+                recentPerformance.style.color = color;
+
+                recentPerformance.innerHTML = `
+                    <span style="font-weight: bold;">${indicator}:</span>
+                    <span>ERA in last ${gamesCount} games: ${recentERADisplay}</span>
+                    <span style="margin-left: 5px; font-size: 0.9em;">(Season: ${seasonERA.toFixed(2)})</span>
+                `;
+
+                statsContainer.appendChild(recentPerformance);
+            }
+        } else {
+            const recentAVG = recentHittingStats.stats.avg;
+            const seasonAVG = parseFloat(hittingStats.avg || 0);
+            const gamesCount = recentHittingStats.gamesCount;
+
+            if (gamesCount > 0 && !isNaN(recentAVG) && recentHittingStats.stats.atBats > 0) {
+                const recentAVGDisplay = recentAVG.toFixed(3).replace(/^0+/, '');
+
+                let indicator, color, bgColor;
+
+                // Batter: Hot (>0.285 AVG), Steady (0.225-0.285 AVG), Cold (<0.225 AVG)
+                if (recentAVG > 0.285) {
+                    indicator = '🔥 HOT';
+                    color = '#d32f2f'; // Red for hot (good for hitters)
+                    bgColor = '#ffebee';
+                } else if (recentAVG >= 0.225 && recentAVG <= 0.285) {
+                    indicator = '⚖️ STEADY';
+                    color = '#616161'; // Gray for steady
+                    bgColor = '#f5f5f5';
+                } else {
+                    indicator = '❄️ COLD';
+                    color = '#1976d2'; // Blue for cold (bad for hitters)
+                    bgColor = '#e3f2fd';
+                }
+
+                recentPerformance.style.backgroundColor = bgColor;
+                recentPerformance.style.color = color;
+
+                recentPerformance.innerHTML = `
+                    <span style="font-weight: bold;">${indicator}:</span>
+                    <span>AVG in last ${gamesCount} games: ${recentAVGDisplay}</span>
+                    <span style="margin-left: 5px; font-size: 0.9em;">(Season: ${seasonAVG.toFixed(3).replace(/^0+/, '')})</span>
+                `;
+
+                statsContainer.appendChild(recentPerformance);
+            }
+        }
+
         // Create container for stats display
         const statsDisplay = document.createElement('div');
         statsContainer.appendChild(statsDisplay);
@@ -308,24 +484,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         .filter(value => !isNaN(value));
 
                     const higherIsBetter = isPitcher ? !statConfig.goodLow : statConfig.goodHigh;
-                    
+
                     // Calculate percentile only if player is qualified
                     let percentile = 50; // Default to middle if not qualified
                     if (isQualified) {
                         percentile = calculatePlayerPercentile(statValue, qualifiedValuesForStat, higherIsBetter);
                     }
-                    
+
                     const displayValue = statConfig.format ? statConfig.format(statValue) : statValue;
                     const sliderColor = getPercentileColor(percentile);
 
                     const statItem = document.createElement('div');
                     statItem.className = 'stat-item';
-                    
+
                     // If not qualified, apply muted styling
                     if (!isQualified) {
                         statItem.style.opacity = '0.7';
                     }
-                    
+
                     statItem.innerHTML = `
                         <div class="stat-name">${statConfig.display}</div>
                         <div class="stat-value">${displayValue}</div>
@@ -344,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     percentileBarContainer.style.borderRadius = '8px';
                     percentileBarContainer.style.width = '100%';
                     percentileBarContainer.style.position = 'relative';
-                    
+
                     // Create the actual percentile bar that will animate
                     const percentileBar = document.createElement('div');
                     percentileBar.classList.add('percentile-bar');
@@ -356,14 +532,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     percentileBar.style.top = '0';
                     percentileBar.style.left = '0';
                     percentileBar.style.transition = 'width 1.3s ease-out';
-                    
+
                     // Create percentile circle
                     const percentileCircle = document.createElement('div');
                     percentileCircle.classList.add('percentile-circle');
-                    
+
                     // Show percentile value or N/A for unqualified players
                     percentileCircle.textContent = isQualified ? Math.round(percentile) : 'N/A';
-                    
+
                     percentileCircle.style.position = 'absolute';
                     percentileCircle.style.top = '-6px';
                     percentileCircle.style.right = '-14px';
@@ -393,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (animate) {
             setTimeout(() => {
                 const percentileBars = statsDisplay.querySelectorAll('.percentile-bar');
-                
+
                 // Animate all bars simultaneously
                 percentileBars.forEach(bar => {
                     const percentileText = bar.querySelector('.percentile-circle').textContent;
@@ -413,6 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
             statsContainer.textContent = `No ${isPitcher ? 'pitching' : 'hitting'} stats available for 2025.`;
         }
     }
+
 
     function getHittingStatConfig() {
         return [
