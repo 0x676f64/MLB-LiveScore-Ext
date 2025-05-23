@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchAllPlayerStats(group, year = 2025) {
         try {
-            const response = await fetch(`https://statsapi.mlb.com/api/v1/stats?stats=season&group=${group}&sportId=1&season=${year}`);
+            const response = await fetch(`https://statsapi.mlb.com/api/v1/stats?stats=season&group=${group}&sportId=1&season=${year}&limit=150`);
             if (!response.ok) throw new Error(`Failed to fetch all ${group} stats for ${year}`);
             const data = await response.json();
             return data.stats[0]?.splits?.map(split => ({
@@ -252,19 +252,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to determine if a player is qualified based on PA/IP threshold
+   // Function to determine if a player is qualified based on PA/IP threshold
     function isQualifiedPlayer(playerStats, teamGamesPlayed, isPitcher, isReliefPitcher = false) {
         if (!teamGamesPlayed || teamGamesPlayed <= 0) {
-            return false; // Cannot determine qualification if team games is unknown
+            return false;
         }
 
         if (isPitcher) {
             const inningsPitched = parseFloat(playerStats.inningsPitched || 0);
-            const threshold = isReliefPitcher ? 0.297 : 1.0;
+            // Lowering thresholds to include more pitchers
+            // Relief: from 0.297 to 0.2 (approx 32 IP/season)
+            // Starter: from 1.0 to 0.75 (approx 121 IP/season)
+            const threshold = isReliefPitcher ? 0.20 : 0.75; // Adjusted thresholds
             return (inningsPitched / teamGamesPlayed) >= threshold;
         } else {
             const plateAppearances = parseInt(playerStats.plateAppearances || 0);
-            return (plateAppearances / teamGamesPlayed) >= 3.1;
+            // Lowering threshold to include more batters
+            // From 3.1 to 2.0 (approx 324 PA/season)
+            return (plateAppearances / teamGamesPlayed) >= 2.0; // Adjusted threshold
         }
     }
 
@@ -366,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
         qualificationStatus.style.padding = '8px';
         qualificationStatus.style.borderRadius = '4px';
         qualificationStatus.style.textAlign = 'center';
+        qualificationStatus.style.fontSize = '1.3em';
 
         if (isQualified) {
             qualificationStatus.textContent = `✓ Qualified (${qualifiedPlayers.length} qualified ${isPitcher ? 'pitchers' : 'batters'})`;
@@ -394,6 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
         recentPerformance.style.alignItems = 'center';
         recentPerformance.style.justifyContent = 'center';
         recentPerformance.style.gap = '5px';
+        recentPerformance.style.fontSize = '1.3em';
 
        // Show recent performance based on player type
         if (isPitcher) {
@@ -427,7 +434,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 recentPerformance.innerHTML = `
                     <span style="font-weight: bold;">${indicator}:</span>
                     <span>ERA in last ${gamesCount} games: ${recentERADisplay}</span>
-                    <span style="margin-left: 5px; font-size: 0.9em;">(Season: ${seasonERA.toFixed(2)})</span>
                 `;
 
                 statsContainer.appendChild(recentPerformance);
@@ -463,7 +469,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 recentPerformance.innerHTML = `
                     <span style="font-weight: bold;">${indicator}:</span>
                     <span>AVG in last ${gamesCount} games: ${recentAVGDisplay}</span>
-                    <span style="margin-left: 5px; font-size: 0.9em;">(Season: ${seasonAVG.toFixed(3).replace(/^0+/, '')})</span>
                 `;
 
                 statsContainer.appendChild(recentPerformance);
