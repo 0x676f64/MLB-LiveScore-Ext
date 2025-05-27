@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchAllPlayerStats(group, year = 2025) {
         try {
-            const response = await fetch(`https://statsapi.mlb.com/api/v1/stats?stats=season&group=${group}&sportId=1&season=${year}&limit=150`);
+            const response = await fetch(`https://statsapi.mlb.com/api/v1/stats?stats=season&group=${group}&sportId=1&season=${year}&limit=200`);
             if (!response.ok) throw new Error(`Failed to fetch all ${group} stats for ${year}`);
             const data = await response.json();
             return data.stats[0]?.splits?.map(split => ({

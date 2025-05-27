@@ -195,6 +195,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         return `${(hours % 12) || 12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
     }
 
+    let gameRefreshInterval = null;
+    let currentGamePk = null;
+
     async function fetchGameDetails(gamePk) {
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
@@ -214,6 +217,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 let gameStatusText = game.status.detailedState;
                 let inningText = "";
                 let inningBoxStyle = "";
+
+                // Check if game is live/in-progress
+                const isLiveGame = !["Final", "Game Over", "Pre-Game", "Scheduled", "Suspended: Rain"].includes(gameStatusText);
     
                 if (gameStatusText === "Suspended: Rain") {
                     inningText = "SUSPENDED";
@@ -246,6 +252,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 
                 // Display current players (hitter/pitcher)
                 updatePlayerInfo(data);
+
+                // Start auto-refresh only for live games
+                if (isLiveGame && (!gameRefreshInterval || currentGamePk !== gamePk)) {
+                startAutoRefresh(gamePk);
+                }
             } else {
                 inningInfo.textContent = "Game data unavailable.";
             }
@@ -254,6 +265,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             inningInfo.textContent = "Error loading game details.";
         }
     }
+            function startAutoRefresh(gamePk) {
+            stopAutoRefresh(); // Clear any existing interval
+            currentGamePk = gamePk;
+            
+            gameRefreshInterval = setInterval(() => {
+                fetchGameDetails(gamePk);
+            }, 2000);
+        }
+
+        function stopAutoRefresh() {
+            if (gameRefreshInterval) {
+                clearInterval(gameRefreshInterval);
+                gameRefreshInterval = null;
+                currentGamePk = null;
+            }
+        }
 
     function updatePlayerInfo(data) {
         const currentPlay = data.liveData.plays.currentPlay;
@@ -744,7 +771,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const hitData = pitchDetails.hitData;
             if (hitData) {
                 const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
-                const launchAngle = hitData.launchAngle ? `${hitData.launchAngle.toFixed(1)}°` : "N/A";
+                const launchAngle = hitData.launchAngle ? `${Math.round(hitData.launchAngle)}°` : "N/A";
                 const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
 
                 // Append hit data formatted correctly
