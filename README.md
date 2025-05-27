@@ -1,6 +1,7 @@
 MLB live feed extension. View live game results, and stats while still remaining productive with every day work. 
 
-![Screenshot 2025-03-25 114941](https://github.com/user-attachments/assets/2241f956-5007-447f-bc15-ab7895ccc4f2)
+
+![Screenshot 2025-05-27 110544](https://github.com/user-attachments/assets/9aacd636-0887-44a6-8a51-5bafb856da44)
 
 ![Screenshot 2025-03-19 123422](https://github.com/user-attachments/assets/f2ddc8e7-7c7a-4e9b-a67b-a8bdb3bd18f7)
 
