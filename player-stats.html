@@ -8,255 +8,361 @@
     <script src="navigation.js" defer></script>
     <script src="player-stats.js" defer></script>
     <style>
-        html {
-            max-width: 300px;
-            width: 100%;
-            box-sizing: border-box;
-            scrollbar-width: none;
-            height: 0;
-            min-height: 0;
-        }
+html {
+    scrollbar-width: none;
+}
 
-        body {
-            font-family: 'Roboto Condensed', sans-serif;
-            width: 500px;
-            text-align: center;
-            box-sizing: border-box;
-            max-height: 705px;
-        }
+body {
+    width: 700px; /* Overall content width */
+    font-family: "Rubik", sans-serif;
+    margin: 0 auto; /* Center the entire body content */
+    display: flex; /* Make body a flex container to stack children */
+    flex-direction: column;
+    align-items: center; /* Center children horizontally */
+}
 
-        /* Header image styling */
-        .statsheader-container img {
-            width: 250px;
-            height: 90px;
-            margin-top: 15px;
-            margin-bottom: 15px;
-            margin-left: auto;
-            margin-right: auto;
-        }
+/* Hide scrollbar in Webkit browsers */
+body::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
 
-        .header-logo {
-            margin-right: auto;
-            margin-left: auto;
-            margin-top: 20px;
-        }
+/* --- Header image styling --- */
+.statsheader-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 15px 0;
+    margin-left: 19rem;
+}
 
-        .search-container {
-            margin: 10px 0;
-            text-align: center;
-            width: 90%; /* Adjust width for padding */
-            display: flex; /* Align input and button */
-            gap: 5px; /* Spacing between input and button */
-            padding: 10px;
-        }
+.statsheader-container img {
+    width: 250px;
+    height: 90px;
+    margin: 0;
+}
 
-        .search-container input {
-            flex-grow: 1; /* Input takes remaining space */
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 18px;
-            outline: none;
-            transition: all 0.3s;
-        }
+/* --- Search Container --- */
+.search-container {
+    margin: 10px 0;
+    width: 80%;
+    display: flex;
+    gap: 10px;
+    padding: 0 15px;
+    justify-content: center;
+    box-sizing: border-box;
+    margin-left: 19rem;
+    margin-bottom: 10px;
+}
 
-        .search-container input:focus {
-            border-color: #fb6a6a;
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-        }
+.search-container input {
+    flex-grow: 1;
+    max-width: 400px;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s;
+}
 
-        .search-container button {
-            background-color: #fb6a6a;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 8px 15px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: background-color 0.3s;
-        }
+.search-container input:focus {
+    border-color: #fb6a6a;
+    box-shadow: 0 0 0 3px rgba(251, 106, 106, 0.3);
+}
 
-        .search-container button:hover {
-            background-color: #ad4c4c;
-        }
+.search-container button {
+    background-color: #fb6a6a;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
 
-        .loading {
-            text-align: center;
-            margin: 10px 0;
-            font-style: italic;
-            color: #666;
-            display: none;
-            font-size: 12px;
-        }
+.search-container button:hover {
+    background-color: #ad4c4c;
+    transform: translateY(-1px);
+}
 
-        .error-message {
-            color: #e53e3e;
-            margin: 10px 0;
-            padding: 8px;
-            border-radius: 5px;
-            background-color: #fed7d7;
-            display: none;
-            font-size: 12px;
-            text-align: center;
-        }
+/* --- Loading & Error Messages --- */
+.loading,
+.error-message {
+    text-align: center;
+    margin: 10px auto;
+    font-style: italic;
+    font-size: 13px;
+    padding: 8px;
+    border-radius: 5px;
+    box-sizing: border-box;
+    width: 90%;
+    max-width: 400px;
+    display: none;
+    margin-right: 15px;
+}
 
-        .player-container {
-            display: none;
-            background: transparent;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            width: 100%; /* Match search container width */
-            box-sizing: border-box; /* Ensure padding doesn't increase width */
-        }
+.loading {
+    color: #666;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+}
 
-        .player-image {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin: 0 auto 10px;
-            border: 2px solid #fb6a6a;
-            background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
+.error-message {
+    color: #e53e3e;
+    background-color: #fed7d7;
+    border: 1px solid #e53e3e;
+}
 
-        .player-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+/* --- Player Container & Info (Main Player Profile Section) --- */
+.player-container {
+    align-items: center; /* Center player image/name horizontally */
+    background: transparent;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    width: 100%; /* Spans full body width */
+    box-sizing: border-box;
+    display: none;
+}
 
-        .player-name {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-            font-family: "Roboto Condensed", sans-serif;
-        }
+.player-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 10px;
+    border: 3px solid #fb6a6a;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
 
-        .player-position {
-            font-size: 1.5rem;
-            color: #666;
-            margin-bottom: 15px;
-            font-weight: 300;
-            font-family: "Roboto Condensed", sans-serif;
-        }
+.player-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-       .stats-container {
-            margin-top: 15px;
-            padding: 30px; /* Add padding around the entire stats container */
-            border: 3px solid #000; /* Optional: Add a subtle border */
-            border-radius: 8px; /* Optional: Add rounded corners */
-            box-sizing: border-box; /* Ensure padding doesn't increase width */
-            width: 100%; /* Take full width of player container */
-            font-family: "Roboto Condensed", sans-serif;
-            background-color: rgb(229, 222, 207);
-            overflow: hidden;
-        }
+.player-name {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    font-family: "Roboto Condensed", sans-serif;
+    color: #2a283e;
+    line-height: 1.1;
+    margin-left: 19rem;
+}
 
-        .stat-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px; /* Slightly reduced margin */
-            padding: 5px 0px; /* Slightly reduced padding */
-            background-color: rgb(229, 222, 207);
-            border-radius: 3px;
-            font-size: 14px;
-        }
+.player-position {
+    font-size: 1.6rem;
+    color: #666;
+    margin-bottom: 15px;
+    font-weight: 400;
+    font-family: "Roboto Condensed", sans-serif;
+    margin-left: 19rem;
+}
 
-        .stat-name {
-            width: 160px;
-            font-weight: 600;
-            text-align: left;
-            font-size: 15px;
-            padding-left: 5px;
-        }
+#playerImage{
+    margin-right: 130px;
+}
 
-        .stat-value {
-            width: 60px;
-            font-weight: 600;
-            text-align: center; 
-            align-items: right;
-            justify-content: left;
-            font-size: 15px;
-        }
+/* --- Main Stats Container (Holds both Summary Row and Stat Grid) --- */
+.stats-container {
+    /* This container now acts as the overall wrapper for all player stats content */
+    display: flex; /* Stack its direct children (summary row, stat grid) vertically */
+    flex-direction: column;
+    align-items: center; /* Center content horizontally within the container */
+    margin-top: 15px; /* Margin above the whole stats block */
+    padding: 15px; /* Padding inside the entire stats block */
+    background-color: #e5decf;
+    border: 3px solid #000;
+    border-radius: 8px;
+    box-sizing: border-box;
+    width: 970px; /* Adjusted width to better fit 5 columns with padding/border */
+    /* Removed margin-left/right auto as align-items on parent handles centering */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    display: none;
+}
 
-        .percentile-container {
-            flex-grow: 1;
-            height: 16px;
-            background-color: #f0f0f0;
-            border-radius: 8px;
-            overflow: visible; /* To show the full circle */
-            position: relative;
-            margin-left: 10px;
-            text-align: left; /* Align the bar to the left */
-            display: flex; /* Use flex to control circle positioning */
-            align-items: center; /* Vertically align the bar and potentially the circle if direct children */
-        }
+/* --- NEW: Summary Row (Qualification & Recent Performance) --- */
+.player-stats-summary-row {
+    display: flex; /* Arrange children (qual/perf) horizontally */
+    justify-content: center; /* Center them within this row */
+    align-items: center; /* Vertically align them */
+    gap: 20px; /* Space between qual and perf */
+    width: 100%; /* Take full width of stats-container */
+    margin-bottom: 20px; /* Space below this row, before the stat items */
+    flex-wrap: wrap; /* Allow wrapping if content is too wide */
+}
 
-        .percentile-bar {
-            height: 100%;
-            border-radius: 8px; /* Match container's border radius */
-            position: relative; /* Position within the container */
-            transition: width 1.3s ease-out; /* For animation */
-        }
+.qualification-status,
+.recent-performance {
+    padding: 8px 12px; /* Reduced padding */
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.1em;
+    font-weight: 500;
+    box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    flex-shrink: 0; /* Prevent shrinking if space is tight */
+    min-height: 35px; /* Min height for consistency */
+    display: flex; /* For centering content within */
+    align-items: center;
+    justify-content: center;
+    flex-basis: auto; /* Allow content to dictate width, but shrink if needed */
+    max-width: 48%; /* Ensure they can sit side-by-side */
+}
 
-        .percentile-circle {
-            top: -6px; /* Adjust to center vertically relative to the container height (16px + 12px overlap) */
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: left 1.3s ease-out; /* For animation */
-        }
+/* Specific colors for qualification status */
+.qualification-status.qualified {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #2e7d32;
+}
 
-        .nav-container {
-            display: flex;
+.qualification-status.not-qualified {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #c62828;
+}
+
+.recent-performance {
+    gap: 8px; /* Space between icon and text */
+}
+
+/* --- NEW: Stat Items Grid Wrapper --- */
+.stats-grid-wrapper {
+    display: flex; /* Make it a flex container for stat-items */
+    flex-wrap: wrap; /* Allow stat-items to wrap to the next row */
+    justify-content: space-between; /* Distribute columns evenly within this wrapper */
+    align-items: stretch; /* Make all stat-items in a row the same height */
+    gap: 15px 10px; /* Vertical gap between rows, Horizontal gap between columns */
+    width: 100%; /* Take full width of stats-container */
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex-basis: calc(20% - 8px); /* 10px gap / 5 items = 2px per side, 8px total deduction */
+    min-width: 0; /* Allow item to shrink if needed */
+    padding: 10px 5px; /* Slightly reduced padding */
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    box-sizing: border-box;
+}
+
+.stat-name {
+    width: 100%;
+    font-weight: 600;
+    text-align: center;
+    font-size: 13px; /* Slightly smaller to fit 5 columns */
+    color: #555;
+    margin-bottom: 5px; /* Reduced margin */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    order: 1;
+}
+
+.stat-value {
+    width: 100%;
+    font-weight: 700;
+    text-align: center;
+    font-size: 1.7em; /* Adjusted for 5 columns */
+    margin-bottom: 8px; /* Reduced margin */
+    color: #2a283e;
+    line-height: 1;
+    order: 2;
+    font-style: italic; /* Italic for emphasis */
+}
+
+.percentile-container {
+    width: 90%;
+    max-width: 100px; /* Reduced max-width for percentile bar */
+    height: 12px; /* Reduced height */
+    background-color: #e0e0e0;
+    border-radius: 6px; /* Adjusted radius */
+    position: relative;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: visible; /* Crucial for circle visibility */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    order: 3;
+}
+
+.percentile-bar {
+    height: 100%;
+    border-radius: 6px; /* Adjusted radius */
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: width 1.3s ease-out;
+}
+
+.percentile-circle {
+    position: absolute;
+    top: -6px; /* Adjust to center vertically (half of its 24px height) */
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px; /* Smaller font for circle text */
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: left 1.3s ease-out;
+    z-index: 2;
+}
+
+.nav-container {
+    display: flex;
             justify-content: space-around;
             background-color: #e5decf;
             position: relative;
             align-items: center;
             padding: 10px;
-            height: 50px;
             bottom: 0;
-            width: 100%;
+            width: 140%;
             align-items: center;
             margin-right: auto;
             margin-left: auto;
-            margin-top: 10px;
-            overflow: visible;
-        
-        }
+}
 
-        .nav-container button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
-            margin-right: 20px;
-        }
+.nav-container button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    margin-right: 0;
+}
 
-        .nav-container svg {
-            height: 28px;
-            width: 28px;
-            fill:rgb(59, 59, 59);
-            transition: fill 0.2s; 
-        }
+.nav-container svg {
+    height: 28px;
+    width: 28px;
+    fill: rgb(59, 59, 59);
+    transition: fill 0.2s;
+}
 
-        .nav-container svg:hover {
-            fill: #D7827E;
-            background-color: #e5decf;
-        }
-    </style>
+.nav-container svg:hover {
+    fill: #D7827E;
+    background-color: #e5decf;
+}
+</style>
 </head>
 <body>
     <div class="search-container">

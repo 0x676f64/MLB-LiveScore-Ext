@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const statsContainer = document.getElementById('statsContainer');
     const loading = document.getElementById('loading');
     const errorMessage = document.getElementById('errorMessage');
+    const searchInput = document.getElementById('searchInput');
+    
+
 
     // 1. statsheader-container
     const statsheaderContainer = document.createElement("div");
@@ -338,263 +341,211 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayPlayerInfo(player, hittingStats, allHittingData, pitchingStats, allPitchingData, playerTeam, teamStandings, recentHittingStats, recentPitchingStats) {
-        playerNameElement.textContent = `${player.firstName} ${player.lastName}`;
-        playerPositionElement.textContent = player.primaryPosition?.name || 'Position Unknown';
-        playerImageDiv.innerHTML = `<img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_150,h_150,c_fill,q_auto:best/v1/people/${player.id}/headshot/67/current" alt="${player.fullName}" onerror="this.onerror=null; this.src='assets/mlb_logo.svg'">`;
+    // --- 1. Player Picture, Name, and Position (outside stats-container) ---
+    // These elements are expected to be present in your HTML and globally accessible.
+    // They are direct children of the `player-container`.
+    playerNameElement.textContent = `${player.firstName} ${player.lastName}`;
+    playerPositionElement.textContent = player.primaryPosition?.name || 'Position Unknown';
+    playerImageDiv.innerHTML = `<img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_150,h_150,c_fill,q_auto:best/v1/people/${player.id}/headshot/67/current" alt="${player.fullName}" onerror="this.onerror=null; this.src='assets/mlb_logo.svg'">`;
 
-        statsContainer.innerHTML = '';
-        const isPitcher = player.primaryPosition?.type === 'Pitcher';
-        const currentStats = isPitcher ? pitchingStats : hittingStats;
-        const isReliefPitcher = isPitcher && (currentStats.gamesStarted || 0) < ((currentStats.gamesPlayed || 0) / 2);
+    if (playerContainer) playerContainer.style.display = 'flex'; // Show player info section
+    if (statsContainer) statsContainer.style.display = 'flex';   // Show stats container (will hide later if no stats)
+    
+    // Clear previous content from statsContainer
+    statsContainer.innerHTML = '';
+
+    const isPitcher = player.primaryPosition?.type === 'Pitcher';
+    const currentStats = isPitcher ? pitchingStats : hittingStats;
+    const isReliefPitcher = isPitcher && (currentStats.gamesStarted || 0) < ((currentStats.gamesPlayed || 0) / 2);
+
+    // Get the player's team games played
+    const teamGamesPlayed = playerTeam && teamStandings[playerTeam.id] ? teamStandings[playerTeam.id] : 0;
+
+    // Determine if the player is qualified
+    const isQualified = isQualifiedPlayer(currentStats, teamGamesPlayed, isPitcher, isReliefPitcher);
+
+    // Filter all players to only qualified ones for percentile calculation
+    const qualifiedPlayers = filterQualifiedPlayers(
+        isPitcher ? allPitchingData : allHittingData,
+        teamStandings,
+        isPitcher
+    );
+
+    // Stats configuration based on player type
+    const statConfigList = isPitcher ? getPitchingStatConfig() : getHittingStatConfig();
+
+    // --- 2. Qualifications and Recent Performance (at top of stats-container, in a row) ---
+    const playerStatsSummaryRow = document.createElement('div');
+    playerStatsSummaryRow.className = 'player-stats-summary-row';
+    statsContainer.appendChild(playerStatsSummaryRow); // Append to stats-container
+
+    // Qualification Status
+    const qualificationStatus = document.createElement('div');
+    qualificationStatus.className = 'qualification-status'; // CSS now handles styling
+
+    if (isQualified) {
+        qualificationStatus.textContent = `✓ Qualified (${qualifiedPlayers.length} qualified ${isPitcher ? 'pitchers' : 'batters'})`;
+        qualificationStatus.classList.add('qualified'); // Add class for green styling
+    } else {
+        const threshold = isPitcher ? (isReliefPitcher ? '0.297' : '1.0') : '3.1';
+        const actual = isPitcher
+            ? ((parseFloat(currentStats.inningsPitched) || 0) / teamGamesPlayed).toFixed(2)
+            : ((parseInt(currentStats.plateAppearances) || 0) / teamGamesPlayed).toFixed(2);
+        qualificationStatus.textContent = `✗ Not Qualified (${actual}/${threshold} ${isPitcher ? 'IP' : 'PA'} per team game)`;
+        qualificationStatus.classList.add('not-qualified'); // Add class for red styling
+    }
+    playerStatsSummaryRow.appendChild(qualificationStatus); // Append to the summary row
 
 
-        // Get the player's team games played
-        const teamGamesPlayed = playerTeam && teamStandings[playerTeam.id] ? teamStandings[playerTeam.id] : 0;
+    // Display recent performance (hot/cold) indicator
+    const recentPerformance = document.createElement('div');
+    recentPerformance.className = 'recent-performance'; // CSS now handles flex, gap etc.
 
-        // Determine if the player is qualified
-        const isQualified = isQualifiedPlayer(currentStats, teamGamesPlayed, isPitcher, isReliefPitcher);
+    let recentPerformanceText = ''; // Default text
+    let iconHtml = '';
+    let textColor = '#666'; // Default neutral color
+    let backgroundColor = '#f5f5f5'; // Default background color
 
-        // Filter all players to only qualified ones for percentile calculation
-        const qualifiedPlayers = filterQualifiedPlayers(
-            isPitcher ? allPitchingData : allHittingData,
-            teamStandings,
-            isPitcher
-        );
+    if (isPitcher) {
+        const recentERA = recentPitchingStats.stats.era;
+        const gamesCount = recentPitchingStats.gamesCount;
 
-        // Stats configuration based on player type
-        const statConfigList = isPitcher ? getPitchingStatConfig() : getHittingStatConfig();
+        if (gamesCount > 0 && !isNaN(recentERA) && recentPitchingStats.stats.inningsPitched > 0) {
+            const recentERADisplay = recentERA.toFixed(2);
 
-        // Display qualification status
-        const qualificationStatus = document.createElement('div');
-        qualificationStatus.className = 'qualification-status';
-        qualificationStatus.style.marginBottom = '15px';
-        qualificationStatus.style.padding = '8px';
-        qualificationStatus.style.borderRadius = '4px';
-        qualificationStatus.style.textAlign = 'center';
-        qualificationStatus.style.fontSize = '1.3em';
-
-        if (isQualified) {
-            qualificationStatus.textContent = `✓ Qualified (${qualifiedPlayers.length} qualified ${isPitcher ? 'pitchers' : 'batters'})`;
-            qualificationStatus.style.backgroundColor = '#e8f5e9';
-            qualificationStatus.style.color = '#2e7d32';
-        } else {
-            const threshold = isPitcher ? (isReliefPitcher ? '0.297' : '1.0') : '3.1';
-            const actual = isPitcher
-                ? ((parseFloat(currentStats.inningsPitched) || 0) / teamGamesPlayed).toFixed(2)
-                : ((parseInt(currentStats.plateAppearances) || 0) / teamGamesPlayed).toFixed(2);
-
-            qualificationStatus.textContent = `✗ Not Qualified (${actual}/${threshold} ${isPitcher ? 'IP' : 'PA'} per team game)`;
-            qualificationStatus.style.backgroundColor = '#ffebee';
-            qualificationStatus.style.color = '#c62828';
-        }
-
-        statsContainer.appendChild(qualificationStatus);
-
-        // Display recent performance (hot/cold) indicator
-        const recentPerformance = document.createElement('div');
-        recentPerformance.className = 'recent-performance';
-        recentPerformance.style.marginBottom = '15px';
-        recentPerformance.style.padding = '8px';
-        recentPerformance.style.borderRadius = '4px';
-        recentPerformance.style.display = 'flex';
-        recentPerformance.style.alignItems = 'center';
-        recentPerformance.style.justifyContent = 'center';
-        recentPerformance.style.gap = '5px';
-        recentPerformance.style.fontSize = '1.3em';
-
-       // Show recent performance based on player type
-        if (isPitcher) {
-            const recentERA = recentPitchingStats.stats.era;
-            const seasonERA = parseFloat(pitchingStats.era || 0);
-            const gamesCount = recentPitchingStats.gamesCount;
-
-            if (gamesCount > 0 && !isNaN(recentERA) && recentPitchingStats.stats.inningsPitched > 0) { // Ensure there are innings to calculate ERA
-                const recentERADisplay = recentERA.toFixed(2);
-
-                let indicator, color, bgColor;
-
-                // Pitcher: Hot (<3.00 ERA), Steady (3.00-3.90 ERA), Cold (>3.90 ERA)
-                if (recentERA < 3.00) {
-                    indicator = '🔥 HOT';
-                    color = '#d32f2f'; // Red for hot (good for pitchers)
-                    bgColor = '#ffebee';
-                } else if (recentERA >= 3.00 && recentERA <= 3.90) {
-                    indicator = '⚖️ STEADY';
-                    color = '#616161'; // Gray for steady
-                    bgColor = '#f5f5f5';
-                } else {
-                    indicator = '❄️ COLD';
-                    color = '#1976d2'; // Blue for cold (bad for pitchers)
-                    bgColor = '#e3f2fd';
-                }
-
-                recentPerformance.style.backgroundColor = bgColor;
-                recentPerformance.style.color = color;
-
-                recentPerformance.innerHTML = `
-                    <span style="font-weight: bold;">${indicator}:</span>
-                    <span>ERA in last ${gamesCount} games: ${recentERADisplay}</span>
-                `;
-
-                statsContainer.appendChild(recentPerformance);
+            if (recentERA < 3.00) {
+                recentPerformanceText = `🔥 HOT: ERA in last ${gamesCount} games: ${recentERADisplay}`;
+                textColor = '#d32f2f'; // Red for hot (good for pitchers)
+                bgColor = '#f6d5d5'; // Light red background
+                borderColor = '1px solid #d32f2f'; // Red border
+            } else if (recentERA >= 3.00 && recentERA <= 3.90) {
+                recentPerformanceText = `⚖️ STEADY: ERA in last ${gamesCount} games: ${recentERADisplay}`;
+                textColor = '#616161'; // Gray for steady
+                bgColor = '#dfdfdf'; // Light gray background
+                borderColor = '1px solid #616161'; // Gray border
+            } else {
+                recentPerformanceText = `❄️ COLD: ERA in last ${gamesCount} games: ${recentERADisplay}`;
+                textColor = '#1976d2'; // Blue for cold (bad for pitchers)
+                bgColor = '#d1e4f6'; // Light blue background
+                borderColor = '1px solid #1976d2'; // Blue border
             }
         } else {
-            const recentAVG = recentHittingStats.stats.avg;
-            const seasonAVG = parseFloat(hittingStats.avg || 0);
-            const gamesCount = recentHittingStats.gamesCount;
-
-            if (gamesCount > 0 && !isNaN(recentAVG) && recentHittingStats.stats.atBats > 0) {
-                const recentAVGDisplay = recentAVG.toFixed(3).replace(/^0+/, '');
-
-                let indicator, color, bgColor;
-
-                // Batter: Hot (>0.285 AVG), Steady (0.225-0.285 AVG), Cold (<0.225 AVG)
-                if (recentAVG > 0.285) {
-                    indicator = '🔥 HOT';
-                    color = '#d32f2f'; // Red for hot (good for hitters)
-                    bgColor = '#ffebee';
-                } else if (recentAVG >= 0.225 && recentAVG <= 0.285) {
-                    indicator = '⚖️ STEADY';
-                    color = '#616161'; // Gray for steady
-                    bgColor = '#f5f5f5';
-                } else {
-                    indicator = '❄️ COLD';
-                    color = '#1976d2'; // Blue for cold (bad for hitters)
-                    bgColor = '#e3f2fd';
-                }
-
-                recentPerformance.style.backgroundColor = bgColor;
-                recentPerformance.style.color = color;
-
-                recentPerformance.innerHTML = `
-                    <span style="font-weight: bold;">${indicator}:</span>
-                    <span>AVG in last ${gamesCount} games: ${recentAVGDisplay}</span>
-                `;
-
-                statsContainer.appendChild(recentPerformance);
-            }
+            recentPerformanceText = `Recent pitching stats unavailable`;
         }
+    } else { // Hitter
+        const recentAVG = recentHittingStats.stats.avg;
+        const gamesCount = recentHittingStats.gamesCount;
 
-        // Create container for stats display
-        const statsDisplay = document.createElement('div');
-        statsContainer.appendChild(statsDisplay);
+        if (gamesCount > 0 && !isNaN(recentAVG) && recentHittingStats.stats.atBats > 0) {
+            const recentAVGDisplay = recentAVG.toFixed(3).replace(/^0+/, '');
 
-        statConfigList.forEach(statConfig => {
-            if (currentStats.hasOwnProperty(statConfig.name)) {
-                const statValue = parseFloat(currentStats[statConfig.name]);
-                if (!isNaN(statValue)) {
-                    // Extract values for this stat from qualified players only
-                    const qualifiedValuesForStat = qualifiedPlayers
-                        .map(p => parseFloat(p.stats[statConfig.name]))
-                        .filter(value => !isNaN(value));
-
-                    const higherIsBetter = isPitcher ? !statConfig.goodLow : statConfig.goodHigh;
-
-                    // Calculate percentile only if player is qualified
-                    let percentile = 50; // Default to middle if not qualified
-                    if (isQualified) {
-                        percentile = calculatePlayerPercentile(statValue, qualifiedValuesForStat, higherIsBetter);
-                    }
-
-                    const displayValue = statConfig.format ? statConfig.format(statValue) : statValue;
-                    const sliderColor = getPercentileColor(percentile);
-
-                    const statItem = document.createElement('div');
-                    statItem.className = 'stat-item';
-
-                    // If not qualified, apply muted styling
-                    if (!isQualified) {
-                        statItem.style.opacity = '0.7';
-                    }
-
-                    statItem.innerHTML = `
-                        <div class="stat-name">${statConfig.display}</div>
-                        <div class="stat-value">${displayValue}</div>
-                        <div class="percentile-container">
-                        </div>
-                    `;
-                    statsDisplay.appendChild(statItem);
-
-                    const percentileContainer = statItem.querySelector('.percentile-container');
-
-                    // Create percentile bar container (background)
-                    const percentileBarContainer = document.createElement('div');
-                    percentileBarContainer.classList.add('percentile-bar-container');
-                    percentileBarContainer.style.backgroundColor = '#f0f0f0';
-                    percentileBarContainer.style.height = '100%';
-                    percentileBarContainer.style.borderRadius = '8px';
-                    percentileBarContainer.style.width = '100%';
-                    percentileBarContainer.style.position = 'relative';
-
-                    // Create the actual percentile bar that will animate
-                    const percentileBar = document.createElement('div');
-                    percentileBar.classList.add('percentile-bar');
-                    percentileBar.style.backgroundColor = sliderColor;
-                    percentileBar.style.height = '100%';
-                    percentileBar.style.width = '0%'; // Start at 0 for animation
-                    percentileBar.style.borderRadius = '8px';
-                    percentileBar.style.position = 'absolute';
-                    percentileBar.style.top = '0';
-                    percentileBar.style.left = '0';
-                    percentileBar.style.transition = 'width 1.3s ease-out';
-
-                    // Create percentile circle
-                    const percentileCircle = document.createElement('div');
-                    percentileCircle.classList.add('percentile-circle');
-
-                    // Show percentile value or N/A for unqualified players
-                    percentileCircle.textContent = isQualified ? Math.round(percentile) : 'N/A';
-
-                    percentileCircle.style.position = 'absolute';
-                    percentileCircle.style.top = '-6px';
-                    percentileCircle.style.right = '-14px';
-                    percentileCircle.style.backgroundColor = isQualified ? sliderColor : '#9e9e9e';
-                    percentileCircle.style.color = 'white';
-                    percentileCircle.style.width = '28px';
-                    percentileCircle.style.height = '28px';
-                    percentileCircle.style.borderRadius = '50%';
-                    percentileCircle.style.display = 'flex';
-                    percentileCircle.style.alignItems = 'center';
-                    percentileCircle.style.justifyContent = 'center';
-                    percentileCircle.style.fontSize = '11px';
-                    percentileCircle.style.fontWeight = 'bold';
-                    percentileCircle.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-                    percentileCircle.style.transition = 'inherit';
-
-                    // Attach circle to bar and bar to container
-                    percentileBar.appendChild(percentileCircle);
-                    percentileBarContainer.appendChild(percentileBar);
-                    percentileContainer.appendChild(percentileBarContainer);
-                }
+            if (recentAVG > 0.285) {
+                recentPerformanceText = `🔥 HOT: AVG in last ${gamesCount} games: ${recentAVGDisplay}`;
+                textColor = '#d32f2f'; // Red for hot (good for hitters)
+                bgColor = '#f6d5d5'; // Light red background
+                borderColor = '1px solid #d32f2f'; // Red border
+            } else if (recentAVG >= 0.225 && recentAVG <= 0.285) {
+                recentPerformanceText = `⚖️ STEADY: AVG in last ${gamesCount} games: ${recentAVGDisplay}`;
+                textColor = '#616161'; // Gray for steady
+                bgColor = '#dfdfdf'; // Light gray background
+                borderColor = '1px solid #616161'; // Gray border
+            } else {
+                recentPerformanceText = `❄️ COLD: AVG in last ${gamesCount} games: ${recentAVGDisplay}`;
+                textColor = '#1976d2'; // Blue for cold (bad for hitters)
+                bgColor = '#d1e4f6'; // Light blue background
+                borderColor = '1px solid #1976d2'; // Blue border
             }
-        });
-
-        // Apply animation after all stats are added
-        const animate = true;
-        if (animate) {
-            setTimeout(() => {
-                const percentileBars = statsDisplay.querySelectorAll('.percentile-bar');
-
-                // Animate all bars simultaneously
-                percentileBars.forEach(bar => {
-                    const percentileText = bar.querySelector('.percentile-circle').textContent;
-                    if (percentileText !== 'N/A') {
-                        const percentile = parseFloat(percentileText);
-                        bar.style.width = `${percentile}%`;
-                    } else {
-                        // For non-qualified players, show a muted 50% bar
-                        bar.style.width = '50%';
-                        bar.style.opacity = '0.4';
-                    }
-                });
-            }, 50);
-        }
-
-        if (statsDisplay.children.length === 0) {
-            statsContainer.textContent = `No ${isPitcher ? 'pitching' : 'hitting'} stats available for 2025.`;
+        } else {
+            recentPerformanceText = `Recent hitting stats unavailable`;
         }
     }
 
+    recentPerformance.innerHTML = `<span>${recentPerformanceText}</span>`;
+    recentPerformance.style.color = textColor; // Apply color dynamically
+    recentPerformance.style.backgroundColor = bgColor;
+    recentPerformance.style.border = borderColor; 
+    playerStatsSummaryRow.appendChild(recentPerformance); // Append to the summary row
+
+    if (!playerContainer || !statsContainer || !playerNameElement || !playerPositionElement || !playerImageDiv) {
+        console.error("One or more required DOM elements not found for displayPlayerInfo.");
+        // If essential elements are missing, hide stats container and exit
+        if (statsContainer) statsContainer.style.display = 'none';
+        return;
+    }
+
+
+    // --- 3. Stat Items Grid Wrapper (below summary row, 5 columns) ---
+    const statsGridWrapper = document.createElement('div');
+    statsGridWrapper.className = 'stats-grid-wrapper';
+    statsContainer.appendChild(statsGridWrapper); // Append to stats-container
+
+    statConfigList.forEach(statConfig => {
+        if (currentStats.hasOwnProperty(statConfig.name)) {
+            const statValue = parseFloat(currentStats[statConfig.name]);
+            if (!isNaN(statValue)) {
+                const qualifiedValuesForStat = qualifiedPlayers
+                    .map(p => parseFloat(p.stats[statConfig.name]))
+                    .filter(value => !isNaN(value));
+
+                const higherIsBetter = isPitcher ? !statConfig.goodLow : statConfig.goodHigh;
+
+                let percentile = 50; // Default to middle if not qualified or no data
+                if (isQualified && qualifiedValuesForStat.length > 0) { // Only calculate if qualified and there's data
+                    percentile = calculatePlayerPercentile(statValue, qualifiedValuesForStat, higherIsBetter);
+                } else {
+                    percentile = 0; // Set to 0 if not qualified or no data for bar
+                }
+                
+                const displayValue = statConfig.format ? statConfig.format(statValue) : statValue;
+                const sliderColor = getPercentileColor(percentile);
+
+                const statItem = document.createElement('div');
+                statItem.className = 'stat-item';
+
+                // If not qualified, apply muted styling through a class
+                if (!isQualified) {
+                    statItem.classList.add('not-qualified-stat'); // New class for muted styling
+                }
+
+                statItem.innerHTML = `
+                    <div class="stat-name">${statConfig.display}</div>
+                    <div class="stat-value">${displayValue}</div>
+                    <div class="percentile-container">
+                        <div class="percentile-bar" style="background-color: ${sliderColor}; width: 0%;"></div>
+                        <div class="percentile-circle" style="background-color: ${isQualified ? sliderColor : '#9e9e9e'}; left: 0%;">
+                            ${isQualified ? Math.round(percentile) : 'N/A'}
+                        </div>
+                    </div>
+                `;
+                statsGridWrapper.appendChild(statItem); // Append to the new grid wrapper
+
+                // Trigger animation for percentile bar and circle position
+                // Get elements *after* they are appended to the DOM
+                const appendedPercentileBar = statItem.querySelector('.percentile-bar');
+                const appendedPercentileCircle = statItem.querySelector('.percentile-circle');
+
+                setTimeout(() => {
+                    if (isQualified && percentile > 0) { // Only animate if qualified and percentile is valid
+                        appendedPercentileBar.style.width = `${percentile}%`;
+                        // Adjust left for circle to center it on the percentage point
+                        appendedPercentileCircle.style.left = `calc(${percentile}% - 12px)`; // 12px is half of 24px circle width
+                    } else {
+                        appendedPercentileBar.style.width = '0%'; // Keep bar at 0 for N/A or 0 percentile
+                        // Position "N/A" circle at the start if not qualified
+                        appendedPercentileCircle.style.left = `0`; // Position at start of bar
+                    }
+                }, 50); // Small timeout
+            }
+        }
+    });
+
+    // Final check for empty stats
+    if (statsGridWrapper.children.length === 0) {
+        statsContainer.textContent = `No ${isPitcher ? 'pitching' : 'hitting'} stats available for 2025.`;
+        // Clear summary row if no stats are shown
+        playerStatsSummaryRow.remove();
+    }
+}
 
     function getHittingStatConfig() {
         return [

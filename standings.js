@@ -126,9 +126,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 headerRow.classList.add("team-row");
                 headerRow.innerHTML = `
                     <span>Team</span>
-                    <span>Wins</span>
-                    <span>Losses</span>
-                    <span>WC Rank</span>
+                    <span>W</span>
+                    <span>L</span>
+                    <span>Rank</span>
                     <span>Pct</span>
                 `;
                 wildcardContainer.appendChild(headerRow);
@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     const teamRow = document.createElement("div");
                     teamRow.classList.add("team-row");
                     teamRow.innerHTML = `
-                        <span>${team.team.name}</span>
+                        <span><img src="https://www.mlbstatic.com/team-logos/${team.team.id}.svg" alt="${team.team.name} Logo" class="team-logo-standing"></span>
                         <span>${team.wins}</span>
                         <span>${team.losses}</span>
                         <span>${team.wildCardRank}</span>
@@ -183,8 +183,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 headerRow.classList.add("team-row");
                 headerRow.innerHTML = `
                     <span>Team</span>
-                    <span>Wins</span>
-                    <span>Losses</span>
+                    <span>W</span>
+                    <span>L</span>
                     <span>GB</span>
                     <span>Pct</span>
                 `;
@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     const teamRow = document.createElement("div");
                     teamRow.classList.add("team-row");
                     teamRow.innerHTML = `
-                        <span>${team.team.name}</span>
+                        <span><img src="https://www.mlbstatic.com/team-logos/${team.team.id}.svg" alt="${team.team.name} Logo" class="team-logo-standing"></span>
                         <span>${team.wins}</span>
                         <span>${team.losses}</span>
                         <span>${gamesBackArray[index]}</span>

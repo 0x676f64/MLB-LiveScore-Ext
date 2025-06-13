@@ -376,94 +376,99 @@ document.addEventListener("DOMContentLoaded", async () => {
         awayPlayerStats.innerHTML = "";
         homePlayerStats.innerHTML = "";
 
-       
+   // ** When the Game is Over **    
+   
         if (gameState === "Final" || gameState === "Game Over") {
-            awayPlayerStats.innerHTML = `<p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>` || "N/A" ;
-            homePlayerStats.innerHTML = `<p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>` || "N/A" ;
-            document.getElementById("scorebug-wrapper").style.display = "none";
-        
-            if (data.gameData.status.detailedState === "Final: Tied") {
-                document.getElementById("awayPlayerStats").style.display = "none";
-                document.getElementById("homePlayerStats").style.display = "none";
+    awayPlayerStats.innerHTML = `<p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>` || "N/A" ;
+    homePlayerStats.innerHTML = `<p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>` || "N/A" ;
+    document.getElementById("scorebug-wrapper").style.display = "none";
+
+    if (data.gameData.status.detailedState === "Final: Tied") {
+        document.getElementById("awayPlayerStats").style.display = "none";
+        document.getElementById("homePlayerStats").style.display = "none";
+    }
+    
+
+    // **Find the gameplay-info-container**
+    const gameplayContainer = document.getElementById("gameplay-info-container");
+    if (!gameplayContainer) return; // Prevents errors if it doesn't exist
+
+    // **Check if Top Performers already exist**
+    let topPerformersContainer = document.getElementById("top-performers");
+    if (!topPerformersContainer) {
+        topPerformersContainer = document.createElement("div");
+        topPerformersContainer.id = "top-performers";
+        topPerformersContainer.classList.add("top-performers-section"); // Add CSS class
+
+        // **Extract top performers dynamically**
+        const topPerformers = data.liveData.boxscore.topPerformers.slice(0, 3); // Ensure we only use the first 3
+
+        // **Get Player Stats and Image based on Type**
+        const getPlayerStats = (player) => {
+            if (!player || !player.player) return { name: "N/A", stats: "No stats available", imageUrl: "" };
+
+            const name = player.player.person.fullName;
+            const playerId = player.player.person.id;
+            // Try multiple MLB image endpoints
+            const imageUrl = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,h_100,c_fill,q_auto:best/v1/people/${playerId}/headshot/67/current`;
+            let stats = "No stats available";
+
+            if (player.type === "pitcher" || "starter" && player.player.stats?.pitching?.summary) {
+                stats = player.player.stats.pitching.summary; // Use summary for pitchers
+            } else if (player.type === "hitter" && player.player.stats?.batting?.summary) {
+                stats = player.player.stats.batting.summary; // Use summary for hitters
+            } else if (player.type === "hitter") {
+                // If summary is missing, construct a fallback from available batting stats
+                const batting = player.player.stats.batting;
+                if (batting) {
+                    stats = `${batting.hits}-${batting.atBats}, ${batting.runs} R, ${batting.rbi} RBI`;
+                }
             }
-            
+        
+            return { name, stats, imageUrl };
+        };
 
-            // **Find the gameplay-info-container**
-            const gameplayContainer = document.getElementById("gameplay-info-container");
-            if (!gameplayContainer) return; // Prevents errors if it doesn't exist
-        
-            // **Check if Top Performers already exist**
-            let topPerformersContainer = document.getElementById("top-performers");
-            if (!topPerformersContainer) {
-                topPerformersContainer = document.createElement("div");
-                topPerformersContainer.id = "top-performers";
-                topPerformersContainer.classList.add("top-performers-section"); // Add CSS class
-        
-                // **Extract top performers dynamically**
-                const topPerformers = data.liveData.boxscore.topPerformers.slice(0, 3); // Ensure we only use the first 3
-        
-                // **Get Player Stats based on Type**
-                const getPlayerStats = (player) => {
-                    if (!player || !player.player) return { name: "N/A", stats: "No stats available" };
-        
-                    const name = player.player.person.fullName;
-                    let stats = "No stats available";
-        
-                    if (player.type === "pitcher" || "starter" && player.player.stats?.pitching?.summary) {
-                        stats = player.player.stats.pitching.summary; // Use summary for pitchers
-                    } else if (player.type === "hitter" && player.player.stats?.batting?.summary) {
-                        stats = player.player.stats.batting.summary; // Use summary for hitters
-                    } else if (player.type === "hitter") {
-                        // If summary is missing, construct a fallback from available batting stats
-                        const batting = player.player.stats.batting;
-                        if (batting) {
-                            stats = `${batting.hits}-${batting.atBats}, ${batting.runs} R, ${batting.rbi} RBI`;
-                        }
-                    }
-                
-                    return { name, stats };
-                };
-        
-                // **Get Stats for the 3 Performers**
-                const performerOne = getPlayerStats(topPerformers[0]);
-                const performerTwo = getPlayerStats(topPerformers[1]);
-                const performerThree = getPlayerStats(topPerformers[2]);
-        
-                // **Create HTML**
-                topPerformersContainer.innerHTML = `
-                <h3 class="top-performers-title">TOP PERFORMERS</h3>
-                <div class="top-performers-row">
-                    <div class="top-performer">
-                        <p class="performer-name">
-                            <span>${performerOne.name.split(" ")[0]}</span> 
-                            <span>${performerOne.name.split(" ")[1]}</span>
-                        </p>
-                        <p class="performer-stats">${performerOne.stats}</p>
-                    </div>
-                    <div class="top-performer">
-                        <p class="performer-name">
-                            <span>${performerTwo.name.split(" ")[0]}</span> 
-                            <span>${performerTwo.name.split(" ")[1]}</span>
-                        </p>
-                        <p class="performer-stats">${performerTwo.stats}</p>
-                    </div>
-                    <div class="top-performer">
-                        <p class="performer-name">
-                            <span>${performerThree.name.split(" ")[0]}</span> 
-                            <span>${performerThree.name.split(" ")[1]}</span>
-                        </p>
-                        <p class="performer-stats">${performerThree.stats}</p>
-                    </div>
-                </div>
-            `;
+        // **Get Stats for the 3 Performers**
+        const performerOne = getPlayerStats(topPerformers[0]);
+        const performerTwo = getPlayerStats(topPerformers[1]);
+        const performerThree = getPlayerStats(topPerformers[2]);
 
-        
-                // **Insert it AFTER gameplay-info-container**
-                gameplayContainer.parentNode.insertBefore(topPerformersContainer, gameplayContainer.nextSibling);
-            }
+        // **Create HTML with Images**
+        topPerformersContainer.innerHTML = `
+        <div class="top-performers-row">
+            <div class="top-performer">
+                <img src="${performerOne.imageUrl}" alt="${performerOne.name}" class="performer-image" onerror="this.onerror=null; this.src='https://content.mlb.com/images/headshots/current/60x60/generic_player@2x.png'">
+                <p class="performer-name">
+                    <span>${performerOne.name.split(" ")[0]}</span> 
+                    <span>${performerOne.name.split(" ")[1]}</span>
+                </p>
+                <p class="performer-stats">${performerOne.stats}</p>
+            </div>
+            <div class="top-performer">
+                <img src="${performerTwo.imageUrl}" alt="${performerTwo.name}" class="performer-image" onerror="this.onerror=null; this.src='https://content.mlb.com/images/headshots/current/60x60/generic_player@2x.png'">
+                <p class="performer-name">
+                    <span>${performerTwo.name.split(" ")[0]}</span> 
+                    <span>${performerTwo.name.split(" ")[1]}</span>
+                </p>
+                <p class="performer-stats">${performerTwo.stats}</p>
+            </div>
+            <div class="top-performer">
+                <img src="${performerThree.imageUrl}" alt="${performerThree.name}" class="performer-image" onerror="this.onerror=null; this.src='https://content.mlb.com/images/headshots/current/60x60/generic_player@2x.png'">
+                <p class="performer-name">
+                    <span>${performerThree.name.split(" ")[0]}</span> 
+                    <span>${performerThree.name.split(" ")[1]}</span>
+                </p>
+                <p class="performer-stats">${performerThree.stats}</p>
+            </div>
+        </div>
+    `;
 
-            return;
-        }
+        // **Insert it AFTER gameplay-info-container**
+        gameplayContainer.parentNode.insertBefore(topPerformersContainer, gameplayContainer.nextSibling);
+    }
+
+    return;
+}
         
         
         
@@ -608,16 +613,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     
             if (gameStatusText === "Suspended: Rain") {
                 inningText = "SUSPENDED";
-                inningBoxStyle = "color: red;";
+                inningBoxStyle = "color: #ff6a6c;";
             } else if (gameStatusText === "Cancelled") {
                 inningText = "RAIN";
-                inningBoxStyle = "color: red;";
+                inningBoxStyle = "color: #ff6a6c;";
             } else if (gameStatusText === "Final" || gameStatusText === "Game Over" || gameStatusText === "Final: Tied") {
                 inningText = "FINAL";
-                inningBoxStyle = "color: red;";
+                inningBoxStyle = "color: #ff6a6c;";
             } else if (gameStatusText === "Pre-Game" || gameStatusText === "Scheduled") {
                 inningText = formatGameTime(game.datetime.dateTime);
-                inningBoxStyle = "color: red;";
+                inningBoxStyle = "color: #ff6a6c;";
             } else {
                 const inningHalf = linescore.inningHalf ? (linescore.inningHalf === "Top" ? "TOP" : "BOT") : "";
                 const currentInning = linescore.currentInning || "";
@@ -758,10 +763,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // Append hit data formatted correctly
                 pitchResult += `<div class="hit-data">
-                    <span><strong>EV:</strong> ${launchSpeed}</span> |
-                    <span><strong>LA:</strong> ${launchAngle}</span> |
-                    <span><strong>Distance:</strong> ${totalDistance}</span>
-                </div>`;
+                <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
+                <span><i><strong>LA:</strong></i> ${launchAngle}</span>
+                <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
+            </div>`;
             }
         } else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") || pitchResult.includes("Flyout") || pitchResult.includes("Forceout") || pitchResult.includes("Pop Out") || pitchResult.includes("Lineout") || pitchResult.includes("Sac Fly")) {
             pitchResult = lastPlay.result?.description || pitchDetails.details.description;
@@ -776,10 +781,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // Append hit data formatted correctly
                 pitchResult += `<div class="hit-data">
-                    <span><strong>EV:</strong> ${launchSpeed}</span> |
-                    <span><strong>LA:</strong> ${launchAngle}</span> |
-                    <span><strong>Distance:</strong> ${totalDistance}</span>
-                </div>`;
+                <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
+                <span><i><strong>LA:</strong></i> ${launchAngle}</span>
+                <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
+            </div>`;
             }
         } else if (
             pitchResult.includes("Foul") ||

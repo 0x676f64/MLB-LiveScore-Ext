@@ -9,21 +9,23 @@
   <script src="navigation.js" defer></script>
   <style>
      html {
-      width: 100%;
-      max-width: 300px;
-      box-sizing: border-box;
-      scrollbar-width: none;
-      height: 0;
-      min-height: 0;
-    }
+    scrollbar-width: none;
+}
 
-    body {
-      font-family: "Rubik", sans-serif;
-      text-align: center;
-      width: 500px;
-      box-sizing: border-box;
-      height: 1000px;
-    }
+body {
+    width: 500px; /* Overall content width */
+    font-family: "Rubik", sans-serif;
+    margin: 0 auto; /* Center the entire body content */
+    display: flex; /* Make body a flex container to stack children */
+    flex-direction: column;
+    align-items: center; /* Center children horizontally */
+}
+
+/* Hide scrollbar in Webkit browsers */
+body::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
 
    /* Header image styling */
     .statsheader-container img {
@@ -31,51 +33,12 @@
     height: 90px;
     margin-top: 15px;
     margin-bottom: 15px;
-    margin-left: 20px;
+    margin-left: 220px;
     }
 
     img {
-        margin-right: auto;
-        margin-left: auto;
+        margin-left: 200px;
         margin-top: 20px;
-    }
-
-    .nav-container {
-        display: flex;
-        justify-content: space-around;
-        background-color: #e5decf;
-        position: relative;
-        align-items: center;
-        padding: 10px;
-        height: 50px;
-        bottom: 0;
-        width: 100%;
-        align-items: center;
-        margin-right: auto;
-        margin-left: auto;
-        margin-top: 10px;
-        overflow: visible;
-        
-    }
-
-    .nav-container button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 10px;
-        margin-right: 20px;
-    }
-
-    .nav-container svg {
-        height: 28px;
-        width: 28px;
-        fill:rgb(59, 59, 59);
-        transition: fill 0.2s; 
-    }
-
-    .nav-container svg:hover {
-        fill: #D7827E;
-        background-color: #e5decf;
     }
 
     .tabs {
@@ -129,6 +92,7 @@
       font-size: 1.3rem;
       font-weight: 300;
       line-height: 1;
+      margin-left: 200px;
     }
 
     .team-name {
@@ -136,7 +100,213 @@
       font-size: 2.5rem;
       font-weight: 600;
       line-height: 1;
+      margin-left: 200px;
     }
+
+     .nav-container {
+        display: flex;
+        justify-content: space-around;
+        background-color: #e5decf;
+        position: relative;
+        align-items: center;
+        padding: 10px;
+        bottom: 0;
+        width: 140%;
+        align-items: center;
+        margin-right: auto;
+        margin-left: auto;
+        margin-top: 10px;
+        overflow: visible;
+        
+    }
+
+    .nav-container button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 10px;
+        margin-right: 20px;
+    }
+
+    .nav-container svg {
+        height: 28px;
+        width: 28px;
+        fill:rgb(59, 59, 59);
+        transition: fill 0.2s; 
+    }
+    .nav-container svg:hover {
+        fill: #D782
+7E;
+        background-color: #e5decf;
+    }
+
+    /* Styles for the stats container (outer wrapper) */
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%; /* Consistent width for content */
+            margin: 15px auto;
+            border: 3px solid #000;
+            border-radius: 12px; /* Slightly more rounded corners */
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2); /* Enhanced shadow */
+            padding: 30px; /* More padding */
+            background-color: #E5DECF;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        /* Styles for tabs container */
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Space between tabs */
+            padding: 0 20px 20px; /* Padding for the bottom as well */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Styles for individual tabs */
+        .tab {
+            padding: 12px 25px; /* Increased padding for tabs */
+            font-size: 16px; /* Larger font size */
+            font-weight: 700; /* Bolder font */
+            cursor: pointer;
+            background-color: transparent;
+            border: 2px solid #D7827E;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            color: #3b3b3b;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15); /* Softer shadow */
+        }
+
+        .tab.active {
+            background-color: #D7827E; /* Active tab background */
+            color: white; /* Active tab text color */
+            border-color: #D7827E;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-2px); /* Slight lift on active */
+        }
+
+        .tab:not(.active):hover {
+            background-color: #F0A09B; /* Hover effect for inactive tabs */
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Content container for stats grid */
+        .content-container {
+            width: 100%; /* Take full width of parent */
+            display: flex; /* Make it a flex container to center loading */
+            justify-content: center; /* Center loading indicator */
+            align-items: center;
+        }
+
+        /* Styles for the stats grid wrapper */
+        .stats-grid-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between; /* Distribute items evenly */
+            align-items: stretch; /* Make all stat-items in a row the same height */
+            gap: 5px 5px; /* Vertical and Horizontal gap */
+            width: 100%; /* Take full width of content-container */
+        }
+
+        /* Styles for individual stat rows (boxes) */
+        .stat-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 10px; /* Increased padding */
+            flex-basis: calc(25% - 15px); /* Adjusted for 4 columns with 15px gap */
+            min-width: 0; /* Allows shrinking on smaller screens */
+            background-color: #ffffff; /* White background for each row */
+            border-radius: 10px; /* Slightly more rounded */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Softer shadow */
+            box-sizing: border-box; /* Include padding and border in sizing */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Styles for stat name */
+        .stat-name {
+            font-size: 13px; /* Slightly larger */
+            width: 100%;
+            font-weight: 600;
+            text-align: center;
+            color: #555;
+            text-transform: capitalize;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            order: 1;
+        }
+
+        /* Styles for stat value */
+        .stat-value {
+            font-size: 1.7em; /* Larger font size */
+            width: 100%;
+            text-align: center; /* Center align value */
+            font-weight: 700;
+            color: #2a283e;
+            order: 2;
+            font-style: italic;
+        }
+
+        /* Styles for percentile bar container */
+        .percentile-container {
+            width: 90%;
+            max-width: 100px; /* Max width for consistency */
+            height: 12px; /* Slightly taller bar */
+            background-color: #e0e0e0;
+            border-radius: 7px; /* Match taller bar */
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: visible;
+            order: 3;
+        }
+
+        /* Styles for percentile bar fill */
+        .percentile-bar {
+            height: 100%;
+            background-color: blue; /* Default, will be overridden by JS */
+            border-radius: 7px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 1.3s ease-out; /* Animation */
+        }
+
+        /* Styles for percentile circle */
+        .percentile-circle {
+            position: absolute;
+            top: -6px; /* Adjusted to center vertically over the bar */
+            left: 0%; /* Initial left for animation */
+            width: 24px; /* Larger for better visibility */
+            height: 24px; /* Keep circular */
+            border-radius: 50%;
+            background-color: blue; /* Default, will be overridden by JS */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px; /* Slightly larger font */
+            font-weight: 500;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3); /* Stronger shadow */
+            transition: left 1.3s ease-out; /* Animation */
+            z-index: 2;
+        }
+
+        /* Loading indicator styling */
+        .loading-indicator {
+            text-align: center;
+            padding: 20px;
+            font-weight: bold;
+            color: #777;
+            font-size: 1.1em;
+        }
 
   </style>
 </head>

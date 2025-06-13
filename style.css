@@ -1,9 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..1000&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap');
+
+html {
+    overflow: visible;
+    height: 100%;
+    width: 100%;
+}
+
 body {
     font-family: "Afacad Flux", Arial, sans-serif;
     margin: 0;
-    transform: scale(0.6); /* 80% of the original size */
+    transform: scale(0.7); /* 80% of the original size */
     transform-origin: top left; /* Ensures it scales from the top left corner */
     display: flex;
     flex-direction: column;
@@ -26,7 +33,7 @@ body {
 
 #games-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px; /* Reduce spacing between game boxes */
     padding: 5px; /* Reduce padding */
 }
@@ -37,7 +44,7 @@ body {
     text-align: center;
     background-color: #e5decf;
     border-radius: 5px; /* Smaller border radius */
-    font-size: 12px; /* Reduce text size */
+    font-size: 10px; /* Reduce text size */
     width: 150px; /* Set a smaller width */
     height: 120px; /* Set a smaller height */
     display: flex;
@@ -67,20 +74,22 @@ img {
 }
 
 .team-logo {
-    width: 25px; /* Smaller logos */
-    height: 25px;
+    width: 35px; /* Smaller logos */
+    height: 35px;
 }
 
 .team-abbr, .team-score {
-    font-size: 20px; /* Reduce font size */
+    font-size: 16px; /* Reduce font size */
     margin: 0 5px;
+    font-weight: 500;
+    color: #373838;
 }
 
 .game-status {
     font-size: 15px;
-    font-weight: bold;
+    font-weight: 700;
     align-self: flex-start;
-    color: red;
+    color: #ff6a6c;
 }
 
 #scorebug {
@@ -88,20 +97,23 @@ img {
     top: 150px;
 }
 
+/* Add this to your CSS file, or update an existing #backButton rule */
 #backButton {
-    display: block !important;
-    background-color: #191724;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 5px;
-  }
+    font-family: 'Rubik', sans-serif; /* Use Rubik font */
+    background-color: #2a283e; /* Button background color */
+    color: #ff6a6c; /* Font color */
+    padding: 10px 15px; /* Adjust padding as needed */
+    border-radius: 8px; /* Slightly rounded corners */
+    cursor: pointer; /* Indicate it's clickable */
+    font-weight: 500; /* Make the text bold */
+    width: 70%;
+    transition: background-color 0.5s ease, color 0.5s ease; /* Smooth transition for hover effects */
+}
 
-  .top-performers-title {
-    font-size: 20px;
-  }
+#backButton:hover {
+    background-color: #2a283ee7; /* Slightly lighter background on hover */
+    border-color: #ffd1d2; /* Match border color on hover */
+}
 
   .player-info {
     font-size: 14px;

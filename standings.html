@@ -9,142 +9,183 @@
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="standings.js" defer></script>
     <script src="navigation.js" defer></script>
-        <style>
-           html {
-        width: 100%;
-        max-width: 300px;
-        box-sizing: border-box;
-        height: 0;
-        scrollbar-width: none;
+    <style>
+
+/* --- Core HTML & Body Styling for Standings Page --- */
+html {
+      box-sizing: border-box;
+      scrollbar-width: none;
+      height: 0;
+      min-height: 0;
+      overflow: hidden;
+      max-width: 700px;
     }
 
     body {
-        width: 500px;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;   
+      font-family: "Rubik", sans-serif;
+      text-align: center;
+      width: 1000px;
+      box-sizing: border-box;
     }
 
-        .header-container img {
-            margin-left: 8rem;
-            width: 250px;
-            height: 90px;
-            margin-top: 15px;
-            margin-bottom: 15px;
-        }
+/* Webkit-specific styles to hide scrollbar while allowing scrolling */
+body::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    background: transparent;
+}
 
-        #standings-container {
-            padding: 15px;
-            overflow: visible;
+/* --- Header Styling --- */
+.header-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 0;
+}
 
-        }
+.header-container img {
+    width: 250px;
+    height: 90px;
+}
 
-        #tabs-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-            margin-top: 20px;
-        }
+/* --- Tabs Container Styling (AL, NL, WC buttons) --- */
+#tabs-container {
+    display: flex;
+    justify-content: center; /* Centers the buttons within this container */
+    margin: 10px auto; /* Centers the tabs container horizontally on the page */
+    width: 100%; /* Ensure it spans the full width to allow centering */
+    padding: 0 20px;
+    box-sizing: border-box;
+}
 
-        #tabs-container button {
-            padding: 10px 20px;
-            margin: 0 10px;
-            background-color: #e5decf;
-            border: px solid #D7827E;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+#tabs-container button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    background-color: #e5decf;
+    border: 1px solid #D7827E;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    color: #3b3b3b;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-        #tabs-container button.active {
-            background-color: #ccc6b5;
-            color: white;
-            border-color: #D7827E;
-        }
+#tabs-container button.active {
+    background-color: #D7827E;
+    color: white;
+    border-color: #D7827E;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+}
 
-        .division-container {
-            margin-bottom: 20px;
-            border: 2px solid #D7827E;
-            padding: 20px;
-            background-color: #e5decf;
-            align-items: center;
-        }
+/* --- Main Standings Display Area --- */
+#standings-container {
+    padding: 15px;
+    display: flex; /* Make it a flex container to arrange divisions in a row */
+    flex-wrap: nowrap; /* PREVENT WRAPPING - This is the key change! */
+    justify-content: center; /* Center all three divisions if they don't fill full width */
+    align-items: flex-start;
+    gap: 20px; /* Space between division columns */
+    width: 100%; /* Occupy full width of the body */
+    box-sizing: border-box;
+}
 
-        .division-container h2 {
-            text-align: center;
-            margin-bottom: 10px;
-            color: #D7827E;
-            font-size: 15px;
-        }
+/* --- Individual Division/Wildcard Containers --- */
+.division-container,
+.wildcard-container {
+    /* Calculate width for 3 columns. Make them truly equal parts of the total width. */
+    /* Ensure this width is enough for content without horizontal scroll */
+    width: calc(34% - 50px); /* Approx 1/3rd width minus the gap */
+    min-width: 200px; /* Increase min-width for better content display, adjust as needed */
+    flex-shrink: 0; /* Prevent them from shrinking below their calculated width */
+    margin-bottom: 0;
+    border: 2px solid #D7827E;
+    padding: 15px;
+    background-color: #e5decf;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 
-        .wildcard-container {
-            margin-bottom: 20px;
-            border: 2px solid #D7827E;
-            padding: 20px;
-            background-color: #e5decf;
-            align-items: center;
-        }
+.division-container h2,
+.wildcard-container h2 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #ff6a6c;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+}
 
-        .wildcard-container h2 {
-            text-align: center;
-            margin-bottom: 10px;
-            color: #D7827E;
-            font-size: 15px;
-        }
+/* --- Team Row Styling within Divisions --- */
+.team-row {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
+    gap: 5px;
+    padding: 5px 0;
+    border-bottom: 1px solid #ccc;
+    align-items: center;
+    width: 100%;
+    font-size: 14px;
+    color: #3b3b3b;
+    font-weight: 500;
+}
 
-        .team-row {
-            display: grid;
-            grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
-            gap: 10px;
-            padding: 5px 0;
-            border-bottom: 1px solid #eee;
-            align-items: center;
-            width: 100%;
-            font-size: 15px;
-        }
+.team-row:first-of-type {
+    font-weight: bold;
+    font-size: 13px;
+    color: #555;
+    text-transform: uppercase;
+}
 
-        .team-row:first-of-type {
-            font-weight: bold;
-            font-size: 14px;
-        }
+.team-row:last-child {
+    border-bottom: none;
+}
 
-        .team-row:last-child {
-            border-bottom: none;
-        }
+.team-logo-standing {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+}
 
-        .nav-container {
-        display: flex;
-        justify-content: space-around;
-        background-color: #e5decf;
-        padding: 10px;
-        position: relative; /* Keep it relative */
-        width: 97%;
-        align-items: center;
-        margin-right: auto;
-        margin-left: auto;
-        margin-top: 10px;
-        height: auto;
-    }
-        .nav-container button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
-            text-align: center;
-            margin-right: 20px;
-        }
-        .nav-container svg {
-            height: 28px;
-            width: 28px;
-            fill:rgb(59, 59, 59);
-            transition: fill 0.2s; 
-        }
+/* --- Navigation Container --- */
+.nav-container {
+    display: flex;
+    justify-content: space-around;
+    background-color: #e5decf;
+    position: relative;
+    align-items: center;
+    padding: 10px;
+    height: 50px;
+    bottom: 0;
+    width: 100%;
+    align-items: center;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 10px;
+            
+}
 
-        .nav-container svg:hover {
-            fill: #D7827E;
-            background-color: #e5decf;
-        }
+.nav-container button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    margin-right: 20px;
+}
 
-        </style>
+.nav-container svg {
+    height: 28px;
+    width: 28px;
+    fill:rgb(59, 59, 59);
+    transition: fill 0.2s; 
+}
+
+.nav-container svg:hover {
+    fill: #D7827E;
+    background-color: #e5decf;
+}
+    </style>
         
     </head>
     <body>
