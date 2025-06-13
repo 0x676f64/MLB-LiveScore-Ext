@@ -1,16 +1,13 @@
 MLB live feed extension. View live game results, and stats while still remaining productive with every day work. 
 
+![Screenshot 2025-06-13 110202](https://github.com/user-attachments/assets/9d277762-ec5c-4f3d-84c6-4529dc2bb811)
 
-![Screenshot 2025-05-27 110544](https://github.com/user-attachments/assets/9aacd636-0887-44a6-8a51-5bafb856da44)
+![Screenshot 2025-06-13 140743](https://github.com/user-attachments/assets/30824406-7319-461f-9b44-73fef68212b6)
 
-![Screenshot 2025-03-19 123422](https://github.com/user-attachments/assets/f2ddc8e7-7c7a-4e9b-a67b-a8bdb3bd18f7)
+![Screenshot 2025-06-13 110218](https://github.com/user-attachments/assets/85590501-f535-4468-b1ec-465500d440bc)
 
-![Screenshot 2025-03-27 091618](https://github.com/user-attachments/assets/31ada541-4207-4ac5-a7c4-6728daa0aab1)
+![Screenshot 2025-06-13 110242](https://github.com/user-attachments/assets/c559ab35-1f32-4cd6-9d69-106eac367a58)
 
-![Screenshot 2025-05-27 132518](https://github.com/user-attachments/assets/ca870a96-cfd8-48af-a244-17d8c6c7e1f0)
+![Screenshot 2025-06-13 110316](https://github.com/user-attachments/assets/829bae5e-6f82-4c84-83f2-424760db7487)
 
-![Screenshot 2025-05-27 132700](https://github.com/user-attachments/assets/01b01de0-e282-4280-9f27-aa035398085f)
-
-![Screenshot 2025-05-27 111908](https://github.com/user-attachments/assets/6b14f180-ba17-4cb8-b2ef-64a80098af12)
-
-![Screenshot 2025-05-27 085401](https://github.com/user-attachments/assets/b94a70d0-1f86-43d8-95ce-6442f64737c1)
+![Screenshot 2025-06-13 113206](https://github.com/user-attachments/assets/018e3a7a-092e-4799-a3c6-eeb960117660)
