@@ -5,21 +5,20 @@
     <script defer src="popup.js" ></script>
     <meta charset="UTF-8">
     <style>
+html {
+    scrollbar-width: none;
+    max-height: 500px;
+}
 
-        html {
-        scrollbar-width: none;
-        max-height: 500px;
-        }
+body {
+    width: 600px;
+    font-family: "Rubik", sans-serif;
+    height: 600px;
+    transform: scale(0.9);
+    transform-origin: top left;
+}
 
-    body {
-        width: 600px;
-        font-family: "Rubik", sans-serif;
-        height: 600px;
-        transform: scale(0.9); /* 80% of the original size */
-        transform-origin: top left; /* Ensures it scales from the top left corner */
-    }
-
-    #popup-container {
+#popup-container {
     width: 640px;
     height: 600px;
     display: flex;
@@ -31,16 +30,33 @@
     padding: 10px;
     position: relative;
     border-radius: 10px;
-    }
+}
 
-    #game-info {
-    display: grid;
-    grid-template-columns: 1fr 3fr 1fr;  /* Away team | Middle section | Home team */
+#game-info {
+    display: flex;
     align-items: center;
-    width: 80%;
-    margin-top: 10px;
-    padding: 5px 0;
-    border-bottom: 1px solid #24272bd5;
+    justify-content: space-between;
+    margin-top: 20px;
+    width: 78%; /* Keep this to ensure it spans full width */
+}
+
+/* --- New styles for the tab section --- */
+#tab-section {
+    width: 100%; /* Make the tab section span full width */
+    margin-bottom: 15px; /* Space between tabs and gameplay-info-container */
+    padding-bottom: 10px; /* Padding for the tabs themselves */
+    border-bottom: 1px solid #ddd; /* This line separates tabs from gameplay info */
+    display: flex;
+    justify-content: center; /* Center the tabs container within this section */
+}
+
+#gameplay-info-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 15px; /* Adjust as needed for space below gameplay info */
+    padding-bottom: 10px; /* Adjust as needed for space below gameplay info */
 }
 
 /* Create team container for logo and record */
@@ -64,11 +80,33 @@
     margin-top: 5px;
 }
 
-/* Middle section with scores and inning */
+/* --- CRITICAL CHANGE: Revert .game-status to row and adjust positioning --- */
 .game-status {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: row; /* Keep as row to place scores left/right of center */
+    align-items: center; /* Vertically center items */
+    justify-content: space-around; /* Distribute space among items */
+    width: 40%; /* Adjust as needed, but 40% seems reasonable */
+    position: relative; /* Needed for absolute positioning of scores if chosen */
+}
+
+/* New: Container for inning/stadium to keep them centered */
+#center-elements {
+    display: flex;
+    flex-direction: column; /* Stack inning and stadium */
+    align-items: center; /* Center them horizontally */
+    flex-grow: 1; /* Allow it to take up available space */
+    min-width: 120px; /* Ensure it has enough space for text */
+    /* Remove any margins that push it too far down, it should be naturally centered */
+    margin: 0;
+}
+
+.stadium {
+    display: block;
+    color: #0B0F13;
+    margin-bottom: 5px; /* Add margin below stadium info */
+    text-align: center; /* Ensure text is centered */
+    white-space: nowrap; /* Prevent wrapping */
 }
 
 .team-score {
@@ -77,6 +115,8 @@
     min-width: 40px;
     text-align: center;
     color: #0B0F13;
+    /* Scores will now be direct children of .game-status, not #center-elements */
+    /* No specific margin needed here as justify-content will handle spacing */
 }
 
 .inning {
@@ -85,66 +125,65 @@
     min-width: 60px;
     text-align: center;
     color: #ff6a6c;
-    margin-right: auto;
-    margin-left: auto;
+    margin-bottom: 5px; /* Space between inning and stadium */
 }
 
-    .player-info {
+.player-info {
     width: 120px;
     padding: 8px;
     background-color: transparent;
     border-radius: 5px;
-    }
+}
 
-    .player-name {
+.player-name {
     font-weight: bold;
     margin-bottom: 5px;
     width: 120%;
-    }
+}
 
-    .player-position {
+.player-position {
     font-style: italic;
     margin-bottom: 5px;
-    color: #D7827E; /* Change to your preferred color */
-    }
+    color: #D7827E;
+}
 
-    .player-stat {
+.player-stat {
     margin: 2px 0;
     font-size: 0.9em;
-    }
+}
 
-    .lineup {
-        font-size: 12px;
-        margin: 20px 0;
-    }
+.lineup {
+    font-size: 12px;
+    margin: 20px 0;
+}
 
-    .limeup:first-child {
-        font-weight: bold;
-    }
+.lineup:first-child {
+    font-weight: bold;
+}
 
-    .hand {
-    color: #db7872; /* Change to your preferred color */
+.hand {
+    color: #db7872;
     font-weight: 500;
     font-style: italic;
-    }
+}
 
-    .field {
-        color: #D7827E; /* Change to your preferred color */
-        font-weight: 500;
-        font-style: italic;
-    }
+.field {
+    color: #D7827E;
+    font-weight: 500;
+    font-style: italic;
+}
 
-    #away-player-info {
-        margin-left: 40px;
-    }
+#away-player-info {
+    margin-left: 60px;
+}
 
-    #home-player-info {
-        margin-right: 70px;
-    }
+#home-player-info {
+    margin-right: 70px;
+}
 
-    .team-logo {
+.team-logo {
     display: block;
-    width: 80px;  /* Adjust as needed */
+    width: 80px;
     height: 80px;
     margin: 0 auto;
 }
@@ -153,7 +192,7 @@
     text-align: center;
     font-size: 14px;
     font-weight: bold;
-    margin-top: 5px;  /* Adds spacing below the logo */
+    margin-top: 5px;
 }
 
 #scoreboard-container {
@@ -193,13 +232,6 @@
 #pitch-data-section {
     width: 100%;
     margin: 10px auto;
-}
-
-.separator-line {
-    margin: 5px 0;
-    border: 0;
-    height: 1px;
-    background-color: #ccc;
 }
 
 #pitch-data-container {
@@ -270,14 +302,12 @@
     display: block;
 }
 
-/* Center and style the pitch description */
 #pitch-description-container {
     text-align: center;
     margin-top: 30px;
     font-size: 18px;
 }
 
-/* Color-coded results */
 .pitch-description {
     display: inline-block;
     padding: 5px 12px;
@@ -287,7 +317,6 @@
     width: 80%;
 }
 
-/* Colors for different outcomes */
 .ball {
     color: white;
     background-color: #286983;
@@ -324,26 +353,27 @@
 }
 
 .hit-data {
-    margin-top: 10px; /* Reduced margin slightly for better flow, adjust as desired */
-    font-size: 16px;  /* Reduced font size slightly to be more compact, adjust as desired */
-    
-    display: flex; /* Make it a flex container */
-    justify-content: space-around; /* Distribute items evenly with space around them */
-    align-items: center; /* Vertically align items */
-    width: 100%; /* Ensure it spans the full width of its parent to utilize space-around */
-    color: #ff6a6c; /* Keep the desired font color */
-    padding: 5px 0; /* Add a little padding above and below */
+    margin-top: 10px;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    color: #ff6a6c;
+    padding: 5px 0;
 }
 
-/* Ensure the labels are italic and bold within the hit-data */
 .hit-data span i {
     font-style: italic;
     font-weight: bold;
 }
 
-/* You might want to slightly adjust the font size of the strong/italic tags too if needed */
 .hit-data span i strong {
-    font-size: 0.95em; /* Slightly smaller than parent for visual distinction */
+    font-size: 0.95em;
+}
+
+.hit .hit-data {
+    color: #0B0F13;
 }
 
 #away-player-stats, #home-player-stats {
@@ -360,17 +390,159 @@
     display: block;
     margin-left: auto;
     margin-right: auto;
-     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-/* Ensure the top-performer container is centered */
 .top-performer {
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-    
+
+/* Tabs Container (now within its own #tab-section) */
+#tabs-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    background-color: #eee;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 2px;
+}
+
+.tab-button {
+    flex-grow: 1;
+    padding: 5px 3px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: #555;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 0;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.tab-button.active {
+    background-color: #D7827E;
+    color: white;
+}
+
+.tab-button:hover:not(.active) {
+    background-color: #e0e0e0;
+}
+
+/* --- Content Area --- */
+#content-area {
+    padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    flex-grow: 1;
+    margin-top: 15px; /* Keep this to separate from content above */
+}
+
+#loading-indicator {
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    color: #666;
+}
+
+/* --- Content Styling (Boxscore, Plays) --- */
+.boxscore-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+.boxscore-table th, .boxscore-table td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 0.8em;
+    white-space: nowrap;
+}
+
+.boxscore-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    color: #444;
+}
+
+.boxscore-table td:nth-child(1) { text-align: left; }
+.boxscore-table td:nth-child(n+2) { text-align: center; }
+.boxscore-pitching-table td:nth-child(n+2) { text-align: center; }
+
+.inning-runs {
+    text-align: center;
+}
+
+h3 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    color: #D7827E;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+h4 {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: #444;
+    font-size: 1em;
+    text-align: center;
+}
+
+.scoring-play-item {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #eee;
+    font-size: 0.9em;
+}
+
+.scoring-play-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.scoring-play-item strong {
+    color: #D7827E;
+}
+
+.play-by-play-item {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dotted #eee;
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+.play-by-play-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.play-by-play-inning {
+    font-weight: bold;
+    color: #D7827E;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 3px;
+    text-align: center;
+    background-color: #f9f9f9;
+    padding: 5px;
+    border-radius: 3px;
+}
     </style>
     </div>
 </head>

@@ -1,77 +1,107 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const popupContainer = document.createElement("div");
     popupContainer.id = "popup-container";
-  
+
     const gameInfo = document.createElement("div");
     gameInfo.id = "game-info";
-  
+
     const awayTeamContainer = document.createElement("div");
     awayTeamContainer.classList.add("team-container");
-  
-    // Team elements
+
     const awayLogo = document.createElement("img");
     awayLogo.id = "away-logo";
     awayLogo.classList.add("team-logo");
-  
+
     const awayRecord = document.createElement("p");
     awayRecord.id = "away-record";
     awayRecord.classList.add("team-record");
-  
-    // Add logo and record to away team container
+
     awayTeamContainer.appendChild(awayLogo);
     awayTeamContainer.appendChild(awayRecord);
-  
-    // Create game status container for middle section
+
     const gameStatusContainer = document.createElement("div");
     gameStatusContainer.classList.add("game-status");
-  
+
     const awayScore = document.createElement("p");
     awayScore.id = "away-score";
     awayScore.classList.add("team-score");
-  
-    const inningInfo = document.createElement("p");
-    inningInfo.id = "inning-info";
-    inningInfo.classList.add("inning");
-  
-    // Create stadium info element - new addition
-    const stadiumInfo = document.createElement("p");
-    stadiumInfo.id = "stadium-info";
-    stadiumInfo.classList.add("stadium");
-    // Example: stadiumInfo.textContent = "Yankee Stadium • Bronx, NY";
-  
+
     const homeScore = document.createElement("p");
     homeScore.id = "home-score";
     homeScore.classList.add("team-score");
-  
-    // Add scores, inning, and stadium info to game status container
+
+    const inningInfo = document.createElement("p");
+    inningInfo.id = "inning-info";
+    inningInfo.classList.add("inning");
+
+    const stadiumInfo = document.createElement("p");
+    stadiumInfo.id = "stadium-info";
+    stadiumInfo.classList.add("stadium");
+
+    const centerElements = document.createElement("div");
+    centerElements.id = "center-elements";
+    centerElements.appendChild(inningInfo);
+    centerElements.appendChild(stadiumInfo);
+
     gameStatusContainer.appendChild(awayScore);
-    gameStatusContainer.appendChild(inningInfo);
-    gameStatusContainer.appendChild(stadiumInfo); // Add stadium info after inning
+    gameStatusContainer.appendChild(centerElements);
     gameStatusContainer.appendChild(homeScore);
-  
-    // Create home team container
+
     const homeTeamContainer = document.createElement("div");
     homeTeamContainer.classList.add("team-container");
-  
+
     const homeLogo = document.createElement("img");
     homeLogo.id = "home-logo";
     homeLogo.classList.add("team-logo");
-  
+
     const homeRecord = document.createElement("p");
     homeRecord.id = "home-record";
     homeRecord.classList.add("team-record");
-  
-    // Add logo and record to home team container
+
     homeTeamContainer.appendChild(homeLogo);
     homeTeamContainer.appendChild(homeRecord);
-  
+
     gameInfo.appendChild(awayTeamContainer);
     gameInfo.appendChild(gameStatusContainer);
     gameInfo.appendChild(homeTeamContainer);
-  
+
     popupContainer.appendChild(gameInfo);
 
-    // Create player info containers
+    const tabSection = document.createElement("div");
+    tabSection.id = "tab-section";
+
+    const tabsContainer = document.createElement("div");
+    tabsContainer.id = "tabs-container";
+
+    // These buttons will remain, but their functionality will change
+    const dynamicTab = document.createElement("button"); // Use 'dynamicTab' as the variable name
+    dynamicTab.id = "dynamic-tab"; // Assign ID to the correct variable
+    dynamicTab.classList.add("tab-button"); // No 'active' class by default, this will be set dynamically
+    dynamicTab.textContent = "Loading..."; // Initial placeholder text
+    
+    const boxscoreTab = document.createElement("button");
+    boxscoreTab.id = "boxscore-tab";
+    boxscoreTab.classList.add("tab-button");
+    boxscoreTab.textContent = "Box Score";
+
+    const scoringPlaysTab = document.createElement("button");
+    scoringPlaysTab.id = "scoring-plays-tab";
+    scoringPlaysTab.classList.add("tab-button");
+    scoringPlaysTab.textContent = "Scoring Plays";
+
+    const allPlaysTab = document.createElement("button");
+    allPlaysTab.id = "all-plays-tab";
+    allPlaysTab.classList.add("tab-button");
+    allPlaysTab.textContent = "All Plays";
+
+    tabsContainer.appendChild(dynamicTab);
+    tabsContainer.appendChild(boxscoreTab);
+    tabsContainer.appendChild(scoringPlaysTab);
+    tabsContainer.appendChild(allPlaysTab);
+    tabSection.appendChild(tabsContainer);
+
+    popupContainer.appendChild(tabSection);
+
     const awayPlayerInfo = document.createElement("div");
     awayPlayerInfo.id = "away-player-info";
     awayPlayerInfo.classList.add("player-info");
@@ -83,7 +113,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     homePlayerInfo.id = "home-player-info";
     homePlayerInfo.classList.add("player-info");
 
-    // Create player stat display area
     const awayPlayerStats = document.createElement("div");
     awayPlayerStats.id = "away-player-stats";
     awayPlayerInfo.appendChild(awayPlayerStats);
@@ -92,22 +121,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     homePlayerStats.id = "home-player-stats";
     homePlayerInfo.appendChild(homePlayerStats);
 
-    // Create container for all three elements with even spacing
     const gameplayInfoContainer = document.createElement("div");
     gameplayInfoContainer.id = "gameplay-info-container";
-    
-    // Create wrapper for scorebug to maintain centered alignment
+
     const scorebugWrapper = document.createElement("div");
     scorebugWrapper.id = "scorebug-wrapper";
     scorebugWrapper.appendChild(scorebugContainer);
-    
-    // Add all elements to the container with explicit spacing
+
     const leftSpacer = document.createElement("div");
     leftSpacer.className = "spacer";
-    
+
     const rightSpacer = document.createElement("div");
     rightSpacer.className = "spacer";
-    
+
     gameplayInfoContainer.appendChild(awayPlayerInfo);
     gameplayInfoContainer.appendChild(leftSpacer);
     gameplayInfoContainer.appendChild(scorebugWrapper);
@@ -115,7 +141,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     gameplayInfoContainer.appendChild(homePlayerInfo);
 
     popupContainer.appendChild(gameplayInfoContainer);
+
+    // Removed contentArea and loadingIndicator creation and appending
+
     document.body.appendChild(popupContainer);
+
+     // Make sure your event listener for the dynamic tab also uses 'dynamicTab':
+    dynamicTab.addEventListener('click', () => {
+        document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
+        dynamicTab.classList.add('active');
+        const currentDynamicTabType = dynamicTab.textContent.toLowerCase().replace(' ', '-');
+        openGameDetailsPage(currentDynamicTabType);
+    });
+
 
     // Add CSS for layout
     const styleElement = document.createElement("style");
@@ -221,6 +259,22 @@ document.addEventListener("DOMContentLoaded", async () => {
                 // Check if game is live/in-progress
                 const isLiveGame = !["Final", "Game Over", "Pre-Game", "Scheduled", "Suspended: Rain"].includes(gameStatusText);
     
+                // --- START OF WHERE TO PUT YOUR TAB LOGIC ---
+                const dynamicTab = document.getElementById("dynamic-tab"); // Ensure dynamicTab is accessible here
+
+                if (gameStatusText === "Final" || gameStatusText === "Game Over") {
+                dynamicTab.textContent = "Wrap"; // Or "Final Summary"
+                    } else if (gameStatusText === "Pre-Game" || gameStatusText === "Scheduled") {
+                dynamicTab.textContent = "Game Info";
+                    } else if (gameStatusText === "Warmup" || gameStatusText === "Delayed" || gameStatusText === "Postponed" || gameStatusText === "Suspended") {
+                dynamicTab.textContent = gameStatusText; // Show the specific status
+                    } else {
+                // For "In Progress", "Manager Challenge", etc.
+                dynamicTab.textContent = "Live";
+            }
+
+            dynamicTab.classList.add('active');
+
                 if (gameStatusText === "Suspended: Rain") {
                     inningText = "SUSPENDED";
                     inningBoxStyle = "color: red;";
@@ -474,6 +528,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         if (gameState === "Pre-Game" || gameState === "Scheduled" || gameState === "Warmup") {
             document.getElementById("scorebug-wrapper").style.display = "none";
+            document.getElementById("tabs-container").style.display = "none";
 
             // Display probable pitchers
             if (data.gameData.probablePitchers) {
