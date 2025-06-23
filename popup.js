@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // These buttons will remain, but their functionality will change
     const dynamicTab = document.createElement("button"); // Use 'dynamicTab' as the variable name
     dynamicTab.id = "dynamic-tab"; // Assign ID to the correct variable
-    dynamicTab.classList.add("tab-button"); // No 'active' class by default, this will be set dynamically
+    dynamicTab.classList.add("tab-button", "active"); // No 'active' class by default, this will be set dynamically
     dynamicTab.textContent = "Loading..."; // Initial placeholder text
     
     const boxscoreTab = document.createElement("button");
@@ -142,18 +142,206 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     popupContainer.appendChild(gameplayInfoContainer);
 
+    // Add boxscore content container (starts hidden)
+    const boxScoreContainer = document.createElement("div");
+    boxScoreContainer.id = "boxscore-content";
+    boxScoreContainer.style.display = "none"; // hidden by default
+    boxScoreContainer.innerHTML = `<h1>Box Score Placeholder</h1>`;
+    popupContainer.appendChild(boxScoreContainer);
+
+
     // Removed contentArea and loadingIndicator creation and appending
 
     document.body.appendChild(popupContainer);
 
-     // Make sure your event listener for the dynamic tab also uses 'dynamicTab':
-    dynamicTab.addEventListener('click', () => {
-        document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
-        dynamicTab.classList.add('active');
+// Store original display values
+const originalDisplayValues = {};
+
+function storeOriginalDisplay(elementId) {
+    const element = document.getElementById(elementId);
+    if (element && !originalDisplayValues[elementId]) {
+        originalDisplayValues[elementId] = window.getComputedStyle(element).display;
+    }
+}
+
+// Function to reapply current tab's visibility rules (call this after refreshes)
+function reapplyTabVisibility() {
+    const activeTab = document.querySelector('.tab-button.active');
+    if (activeTab && activeTab.id === 'dynamic-tab') {
+        toggleContainers(true);
+    } else if (activeTab) {
+        toggleContainers(false);
+    }
+}
+
+// Visibility management function
+function toggleContainers(showDynamic, isBoxscoreTab = false) {
+    const gameInfoContainer = document.getElementById('game-info');
+    const gameplayInfoContainer = document.getElementById('gameplay-info-container');
+    const topPerformer = document.getElementById('top-performers');
+    const pitchDataSection = document.getElementById('pitch-data-section');
+    const boxScoreContainer = document.getElementById('boxscore-content');
+
+    // Store original display values if not already stored
+    ['game-info', 'gameplay-info-container', 'top-performers', 'pitch-data-section'].forEach(storeOriginalDisplay);
+
+    if (showDynamic) {
+        // Show dynamic containers
+        if (gameInfoContainer) gameInfoContainer.style.display = originalDisplayValues['game-info'] || '';
+        if (gameplayInfoContainer) gameplayInfoContainer.style.display = originalDisplayValues['gameplay-info-container'] || '';
+        if (topPerformer) topPerformer.style.display = originalDisplayValues['top-performers'] || '';
+        if (pitchDataSection) pitchDataSection.style.display = originalDisplayValues['pitch-data-section'] || '';
+    } else {
+        // Hide dynamic containers
+        if (gameInfoContainer) gameInfoContainer.style.display = originalDisplayValues['game-info'] || '';
+        if (gameplayInfoContainer) gameplayInfoContainer.style.display = 'none';
+        if (topPerformer) topPerformer.style.display = 'none';
+        if (pitchDataSection) pitchDataSection.style.display = 'none';
+    }
+
+    // Handle box score container
+    if (boxScoreContainer) {
+        boxScoreContainer.style.display = isBoxscoreTab ? 'block' : 'none';
+    }
+}
+
+
+// Add these function definitions to your code
+
+// Function to handle different tab content loading
+function openGameDetailsPage(tabType) {
+    // This function should handle loading different content based on the tab
+    console.log(`Loading ${tabType} content`);
+    
+    // Example implementation - you'll need to customize based on your API/data structure
+    switch(tabType) {
+        case 'live':
+        case 'wrap':
+        case 'pre-game':
+            // Load dynamic content based on game state
+            loadDynamicContent(tabType);
+            break;
+        case 'boxscore':
+            loadBoxScore();
+            break;
+        case 'scoring-plays':
+            loadScoringPlays();
+            break;
+        case 'all-plays':
+            loadAllPlays();
+            break;
+        default:
+            console.warn(`Unknown tab type: ${tabType}`);
+    }
+}
+
+// Function for basic game info refresh (lighter than full refresh)
+function fetchBasicGameInfo(gamePk) {
+    // This should be a lighter version of your main fetchGameData function
+    // Only update essential info like score, inning, game state
+    console.log(`Fetching basic info for game ${gamePk}`);
+    
+    // Example - you'll need to implement based on your data source
+    // This might call your API but only update specific DOM elements
+    // without refreshing the entire content area
+}
+
+// Helper functions that openGameDetailsPage calls
+function loadDynamicContent(tabType) {
+    const boxScoreContainer = document.getElementById("boxscore-content");
+    if (boxScoreContainer) boxScoreContainer.style.display = "none";
+    console.log(`Loading dynamic content for ${tabType}`);
+}
+
+function loadScoringPlays() {
+    // Load scoring plays data
+    console.log('Loading scoring plays');
+}
+
+function loadAllPlays() {
+    // Load all plays data
+    console.log('Loading all plays');
+}
+
+// Event listeners for all tabs
+dynamicTab.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
+    dynamicTab.classList.add('active');
+    toggleContainers(true); // show dynamic, hide boxscore
+    const currentDynamicTabType = dynamicTab.textContent.toLowerCase().replace(' ', '-');
+    openGameDetailsPage(currentDynamicTabType);
+});
+
+boxscoreTab.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
+    boxscoreTab.classList.add('active');
+    toggleContainers(false, true); // hide dynamic, show boxscore
+    openGameDetailsPage('boxscore');
+});
+
+scoringPlaysTab.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
+    scoringPlaysTab.classList.add('active');
+    toggleContainers(false); // hide dynamic & boxscore
+    openGameDetailsPage('scoring-plays');
+});
+
+allPlaysTab.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
+    allPlaysTab.classList.add('active');
+    toggleContainers(false); // hide dynamic & boxscore
+    openGameDetailsPage('all-plays');
+});
+
+
+// Function to update dynamic tab based on game state
+function updateDynamicTab(detailedState) {
+    if (detailedState === 'In Progress') {
+        dynamicTab.textContent = 'Live';
+    } else if (detailedState === 'Final') {
+        dynamicTab.textContent = 'Wrap';
+    } else {
+        dynamicTab.textContent = 'Pre-Game';
+    }
+    
+    // If dynamic tab is active, refresh content
+    if (dynamicTab.classList.contains('active')) {
         const currentDynamicTabType = dynamicTab.textContent.toLowerCase().replace(' ', '-');
         openGameDetailsPage(currentDynamicTabType);
-    });
+    }
+}
 
+// Add this helper function to check if pitch data should be shown
+function shouldShowPitchData() {
+    const activeTab = document.querySelector('.tab-button.active');
+    return activeTab && activeTab.id === 'dynamic-tab';
+}
+
+// Conditional refresh based on active tab
+setInterval(() => {
+    // Only run if gamePk is set
+    if (!gamePk) {
+        console.warn('gamePk not set, skipping refresh');
+        return;
+    }
+    
+    const activeTab = document.querySelector('.tab-button.active');
+    
+    if (activeTab && activeTab.id === 'dynamic-tab') {
+        // Only refresh when dynamic tab is active
+        if (typeof fetchGameData === 'function') {
+            fetchGameData(gamePk);
+        } else {
+            console.warn('fetchGameData function not defined');
+        }
+    } else {
+        // For other tabs, only refresh basic game info
+        fetchBasicGameInfo(gamePk);
+    }
+}, 2000);
+
+// Initialize - make sure dynamic tab shows all containers by default
+toggleContainers(true);
 
     // Add CSS for layout
     const styleElement = document.createElement("style");
@@ -176,7 +364,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             display: flex;
             justify-content: center;
             width: 10%;
-            padding-right: 40px;
+            padding-right: 30px;
 
         }
         
@@ -272,8 +460,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 // For "In Progress", "Manager Challenge", etc.
                 dynamicTab.textContent = "Live";
             }
-
-            dynamicTab.classList.add('active');
 
                 if (gameStatusText === "Suspended: Rain") {
                     inningText = "SUSPENDED";
@@ -734,9 +920,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     
 
-    function renderLivePitchData(data) {
+ function renderLivePitchData(data) {
         // Check if game is live
         const gameState = data.gameData.status.abstractGameState;
+
         if (gameState !== "Live" && gameState !== "In Progress") return;
         
         // Remove any existing pitch data display
@@ -786,110 +973,178 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         pitchDataSection.appendChild(pitchDataContainer);
     
-        // Create pitch description section
-        const pitchDescriptionContainer = document.createElement("div");
-        pitchDescriptionContainer.id = "pitch-description-container";
+// Create pitch description section
+const pitchDescriptionContainer = document.createElement("div");
+pitchDescriptionContainer.id = "pitch-description-container";
+
+// Safely get the latest currentPlay pitch description
+const currentPlay = data.liveData.plays.currentPlay;
+
+// First, try to get the overall play description
+let pitchResult = currentPlay?.result?.description || 
+                  currentPlay?.result?.event ||
+                  "Unknown";
+
+// If that doesn't work, look in playEvents for the most recent event with a description
+if (!pitchResult || pitchResult === "Unknown") {
+    const latestEvent = [...(currentPlay?.playEvents || [])].reverse().find(e => 
+        e?.details?.description && 
+        e?.details?.description !== e?.details?.event // Avoid generic event names
+    );
+    pitchResult = latestEvent?.details?.description || "Unknown";
+}
+
+// Fallback to checking allPlays for the most recent completed play
+if (!pitchResult || pitchResult === "Unknown") {
+    const allPlays = data.liveData.plays.allPlays || [];
+    const mostRecentPlay = allPlays[allPlays.length - 1];
+    pitchResult = mostRecentPlay?.result?.description || "No play data available";
+}
+
+// Get hit data from the right source
+const getHitData = () => {
+    console.log("Searching for hit data..."); // Debug log
     
-        // Get event result, but fallback to pitch description if not available
-        let pitchResult = lastPlay.result?.event || pitchDetails.details.description || "Unknown";
-        let resultClass = "unclassified"; // Default to gray for unknown results
+    // Try multiple sources for hit data
+    let hitData = null;
     
-        // Determine color based on event or description
-        if (pitchResult === "Strikeout" || pitchResult.includes("Called Strike") || pitchResult.includes("Swinging Strike")) {
-            pitchResult = pitchResult === "Strikeout" ? "Strikeout" : "Called Strike";
-            resultClass = "strike";
-        } else if (pitchResult.includes("Ball") || pitchResult.includes("Ball In the Dirt")) {
-            pitchResult = "Ball";
-            resultClass = "ball";
-        } else if (pitchResult.includes("Walk")) {
-            pitchResult = "Walk";
-            resultClass = "ball";
-        } else if (pitchResult.includes("Single") || pitchResult.includes("Double") || 
-                pitchResult.includes("Triple") || pitchResult.includes("Home Run")) {
-            pitchResult = lastPlay.result?.description || pitchDetails.details.description;
-            resultClass = "hit";
-
-            // Extract hit data if available
-            const hitData = pitchDetails.hitData;
-            if (hitData) {
-                const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
-                const launchAngle = hitData.launchAngle ? `${hitData.launchAngle.toFixed(1)}°` : "N/A";
-                const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
-
-                // Append hit data formatted correctly
-                pitchResult += `<div class="hit-data">
-                <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
-                <span><i><strong>LA:</strong></i> ${launchAngle}</span>
-                <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
-            </div>`;
+    // Check currentPlay playEvents (most common location)
+    if (currentPlay?.playEvents) {
+        for (let event of currentPlay.playEvents) {
+            if (event.hitData) {
+                console.log("Found hit data in currentPlay.playEvents:", event.hitData);
+                hitData = event.hitData;
+                break;
             }
-        } else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") || pitchResult.includes("Flyout") || pitchResult.includes("Forceout") || pitchResult.includes("Pop Out") || pitchResult.includes("Lineout") || pitchResult.includes("Sac Fly")) {
-            pitchResult = lastPlay.result?.description || pitchDetails.details.description;
-            resultClass = "out";
-
-            // Extract hit data if available (for balls put in play leading to outs)
-            const hitData = pitchDetails.hitData;
-            if (hitData) {
-                const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
-                const launchAngle = hitData.launchAngle ? `${Math.round(hitData.launchAngle)}°` : "N/A";
-                const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
-
-                // Append hit data formatted correctly
-                pitchResult += `<div class="hit-data">
-                <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
-                <span><i><strong>LA:</strong></i> ${launchAngle}</span>
-                <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
-            </div>`;
-            }
-        } else if (
-            pitchResult.includes("Foul") ||
-            pitchResult === "Foul Tip" ||
-            pitchResult === "Foul Bunt" ||
-            pitchResult === "Foul Ball" ||
-            pitchResult === "Foul Out" ||
-            pitchResult === "Foul Strike" ||
-            pitchResult === "Foul Tip Catch"
-        ) {
-            pitchResult = "Foul Ball";  // You can adjust this if you need to display a more specific description
-            resultClass = "foul";
-        } else if (pitchResult.includes("Pitching Change") || 
-            pitchResult === "Mound Visit" ||
-            pitchResult === "Batter Timeout" ||
-            pitchResult === "Batting Timeout" 
-        ) {
-            pitchResult = "Time Out";
-            resultClass = "change";
-        } else if (pitchResult.includes("Stolen Base")
-        ) {
-            pitchResult = "Stolen Base";
-            resultClass = "strike";
-        } else if (pitchResult.includes("Caught Stealing")
-        ) {
-            pitchResult = "Caught Stealing";
-            resultClass = "ball";
-        } else if (pitchResult.includes("Wild Pitch")
-        ) {
-            pitchResult = "Wild Pitch";
-            resultClass = "ball";
-        }  else {
-            // Anything not covered falls here
-            resultClass = "unclassified"; // Default gray
         }
-
-
-    
-        // Set pitch description content with color-coded class
-        pitchDescriptionContainer.innerHTML = `
-            <span class="pitch-description ${resultClass}">${pitchResult}</span>
-        `;
-    
-        pitchDataSection.appendChild(pitchDescriptionContainer);
-    
-        // Insert after gameplay-info-container
-        const gameplayInfoContainer = document.getElementById("gameplay-info-container");
-        gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoContainer.nextSibling);
     }
     
+    // Check currentPlay directly
+    if (!hitData && currentPlay?.hitData) {
+        console.log("Found hit data in currentPlay:", currentPlay.hitData);
+        hitData = currentPlay.hitData;
+    }
+    
+    // Check allPlays for the most recent play
+    if (!hitData) {
+        const allPlays = data.liveData.plays.allPlays || [];
+        const mostRecentPlay = allPlays[allPlays.length - 1];
+        
+        if (mostRecentPlay?.playEvents) {
+            for (let event of mostRecentPlay.playEvents) {
+                if (event.hitData) {
+                    console.log("Found hit data in allPlays.playEvents:", event.hitData);
+                    hitData = event.hitData;
+                    break;
+                }
+            }
+        }
+        
+        if (!hitData && mostRecentPlay?.hitData) {
+            console.log("Found hit data in allPlays play:", mostRecentPlay.hitData);
+            hitData = mostRecentPlay.hitData;
+        }
+    }
+    
+    if (!hitData) {
+        console.log("No hit data found");
+        console.log("currentPlay structure:", currentPlay);
+    }
+    
+    return hitData;
+};
+
+let resultClass = "unclassified"; // Default to gray for unknown results
+
+// Determine color based on event or description
+if (pitchResult === "Strikeout" || pitchResult.includes("Called Strike") || pitchResult.includes("Swinging Strike") || pitchResult.includes("Foul") || pitchResult.includes("Foul Ball")) {
+    resultClass = "strike";
+} else if (pitchResult.includes("Ball") || pitchResult.includes("Ball In the Dirt") || pitchResult.includes("Walk")) {
+    resultClass = "ball";
+
+            // Extract hit data if available
+    const hitData = getHitData();
+    console.log("Hit detected, hit data found:", hitData); // Debug log
+    if (hitData) {
+        const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
+        const launchAngle = hitData.launchAngle ? `${hitData.launchAngle.toFixed(1)}°` : "N/A";
+        const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
+
+        // Append hit data formatted correctly
+        pitchResult += `<div class="hit-data">
+        <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
+        <span><i><strong>LA:</strong></i> ${launchAngle}</span>
+        <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
+    </div>`;
+    }
+} else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") || 
+           pitchResult.includes("Flyout") || pitchResult.includes("Forceout") || 
+           pitchResult.includes("Pop Out") || pitchResult.includes("Lineout") || 
+           pitchResult.includes("Sac Fly") || pitchResult.includes("grounded") ||
+           pitchResult.includes("flied") || pitchResult.includes("lined") ||
+           pitchResult.includes("popped")) {
+    // Keep the full description for outs
+    resultClass = "out";
+
+    // Extract hit data if available (for balls put in play leading to outs)
+    const hitData = getHitData();
+    console.log("Out detected, hit data found:", hitData); // Debug log
+    if (hitData) {
+        const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
+        const launchAngle = hitData.launchAngle ? `${Math.round(hitData.launchAngle)}°` : "N/A";
+        const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
+
+        // Append hit data formatted correctly
+        pitchResult += `<div class="hit-data">
+        <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
+        <span><i><strong>LA:</strong></i> ${launchAngle}</span>
+        <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
+    </div>`;
+    }
+} else if (
+    pitchResult.includes("Foul") ||
+    pitchResult === "Foul Tip" ||
+    pitchResult === "Foul Bunt" ||
+    pitchResult === "Foul Ball" ||
+    pitchResult === "Foul Out" ||
+    pitchResult === "Foul Strike" ||
+    pitchResult === "Foul Tip Catch"
+) {
+    pitchResult = "Foul Ball";
+    resultClass = "foul";
+} else if (pitchResult.includes("Pitching Change") || 
+    pitchResult === "Mound Visit" ||
+    pitchResult === "Batter Timeout" ||
+    pitchResult === "Batting Timeout" 
+) {
+    pitchResult = "Time Out";
+    resultClass = "change";
+} else if (pitchResult.includes("Stolen Base")) {
+    pitchResult = "Stolen Base";
+    resultClass = "strike";
+} else if (pitchResult.includes("Caught Stealing")) {
+    pitchResult = "Caught Stealing";
+    resultClass = "ball";
+} else if (pitchResult.includes("Wild Pitch")) {
+    pitchResult = "Wild Pitch";
+    resultClass = "ball";
+} else {
+    // Anything not covered falls here
+    resultClass = "unclassified"; // Default gray
+}
+
+// Set pitch description content with color-coded class
+pitchDescriptionContainer.innerHTML = `
+    <span class="pitch-description ${resultClass}">${pitchResult}</span>
+`;
+
+pitchDataSection.appendChild(pitchDescriptionContainer);
+
+// Insert after gameplay-info-container
+const gameplayInfoContainer = document.getElementById("gameplay-info-container");
+gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoContainer.nextSibling);
+    }
+
     function generateSVGField(count, onBase) {
         return `
             <svg id="field" width="100" height="100" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #e5decf;">
@@ -918,6 +1173,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('second-base').style.fill = onBase.second ? '#000' : '#e5decf';
         document.getElementById('third-base').style.fill = onBase.third ? '#000' : '#e5decf';
     }
-   
-    setInterval(() => fetchGameData(gamePk), 2000); // Refresh every 2s
+
+   // setInterval(() => fetchGameData(gamePk), 2000); // Refresh every 2s
 });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
