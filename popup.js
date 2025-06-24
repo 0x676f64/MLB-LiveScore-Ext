@@ -1175,4 +1175,733 @@ gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoCont
     }
 
    // setInterval(() => fetchGameData(gamePk), 2000); // Refresh every 2s
+async function loadBoxScore() {
+    const boxScoreContainer = document.getElementById("boxscore-content");
+    boxScoreContainer.style.display = "block";
+    boxScoreContainer.innerHTML = "<p>Loading Box Score...</p>";
+
+    async function fetchAbbreviation(teamId) {
+        try {
+            const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`);
+            const data = await response.json();
+            return data.teams[0].abbreviation || "N/A";
+        } catch (error) {
+            console.error("Error fetching abbreviation:", error);
+            return "N/A";
+        }
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const gamePk = params.get("gamePk");
+
+    if (!gamePk) {
+        boxScoreContainer.innerHTML = "<p>No gamePk found in URL.</p>";
+        return;
+    }
+
+    try {
+        // Fetch both game data and lineup data
+        const [gameResponse, lineupResponse] = await Promise.all([
+            fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`),
+            fetch(`https://statsapi.mlb.com/api/v1/schedule?hydrate=lineups&sportId=1&gamePk=${gamePk}`)
+        ]);
+
+        const gameData = await gameResponse.json();
+        const lineupData = await lineupResponse.json();
+
+        const linescore = gameData?.liveData?.linescore;
+        const boxscore = gameData?.liveData?.boxscore;
+        
+        if (!linescore || !boxscore) {
+            boxScoreContainer.innerHTML = "<p>Box score data not available.</p>";
+            return;
+        }
+
+        const awayTeamId = gameData.gameData.teams.away.id;
+        const homeTeamId = gameData.gameData.teams.home.id;
+        const innings = linescore.innings;
+
+        const homeAbbr = await fetchAbbreviation(homeTeamId);
+        const awayAbbr = await fetchAbbreviation(awayTeamId);
+
+        const awayTeam = gameData.gameData.teams.away;
+        const homeTeam = gameData.gameData.teams.home;
+        const awayStats = boxscore.teams.away;
+        const homeStats = boxscore.teams.home;
+
+        // Extract lineup data
+        const gameInfo = lineupData.dates?.[0]?.games?.[0];
+        const awayLineup = gameInfo?.teams?.away?.lineup || [];
+        const homeLineup = gameInfo?.teams?.home?.lineup || [];
+
+        // Debug logging
+        console.log("Away lineup:", awayLineup);
+        console.log("Home lineup:", homeLineup);
+        console.log("Away stats players:", Object.keys(awayStats.players || {}));
+        console.log("Home stats players:", Object.keys(homeStats.players || {}));
+
+        // Get player stats from boxscore
+        function getPlayerStats(playerId, teamStats, isHitter = true) {
+            const playerKey = `ID${playerId}`;
+            const player = teamStats.players[playerKey];
+            
+            console.log(`Looking for player ${playerId} (${playerKey}) in teamStats:`, player ? "FOUND" : "NOT FOUND");
+            
+            if (!player) return null;
+            
+            if (isHitter) {
+                const stats = player.stats?.batting || {};
+                return {
+                    name: player.person?.fullName || 'Unknown',
+                    position: player.position?.abbreviation || '',
+                    ab: stats.atBats || 0,
+                    r: stats.runs || 0,
+                    h: stats.hits || 0,
+                    rbi: stats.rbi || 0,
+                    bb: stats.baseOnBalls || 0,
+                    so: stats.strikeOuts || 0,
+                    avg: stats.avg || '.000'
+                };
+            } else {
+                const stats = player.stats?.pitching || {};
+                return {
+                    name: player.person?.fullName || 'Unknown',
+                    position: player.position?.abbreviation || 'P',
+                    ip: stats.inningsPitched || '0.0',
+                    h: stats.hits || 0,
+                    r: stats.runs || 0,
+                    er: stats.earnedRuns || 0,
+                    bb: stats.baseOnBalls || 0,
+                    so: stats.strikeOuts || 0,
+                    era: stats.era || '0.00'
+                };
+            }
+        }
+
+        // Alternative approach: get all batters from boxscore data directly
+        function getAllBatters(teamStats) {
+            const batters = [];
+            const batterIds = teamStats.batters || [];
+            
+            batterIds.forEach(id => {
+                const playerKey = `ID${id}`;
+                const player = teamStats.players[playerKey];
+                if (player && player.stats?.batting) {
+                    const stats = player.stats.batting;
+                    batters.push({
+                        id: id,
+                        name: player.person?.fullName || 'Unknown',
+                        position: player.position?.abbreviation || '',
+                        battingOrder: player.battingOrder || 99,
+                        ab: stats.atBats || 0,
+                        r: stats.runs || 0,
+                        h: stats.hits || 0,
+                        rbi: stats.rbi || 0,
+                        bb: stats.baseOnBalls || 0,
+                        so: stats.strikeOuts || 0,
+                        avg: stats.avg || '.000'
+                    });
+                }
+            });
+            
+            // Sort by batting order
+            return batters.sort((a, b) => a.battingOrder - b.battingOrder);
+        }
+
+        function createBattingStatsRow(player, battingOrder, teamStats) {
+            const playerId = player.person?.id || player.id;
+            console.log(`Creating batting row for player ${playerId} at batting order ${battingOrder}`);
+            
+            let stats = null;
+            
+            // Try to get stats using the original method
+            if (playerId) {
+                stats = getPlayerStats(playerId, teamStats, true);
+            }
+            
+            // If that didn't work, try to find the player by name in the batters
+            if (!stats && player.person?.fullName) {
+                const allBatters = getAllBatters(teamStats);
+                const foundBatter = allBatters.find(b => b.name === player.person.fullName);
+                if (foundBatter) {
+                    stats = foundBatter;
+                }
+            }
+            
+            // If still no stats, create a placeholder row
+            if (!stats) {
+                const playerName = player.person?.fullName || player.name || 'Unknown';
+                console.log(`No stats found for player: ${playerName} (ID: ${playerId})`);
+                return `
+                    <tr>
+                        <td class="batting-order">${battingOrder}</td>
+                        <td class="player-name" title="${playerName}">${playerName}</td>
+                        <td class="position">${player.position?.abbreviation || ''}</td>
+                        <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>.000</td>
+                    </tr>
+                `;
+            }
+
+            // Format name as "First Initial. Last Name"
+            const nameParts = stats.name.split(' ');
+            const shortName = stats.name.length > 15 && nameParts.length >= 2 
+                ? `${nameParts[0][0]}. ${nameParts[nameParts.length - 1]}` 
+                : stats.name;
+            
+            return `
+                <tr>
+                    <td class="batting-order">${battingOrder}</td>
+                    <td class="player-name" title="${stats.name}">${shortName}</td>
+                    <td class="position">${stats.position}</td>
+                    <td>${stats.ab}</td>
+                    <td>${stats.r}</td>
+                    <td>${stats.h}</td>
+                    <td>${stats.rbi}</td>
+                    <td>${stats.bb}</td>
+                    <td>${stats.so}</td>
+                    <td>${stats.avg}</td>
+                </tr>
+            `;
+        }
+
+        function createPitchingStatsRow(pitcher, teamStats) {
+            const playerId = pitcher.person?.id;
+            const stats = getPlayerStats(playerId, teamStats, false);
+            
+            if (!stats) {
+                return `
+                    <tr class="pitcher-row">
+                        <td class="batting-order">P</td>
+                        <td class="player-name" title="${pitcher.person?.fullName || 'Unknown'}">${pitcher.person?.fullName || 'Unknown'}</td>
+                        <td class="position">${pitcher.position?.abbreviation || 'P'}</td>
+                        <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+                    </tr>
+                `;
+            }
+
+            // Format name as "First Initial. Last Name"
+            const nameParts = stats.name.split(' ');
+            const shortName = stats.name.length > 15 && nameParts.length >= 2 
+                ? `${nameParts[0][0]}. ${nameParts[nameParts.length - 1]}` 
+                : stats.name;
+            
+            return `
+                <tr class="pitcher-row">
+                    <td class="batting-order">P</td>
+                    <td class="player-name" title="${stats.name}">${shortName}</td>
+                    <td class="position">${stats.position}</td>
+                    <td>${stats.ip}</td>
+                    <td>${stats.h}</td>
+                    <td>${stats.r}</td>
+                    <td>${stats.er}</td>
+                    <td>${stats.bb}</td>
+                    <td>${stats.so}</td>
+                    <td>${stats.era}</td>
+                </tr>
+            `;
+        }
+
+       function createTeamSection(teamName, teamId, lineup, teamStats, isHome = false) {
+            const teamClass = isHome ? 'home-team' : 'away-team';
+            const toggleId = isHome ? 'home-team-toggle' : 'away-team-toggle';
+            const contentId = isHome ? 'home-team-content' : 'away-team-content';
+
+            // Get batting lineup - try multiple approaches
+            let battingLineup = [];
+            
+            // Approach 1: Use provided lineup if it exists and has players
+            if (lineup && lineup.length > 0) {
+                // Filter out pitchers from batting lineup
+                battingLineup = lineup.filter(player => {
+                    const position = player.position?.abbreviation || '';
+                    return position !== 'P' && position !== 'Pitcher';
+                });
+            } else {
+                // Approach 2: Fall back to getting all batters from boxscore and sorting them
+                const allBatters = getAllBatters(teamStats);
+                battingLineup = allBatters.filter(batter => {
+                    const position = batter.position || '';
+                    return position !== 'P' && position !== 'Pitcher';
+                }).map(batter => ({
+                    person: { id: batter.id, fullName: batter.name },
+                    position: { abbreviation: batter.position }
+                }));
+            }
+
+            console.log(`${teamName} batting lineup (filtered):`, battingLineup);
+
+            // Get all pitchers who appeared in the game (for pitching section only)
+            const pitcherIds = teamStats.pitchers || [];
+            const pitchers = pitcherIds.map(id => {
+                const playerKey = `ID${id}`;
+                const player = teamStats.players[playerKey];
+                return player ? {
+                    person: player.person,
+                    position: player.position,
+                    stats: player.stats?.pitching
+                } : null;
+            }).filter(p => p !== null);
+
+            return `
+                <div class="team-section ${teamClass}">
+                    <div class="team-header" data-content-id="${contentId}" data-toggle-id="${toggleId}">
+                        <img src="https://www.mlbstatic.com/team-logos/${teamId}.svg" alt="${teamName}" class="team-logo-small">
+                        <span class="team-name-small">${teamName}</span>
+                        <span class="toggle-icon" id="${toggleId}">▼</span>
+                    </div>
+                    <div class="team-content" id="${contentId}">
+                        <div class="stats-table-wrapper">
+                            <div class="section-subtitle">Batting</div>
+                            <table class="stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Player</th>
+                                        <th>Pos</th>
+                                        <th>AB</th>
+                                        <th>R</th>
+                                        <th>H</th>
+                                        <th>RBI</th>
+                                        <th>BB</th>
+                                        <th>K</th>
+                                        <th>AVG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${battingLineup.map((player, index) => 
+                                        createBattingStatsRow(player, index + 1, teamStats)
+                                    ).join('')}
+                                </tbody>
+                            </table>
+                            
+                            <div class="section-subtitle">Pitching</div>
+                            <table class="stats-table">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Pitcher</th>
+                                        <th>Pos</th>
+                                        <th>IP</th>
+                                        <th>H</th>
+                                        <th>R</th>
+                                        <th>ER</th>
+                                        <th>BB</th>
+                                        <th>K</th>
+                                        <th>ERA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${pitchers.map(pitcher => 
+                                        createPitchingStatsRow(pitcher, teamStats)
+                                    ).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Enhanced HTML with modern styling
+        let fullHTML = `
+            <style>
+            .boxscore-container {
+                width: 600px;
+                height: 400px;
+                margin: 0 auto;
+                padding: 10px;
+                font-family: 'Rubik', Tahoma, Geneva, Verdana, sans-serif;
+                background: #e5decf;
+                overflow-y: auto;
+                display: block;
+                scrollbar-width: thin;
+            }
+
+            .boxscore-title {
+                text-align: center;
+                margin: 0 0 12px 0;
+                font-size: 18px;
+                font-weight: 600;
+                color: #0b0f13;
+            }
+
+            .boxscore-table {
+                margin: 0 auto 15px auto;
+                width: 100%;
+                max-width: 100%;
+                border-collapse: collapse;
+                background: white;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+
+            .boxscore-table thead {
+                background: #0b0f13;
+                color: white;
+            }
+
+            .boxscore-table th {
+                padding: 8px 4px;
+                text-align: center;
+                font-weight: 600;
+                font-size: 11px;
+                border-right: 1px solid rgba(255,255,255,0.1);
+            }
+
+            .boxscore-table th:last-child {
+                border-right: none;
+            }
+
+            .boxscore-table tbody tr {
+                transition: background-color 0.2s ease;
+            }
+
+            .boxscore-table tbody tr:hover {
+                background-color: rgba(255,106,108,0.1);
+            }
+
+            .boxscore-table tbody tr:nth-child(even) {
+                background-color: rgba(229,222,207,0.3);
+            }
+
+            .boxscore-table td {
+                padding: 8px 4px;
+                text-align: center;
+                border-right: 1px solid rgba(215,130,126,0.3);
+                border-bottom: 1px solid rgba(215,130,126,0.3);
+                font-weight: 500;
+                color: #0b0f13;
+                font-size: 11px;
+            }
+
+            .boxscore-table td:last-child {
+                border-right: none;
+            }
+
+            .boxscore-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .team-name {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .team-logo {
+                width: 20px;
+                height: 20px;
+            }
+
+            .total-stats {
+                background: rgba(255,106,108,0.2) !important;
+                font-weight: 700;
+                color: #0b0f13;
+            }
+
+            .inning-score {
+                font-weight: 500;
+                min-width: 25px;
+            }
+
+            /* Section Headers */
+            .section-title {
+                text-align: center;
+                margin: 15px 0 8px 0;
+                font-size: 14px;
+                font-weight: 600;
+                color: #0b0f13;
+                padding: 5px 0;
+                border-bottom: 2px solid #d7827e;
+            }
+
+            .teams-row {
+                display: flex;
+                gap: 8px;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+
+            .team-section {
+                flex: 1;
+                width: 54%;
+                border-radius: 6px;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                background: white;
+                margin-bottom: 8px;
+            }
+
+            .team-header {
+                display: flex;
+                align-items: center;
+                padding: 10px 12px;
+                background: #0b0f13;
+                color: white;
+                cursor: pointer;
+                user-select: none;
+                transition: background-color 0.2s;
+            }
+
+            .team-header:hover {
+                background: #1a2025;
+            }
+
+            .team-logo-small {
+                width: 18px;
+                height: 18px;
+                margin-right: 8px;
+            }
+
+            .team-name-small {
+                flex: 1;
+                font-weight: 600;
+                font-size: 12px;
+            }
+
+            .toggle-icon {
+                font-size: 12px;
+                transition: transform 0.2s;
+                font-weight: bold;
+            }
+
+            .toggle-icon.rotated {
+                transform: rotate(-90deg);
+            }
+
+            .team-content {
+                max-height: 380px;
+                overflow-y: auto;
+                transition: max-height 0.3s ease;
+                scrollbar-width: thin;
+            }
+
+            .team-content.collapsed {
+                max-height: 0;
+                overflow: hidden;
+            }
+
+            /* Stats Table Wrappers for Scrolling */
+            .stats-table-wrapper {
+                max-height: 360px;
+                overflow-y: auto;
+                scrollbar-width: none;
+            }
+
+            .section-subtitle {
+                background: #f8f9fa;
+                padding: 6px 8px;
+                font-weight: 600;
+                font-size: 10px;
+                color: #495057;
+                border-bottom: 1px solid #dee2e6;
+                margin-top: 8px;
+            }
+
+            .section-subtitle:first-child {
+                margin-top: 0;
+            }
+
+            .stats-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 11px;
+            }
+
+            .stats-table thead {
+                background: #f8f9fa;
+                position: sticky;
+                top: 0;
+                z-index: 1;
+            }
+
+            .stats-table th {
+                padding: 6px 2px;
+                text-align: center;
+                font-weight: 600;
+                border-bottom: 2px solid #dee2e6;
+                font-size: 8px;
+                color: #495057;
+                white-space: nowrap;
+            }
+
+            .stats-table td {
+                padding: 4px 2px;
+                text-align: center;
+                border-bottom: 1px solid #f1f3f4;
+                font-weight: 500;
+                font-size: 8px;
+                white-space: nowrap;
+            }
+
+            .stats-table tr:hover {
+                background-color: rgba(0,123,255,0.1);
+            }
+
+            .player-name {
+                text-align: left !important;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 8px;
+                max-width: 80px;
+            }
+
+            /* Stats Table Column Widths */
+            .stats-table th:first-child,
+            .stats-table td:first-child {
+                width: 8%;
+                min-width: 20px;
+            }
+
+            .stats-table th:nth-child(2),
+            .stats-table td:nth-child(2) {
+                width: 25%;
+                text-align: left;
+            }
+
+            .stats-table th:nth-child(3),
+            .stats-table td:nth-child(3) {
+                width: 8%;
+                min-width: 25px;
+            }
+
+            .stats-table th:nth-child(n+4),
+            .stats-table td:nth-child(n+4) {
+                width: 7%;
+                min-width: 20px;
+            }
+
+            .batting-order {
+                font-weight: bold;
+                color: #0b0f13;
+                background-color: rgba(11,15,19,0.1);
+            }
+
+            .position {
+                font-weight: 600;
+                color: #495057;
+            }
+
+            .pitcher-row {
+                background-color: rgba(108,117,125,0.1);
+                border-top: 2px solid #dee2e6;
+            }
+
+            .pitcher-row .batting-order {
+                background-color: rgba(108,117,125,0.3);
+                font-weight: bold;
+                color: #495057;
+            }
+
+            .away-team .team-header {
+                background:rgb(74, 87, 100);
+            }
+
+            .away-team .team-header:hover {
+                background: #5a6268;
+            }
+
+            .home-team .team-header {
+                background: rgb(74, 87, 100);
+            }
+
+            .home-team .team-header:hover {
+                background: #5a6268;
+            }
+
+            @media (max-width: 600px) {
+                .teams-row {
+                    flex-direction: column;
+                }
+                
+                .team-section {
+                    width: 100%;
+                }
+            }
+            </style>
+            
+            <div class="boxscore-container">
+                <table class="boxscore-table">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            ${innings.map((_, i) => `<th>${i + 1}</th>`).join('')}
+                            <th>R</th><th>H</th><th>E</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="team-name">
+                                <img src="https://www.mlbstatic.com/team-logos/${awayTeamId}.svg" alt="${awayAbbr} logo" class="team-logo">
+                            </td>
+                            ${innings.map(inn => `<td class="inning-score">${inn.away?.runs ?? '-'}</td>`).join('')}
+                            <td class="total-stats">${linescore.teams.away.runs}</td>
+                            <td class="total-stats">${linescore.teams.away.hits}</td>
+                            <td class="total-stats">${linescore.teams.away.errors}</td>
+                        </tr>
+                        <tr>
+                            <td class="team-name">
+                                <img src="https://www.mlbstatic.com/team-logos/${homeTeamId}.svg" alt="${homeAbbr} logo" class="team-logo">
+                            </td>
+                            ${innings.map(inn => `<td class="inning-score">${inn.home?.runs ?? '-'}</td>`).join('')}
+                            <td class="total-stats">${linescore.teams.home.runs}</td>
+                            <td class="total-stats">${linescore.teams.home.hits}</td>
+                            <td class="total-stats">${linescore.teams.home.errors}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                
+                <div class="teams-row">
+                    ${createTeamSection(awayTeam.name, awayTeam.id, awayLineup, awayStats, false)}
+                    ${createTeamSection(homeTeam.name, homeTeam.id, homeLineup, homeStats, true)}
+                </div>
+            </div>
+        `;
+
+        // Insert the HTML first
+        boxScoreContainer.innerHTML = fullHTML;
+        
+        // Now that the DOM elements exist, set up the event listeners
+        setupToggleHandlers();
+        
+    } catch (error) {
+        console.error("Error loading box score:", error);
+        boxScoreContainer.innerHTML = "<p>Error loading box score data.</p>";
+    }
+}
+
+// Define the toggle function separately so it can be called after DOM creation
+function toggleTeam(contentId, toggleId) {
+    const content = document.getElementById(contentId);
+    const toggle = document.getElementById(toggleId);
+
+    if (content && toggle) {
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            toggle.textContent = '▼';
+            toggle.classList.remove('rotated');
+        } else {
+            content.classList.add('collapsed');
+            toggle.textContent = '▶';
+            toggle.classList.add('rotated');
+        }
+    }
+}
+
+// Set up event listeners after DOM is created
+function setupToggleHandlers() {
+    const teamHeaders = document.querySelectorAll('.team-header');
+    teamHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const contentId = this.getAttribute('data-content-id');
+            const toggleId = this.getAttribute('data-toggle-id');
+            toggleTeam(contentId, toggleId);
+        });
+    });
+}
 });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
