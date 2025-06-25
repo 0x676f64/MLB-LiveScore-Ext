@@ -1423,43 +1423,6 @@ function createPitchingStatsRow(pitcher, teamStats) {
     `;
 }
 
-        function createPitchingStatsRow(pitcher, teamStats) {
-            const playerId = pitcher.person?.id;
-            const stats = getPlayerStats(playerId, teamStats, false);
-            
-            if (!stats) {
-                return `
-                    <tr class="pitcher-row">
-                        <td class="batting-order">P</td>
-                        <td class="player-name-boxscore" title="${pitcher.person?.fullName || 'Unknown'}">${pitcher.person?.fullName || 'Unknown'}</td>
-                        <td class="position">${pitcher.position?.abbreviation || 'P'}</td>
-                        <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
-                    </tr>
-                `;
-            }
-
-            // Format name as "First Initial. Last Name"
-            const nameParts = stats.name.split(' ');
-            const shortName = stats.name.length > 15 && nameParts.length >= 2 
-                ? `${nameParts[0][0]}. ${nameParts[nameParts.length - 1]}` 
-                : stats.name;
-            
-            return `
-                <tr class="pitcher-row">
-                    <td class="batting-order">P</td>
-                    <td class="player-name-boxscore" title="${stats.name}">${shortName}</td>
-                    <td class="position">${stats.position}</td>
-                    <td>${stats.ip}</td>
-                    <td>${stats.h}</td>
-                    <td>${stats.r}</td>
-                    <td>${stats.er}</td>
-                    <td>${stats.bb}</td>
-                    <td>${stats.so}</td>
-                    <td>${stats.era}</td>
-                </tr>
-            `;
-        }
-
        function createTeamSection(teamName, teamId, lineup, teamStats, isHome = false) {
             const teamClass = isHome ? 'home-team' : 'away-team';
             const toggleId = isHome ? 'home-team-toggle' : 'away-team-toggle';
@@ -1649,7 +1612,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 gap: 6px;
             }
 
-            .team-logo {
+            .team-logo-boxscore {
                 width: 20px;
                 height: 20px;
             }
@@ -1677,7 +1640,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
             }
 
             .teams-row {
-                display: flex;
+                display: column;
                 gap: 8px;
                 justify-content: space-between;
                 margin-bottom: 10px;
@@ -1685,7 +1648,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
 
             .team-section {
                 flex: 1;
-                width: 52%;
+                width: 100%;
                 border-radius: 6px;
                 overflow: hidden;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -1895,7 +1858,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                     <tbody>
                         <tr>
                             <td class="team-name">
-                                <img src="https://www.mlbstatic.com/team-logos/${awayTeamId}.svg" alt="${awayAbbr} logo" class="team-logo">
+                                <img src="https://www.mlbstatic.com/team-logos/${awayTeamId}.svg" alt="${awayAbbr} logo" class="team-logo-boxscore">
                             </td>
                             ${innings.map(inn => `<td class="inning-score">${inn.away?.runs ?? '-'}</td>`).join('')}
                             <td class="total-stats">${linescore.teams.away.runs}</td>
@@ -1904,7 +1867,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                         </tr>
                         <tr>
                             <td class="team-name">
-                                <img src="https://www.mlbstatic.com/team-logos/${homeTeamId}.svg" alt="${homeAbbr} logo" class="team-logo">
+                                <img src="https://www.mlbstatic.com/team-logos/${homeTeamId}.svg" alt="${homeAbbr} logo" class="team-logo-boxscore">
                             </td>
                             ${innings.map(inn => `<td class="inning-score">${inn.home?.runs ?? '-'}</td>`).join('')}
                             <td class="total-stats">${linescore.teams.home.runs}</td>
@@ -1975,4 +1938,356 @@ function setupToggleHandlers() {
         });
     });
 }
+
+
+// Global variable to store previous plays for animation detection
+let previousPlays = [];
+
+async function loadAllPlays() {
+    try {
+        // Get gamePk from URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const gamePk = params.get("gamePk");
+        
+        if (!gamePk) {
+            let container = document.getElementById('allPlaysContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'allPlaysContainer';
+                const mainContent = document.getElementById('main-content') || 
+                                   document.getElementById('content') || 
+                                   document.querySelector('.content') ||
+                                   document.body;
+                mainContent.appendChild(container);
+            }
+            container.innerHTML = "<p style='text-align: center; padding: 20px; color: #000;'>No gamePk found in URL.</p>";
+            return;
+        }
+        
+        // Fetch game data from MLB API
+        const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+        const data = await response.json();
+        
+        const allPlays = data.liveData?.plays?.allPlays || [];
+        const gameData = data.gameData;
+        
+        // Get or create the container element
+        let container = document.getElementById('allPlaysContainer');
+        if (!container) {
+            // Create the container if it doesn't exist
+            container = document.createElement('div');
+            container.id = 'allPlaysContainer';
+            container.style.cssText = `
+                width: 100%;
+                height: 100%;
+                background-color: #e5decf;
+                position: relative;
+            `;
+            
+            // Find where to append it - look for common container elements
+            const mainContent = document.getElementById('main-content') || 
+                               document.getElementById('content') || 
+                               document.querySelector('.content') ||
+                               document.body;
+            mainContent.appendChild(container);
+        }
+        
+        // Check for new plays for animation
+        const newPlays = allPlays.filter(play => 
+            !previousPlays.some(prevPlay => prevPlay.atBatIndex === play.atBatIndex && prevPlay.playIndex === play.playIndex)
+        );
+        
+        // Clear container
+        container.innerHTML = '';
+        
+        // Create scrollable container
+        const scrollContainer = document.createElement('div');
+        scrollContainer.className = 'all-plays-scroll';
+        scrollContainer.innerHTML = `
+            <style>
+                .all-plays-scroll {
+                    height: 550px;
+                    overflow-y: auto;
+                    padding: 20px;
+                    background-color: #e5decf;
+                }
+                
+                .all-plays-scroll::-webkit-scrollbar {
+                    width: 8px;
+                }
+                
+                .all-plays-scroll::-webkit-scrollbar-track {
+                    background: #d7827e;
+                    border-radius: 4px;
+                }
+                
+                .all-plays-scroll::-webkit-scrollbar-thumb {
+                    background: #ff6a6c;
+                    border-radius: 4px;
+                }
+                
+                .play-item {
+                    display: flex;
+                    margin-bottom: 15px;
+                    padding: 12px;
+                    background-color: rgba(255, 255, 255, 0.1);
+                    border-radius: 8px;
+                    position: relative;
+                    transition: all 0.3s ease;
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                
+                .play-item.new-play {
+                    animation: slideInFromTop 0.5s ease-out;
+                }
+                
+                @keyframes slideInFromTop {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                .inning-indicator {
+                    position: absolute;
+                    top: -5px;
+                    left: -5px;
+                    background-color: #2a283e;
+                    color: #fff;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: bold;
+                    z-index: 2;
+                }
+                
+                .player-image {
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    margin-right: 12px;
+                    object-fit: cover;
+
+                    flex-shrink: 0;
+                }
+                
+                .play-content {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+                
+                .event-tag {
+                    background-color: transparent;
+                    color: #2a283e;
+                    padding: 6px 12px;
+                    border-radius: 20rem;
+                    font-weight: bold;
+                    font-size: 12px;
+                    display: inline-block;
+                    max-width: fit-content;
+                    border: 4px solid #2a283e;
+                }
+                
+                .event-description {
+                    color: #000;
+                    font-size: 14px;
+                    line-height: 1.4;
+                    background-color: rgba(215, 130, 126, 0.2);
+                    padding: 6px;
+                    border-radius: 6px;
+                    font-weight: 500;
+                }
+                
+                .event-icon {
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    background-color: #d7827e;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 12px;
+                    flex-shrink: 0;
+                    font-size: 20px;
+                    border: 2px solid #ff6a6c;
+                }
+                
+                .game-start-item {
+                    background-color: rgba(255, 106, 108, 0.2);
+                    border: 2px solid #ff6a6c;
+                    text-align: center;
+                    padding: 15px;
+                    margin-bottom: 20px;
+                    border-radius: 12px;
+                }
+                
+                .game-start-title {
+                    font-weight: bold;
+                    font-size: 14px;
+                    color: #000;
+                    margin-bottom: 5px;
+                }
+                
+                .game-start-details {
+                    font-size: 11px;
+                    color: #000;
+                    opacity: 0.8;
+                }
+            </style>
+        `;
+        
+        // Add game start information
+        if (gameData && gameData.datetime) {
+            const gameStartDiv = document.createElement('div');
+            gameStartDiv.className = 'game-start-item';
+            const gameTime = new Date(gameData.datetime.dateTime).toLocaleTimeString();
+            const venue = gameData.venue?.name || 'Unknown Venue';
+            
+            gameStartDiv.innerHTML = `
+                <div class="event-icon">⚾</div>
+                <div class="game-start-title">First Pitch</div>
+                <div class="game-start-details">${gameTime} at ${venue}</div>
+            `;
+            
+            scrollContainer.appendChild(gameStartDiv);
+        }
+        
+        // Reverse plays to show newest first
+        const reversedPlays = [...allPlays].reverse();
+        
+        // Process each play
+        reversedPlays.forEach((play, index) => {
+            const playDiv = document.createElement('div');
+            playDiv.className = 'play-item';
+            
+            // Check if this is a new play for animation
+            const isNewPlay = newPlays.some(newPlay => 
+                newPlay.atBatIndex === play.atBatIndex && newPlay.playIndex === play.playIndex
+            );
+            
+            if (isNewPlay) {
+                playDiv.classList.add('new-play');
+            }
+            
+            // Get inning information
+            const inning = play.about?.inning || 1;
+            const isTop = play.about?.isTopInning;
+            const inningText = `${isTop ? 'T' : 'B'}${inning}`;
+            
+            // Get player information
+            const batter = play.matchup?.batter;
+            const batterId = batter?.id;
+            
+            // Get event information
+            const event = play.result?.event || 'Unknown Event';
+            const description = play.result?.description || 'No description available';
+            
+            // Create play HTML
+            playDiv.innerHTML = `
+                <div class="inning-indicator">${inningText}</div>
+                ${createPlayerImageOrIcon(batterId, event)}
+                <div class="play-content">
+                    <div class="event-tag">${event}</div>
+                    <div class="event-description">${description}</div>
+                </div>
+            `;
+            
+            scrollContainer.appendChild(playDiv);
+        });
+        
+        container.appendChild(scrollContainer);
+        
+        // Update previous plays for next comparison
+        previousPlays = [...allPlays];
+        
+    } catch (error) {
+        console.error('Error loading all plays:', error);
+        let container = document.getElementById('allPlaysContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'allPlaysContainer';
+            const mainContent = document.getElementById('main-content') || 
+                               document.getElementById('content') || 
+                               document.querySelector('.content') ||
+                               document.body;
+            mainContent.appendChild(container);
+        }
+        container.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #000; background-color: #e5decf; height: 100%;">
+                <p>Error loading plays data</p>
+                <button onclick="loadAllPlays()" style="background: #ff6a6c; border: none; padding: 8px 16px; border-radius: 6px; color: #000; cursor: pointer;">
+                    Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+function createPlayerImageOrIcon(playerId, event) {
+    // Special events that use icons instead of player images
+    const iconEvents = {
+        'Game Advisory': '📢',
+        'Pitching Substitution': '🔄',
+        'Defensive Substitution': '🔄',
+        'Offensive Substitution': '🔄',
+        'Stolen Base': '🏃',
+        'Wild Pitch': '👟',
+        'Passed Ball': '👟',
+        'Balk': '⚠️',
+        'Pickoff': '🎯',
+        'First Pitch': '⚾'
+    };
+    
+    // Check if this event should use an icon
+    for (const [eventType, icon] of Object.entries(iconEvents)) {
+        if (event.toLowerCase().includes(eventType.toLowerCase()) || 
+            event.toLowerCase().includes('substitution')) {
+            return `<div class="event-icon">${icon}</div>`;
+        }
+    }
+    
+    // For player-specific events, try to load player image
+    if (playerId) {
+        return `
+            <img 
+                class="player-image" 
+                src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" 
+                onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                alt="Player"
+            />
+            <div class="event-icon" style="display: none;">👤</div>
+        `;
+    }
+    
+    // Default icon for unknown events
+    return `<div class="event-icon">⚾</div>`;
+}
+
+// Function to set up auto-refresh for live games (integrate with your existing refresh system)
+function setupAllPlaysAutoRefresh(intervalMs = 30000) {
+    return setInterval(() => {
+        // Only refresh if all plays tab is active
+        const activeTab = document.querySelector('.tab-button.active');
+        if (activeTab && activeTab.id === 'allPlaysTab') {
+            loadAllPlays();
+        }
+    }, intervalMs);
+}
+
+// Function to show/hide all plays container based on tab selection
+function toggleAllPlaysContainer(show) {
+    const container = document.getElementById('allPlaysContainer');
+    if (container) {
+        container.style.display = show ? 'block' : 'none';
+    }
+}
+
+// Remove the old setupAllPlaysTab function since you handle tabs differently
 });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
