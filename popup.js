@@ -1241,128 +1241,187 @@ async function loadBoxScore() {
         console.log("Home stats players:", Object.keys(homeStats.players || {}));
 
         // Get player stats from boxscore
-        function getPlayerStats(playerId, teamStats, isHitter = true) {
-            const playerKey = `ID${playerId}`;
-            const player = teamStats.players[playerKey];
-            
-            console.log(`Looking for player ${playerId} (${playerKey}) in teamStats:`, player ? "FOUND" : "NOT FOUND");
-            
-            if (!player) return null;
-            
-            if (isHitter) {
-                const stats = player.stats?.batting || {};
-                return {
-                    name: player.person?.fullName || 'Unknown',
-                    position: player.position?.abbreviation || '',
-                    ab: stats.atBats || 0,
-                    r: stats.runs || 0,
-                    h: stats.hits || 0,
-                    rbi: stats.rbi || 0,
-                    bb: stats.baseOnBalls || 0,
-                    so: stats.strikeOuts || 0,
-                    avg: stats.avg || '.000'
-                };
-            } else {
-                const stats = player.stats?.pitching || {};
-                return {
-                    name: player.person?.fullName || 'Unknown',
-                    position: player.position?.abbreviation || 'P',
-                    ip: stats.inningsPitched || '0.0',
-                    h: stats.hits || 0,
-                    r: stats.runs || 0,
-                    er: stats.earnedRuns || 0,
-                    bb: stats.baseOnBalls || 0,
-                    so: stats.strikeOuts || 0,
-                    era: stats.era || '0.00'
-                };
-            }
-        }
+     // Updated getPlayerStats function to include season batting average
+// Updated getPlayerStats function to include season batting average
+function getPlayerStats(playerId, teamStats, isHitter = true) {
+    const playerKey = `ID${playerId}`;
+    const player = teamStats.players[playerKey];
+    
+    console.log(`Looking for player ${playerId} (${playerKey}) in teamStats:`, player ? "FOUND" : "NOT FOUND");
+    
+    if (!player) return null;
+    
+    if (isHitter) {
+        const gameStats = player.stats?.batting || {};
+        const seasonStats = player.seasonStats?.batting || {};
+        
+        return {
+            name: player.person?.fullName || 'Unknown',
+            position: player.position?.abbreviation || '',
+            ab: gameStats.atBats || 0,
+            r: gameStats.runs || 0,
+            h: gameStats.hits || 0,
+            rbi: gameStats.rbi || 0,
+            bb: gameStats.baseOnBalls || 0,
+            so: gameStats.strikeOuts || 0,
+            seasonAvg: seasonStats.avg || '.000'  // Season batting average
+        };
+    } else {
+        const gameStats = player.stats?.pitching || {};
+        const seasonStats = player.seasonStats?.pitching || {};
+        
+        return {
+            name: player.person?.fullName || 'Unknown',
+            position: player.position?.abbreviation || 'P',
+            ip: gameStats.inningsPitched || '0.0',
+            h: gameStats.hits || 0,
+            r: gameStats.runs || 0,
+            er: gameStats.earnedRuns || 0,
+            bb: gameStats.baseOnBalls || 0,
+            so: gameStats.strikeOuts || 0,
+            seasonEra: seasonStats.era || '0.00'  // Season ERA
+        };
+    }
+}
 
-        // Alternative approach: get all batters from boxscore data directly
-        function getAllBatters(teamStats) {
-            const batters = [];
-            const batterIds = teamStats.batters || [];
+// Updated getAllBatters function to include season stats
+function getAllBatters(teamStats) {
+    const batters = [];
+    const batterIds = teamStats.batters || [];
+    
+    batterIds.forEach(id => {
+        const playerKey = `ID${id}`;
+        const player = teamStats.players[playerKey];
+        if (player && player.stats?.batting) {
+            const gameStats = player.stats.batting;
+            const seasonStats = player.seasonStats?.batting || {};
             
-            batterIds.forEach(id => {
-                const playerKey = `ID${id}`;
-                const player = teamStats.players[playerKey];
-                if (player && player.stats?.batting) {
-                    const stats = player.stats.batting;
-                    batters.push({
-                        id: id,
-                        name: player.person?.fullName || 'Unknown',
-                        position: player.position?.abbreviation || '',
-                        battingOrder: player.battingOrder || 99,
-                        ab: stats.atBats || 0,
-                        r: stats.runs || 0,
-                        h: stats.hits || 0,
-                        rbi: stats.rbi || 0,
-                        bb: stats.baseOnBalls || 0,
-                        so: stats.strikeOuts || 0,
-                        avg: stats.avg || '.000'
-                    });
-                }
+            batters.push({
+                id: id,
+                name: player.person?.fullName || 'Unknown',
+                position: player.position?.abbreviation || '',
+                battingOrder: player.battingOrder || 99,
+                ab: gameStats.atBats || 0,
+                r: gameStats.runs || 0,
+                h: gameStats.hits || 0,
+                rbi: gameStats.rbi || 0,
+                bb: gameStats.baseOnBalls || 0,
+                so: gameStats.strikeOuts || 0,
+                seasonAvg: seasonStats.avg || '.000'  // Season batting average
             });
-            
-            // Sort by batting order
-            return batters.sort((a, b) => a.battingOrder - b.battingOrder);
         }
+    });
+    
+    // Sort by batting order
+    return batters.sort((a, b) => a.battingOrder - b.battingOrder);
+}
 
-        function createBattingStatsRow(player, battingOrder, teamStats) {
-            const playerId = player.person?.id || player.id;
-            console.log(`Creating batting row for player ${playerId} at batting order ${battingOrder}`);
-            
-            let stats = null;
-            
-            // Try to get stats using the original method
-            if (playerId) {
-                stats = getPlayerStats(playerId, teamStats, true);
-            }
-            
-            // If that didn't work, try to find the player by name in the batters
-            if (!stats && player.person?.fullName) {
-                const allBatters = getAllBatters(teamStats);
-                const foundBatter = allBatters.find(b => b.name === player.person.fullName);
-                if (foundBatter) {
-                    stats = foundBatter;
-                }
-            }
-            
-            // If still no stats, create a placeholder row
-            if (!stats) {
-                const playerName = player.person?.fullName || player.name || 'Unknown';
-                console.log(`No stats found for player: ${playerName} (ID: ${playerId})`);
-                return `
-                    <tr>
-                        <td class="batting-order">${battingOrder}</td>
-                        <td class="player-name" title="${playerName}">${playerName}</td>
-                        <td class="position">${player.position?.abbreviation || ''}</td>
-                        <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>.000</td>
-                    </tr>
-                `;
-            }
-
-            // Format name as "First Initial. Last Name"
-            const nameParts = stats.name.split(' ');
-            const shortName = stats.name.length > 15 && nameParts.length >= 2 
-                ? `${nameParts[0][0]}. ${nameParts[nameParts.length - 1]}` 
-                : stats.name;
-            
-            return `
-                <tr>
-                    <td class="batting-order">${battingOrder}</td>
-                    <td class="player-name" title="${stats.name}">${shortName}</td>
-                    <td class="position">${stats.position}</td>
-                    <td>${stats.ab}</td>
-                    <td>${stats.r}</td>
-                    <td>${stats.h}</td>
-                    <td>${stats.rbi}</td>
-                    <td>${stats.bb}</td>
-                    <td>${stats.so}</td>
-                    <td>${stats.avg}</td>
-                </tr>
-            `;
+// Updated createBattingStatsRow function to use season average
+function createBattingStatsRow(player, battingOrder, teamStats) {
+    const playerId = player.person?.id || player.id;
+    console.log(`Creating batting row for player ${playerId} at batting order ${battingOrder}`);
+    
+    let stats = null;
+    
+    // Try to get stats using the original method
+    if (playerId) {
+        stats = getPlayerStats(playerId, teamStats, true);
+    }
+    
+    // If that didn't work, try to find the player by name in the batters
+    if (!stats && player.person?.fullName) {
+        const allBatters = getAllBatters(teamStats);
+        const foundBatter = allBatters.find(b => b.name === player.person.fullName);
+        if (foundBatter) {
+            stats = foundBatter;
         }
+    }
+    
+    // If still no stats, create a placeholder row
+    if (!stats) {
+        const playerName = player.person?.fullName || player.name || 'Unknown';
+        console.log(`No stats found for player: ${playerName} (ID: ${playerId})`);
+        return `
+            <tr>
+                <td class="batting-order">${battingOrder}</td>
+                <td class="player-name-boxscore" title="${playerName}">${playerName}</td>
+                <td class="position">${player.position?.abbreviation || ''}</td>
+                <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>.000</td>
+            </tr>
+        `;
+    }
+
+    // Format name as "First Initial. Last Name"
+    const nameParts = stats.name.split(' ');
+    const suffixes = ['Jr.', 'Jr', 'Sr.', 'Sr', 'II', 'III', 'IV', 'V'];
+    const lastPart = nameParts[nameParts.length - 1];
+    const lastName = suffixes.includes(lastPart) && nameParts.length > 2
+        ? nameParts[nameParts.length - 2] 
+        : lastPart;
+
+    const shortName = stats.name.length > 15 && nameParts.length >= 2 
+        ? `${nameParts[0][0]}. ${lastName}` 
+        : stats.name;
+        
+    return `
+        <tr>
+            <td class="batting-order">${battingOrder}</td>
+            <td class="player-name-boxscore" title="${stats.name}">${shortName}</td>
+            <td class="position">${stats.position}</td>
+            <td>${stats.ab}</td>
+            <td>${stats.r}</td>
+            <td>${stats.h}</td>
+            <td>${stats.rbi}</td>
+            <td>${stats.bb}</td>
+            <td>${stats.so}</td>
+            <td>${stats.seasonAvg}</td>
+        </tr>
+    `;
+}
+
+// Updated createPitchingStatsRow function to use season ERA
+function createPitchingStatsRow(pitcher, teamStats) {
+    const playerId = pitcher.person?.id;
+    const stats = getPlayerStats(playerId, teamStats, false);
+    
+    if (!stats) {
+        return `
+            <tr class="pitcher-row">
+                <td class="batting-order">P</td>
+                <td class="player-name-boxscore" title="${pitcher.person?.fullName || 'Unknown'}">${pitcher.person?.fullName || 'Unknown'}</td>
+                <td class="position">${pitcher.position?.abbreviation || 'P'}</td>
+                <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+            </tr>
+        `;
+    }
+
+    // Format name as "First Initial. Last Name"
+    const nameParts = stats.name.split(' ');
+    const suffixes = ['Jr.', 'Jr', 'Sr.', 'Sr', 'II', 'III', 'IV', 'V'];
+    const lastPart = nameParts[nameParts.length - 1];
+    const lastName = suffixes.includes(lastPart) && nameParts.length > 2
+        ? nameParts[nameParts.length - 2] 
+        : lastPart;
+
+    const shortName = stats.name.length > 15 && nameParts.length >= 2 
+        ? `${nameParts[0][0]}. ${lastName}` 
+        : stats.name;
+    
+    return `
+        <tr class="pitcher-row">
+            <td class="batting-order">P</td>
+            <td class="player-name-boxscore" title="${stats.name}">${shortName}</td>
+            <td class="position">${stats.position}</td>
+            <td>${stats.ip}</td>
+            <td>${stats.h}</td>
+            <td>${stats.r}</td>
+            <td>${stats.er}</td>
+            <td>${stats.bb}</td>
+            <td>${stats.so}</td>
+            <td>${stats.seasonEra}</td>
+        </tr>
+    `;
+}
 
         function createPitchingStatsRow(pitcher, teamStats) {
             const playerId = pitcher.person?.id;
@@ -1372,7 +1431,7 @@ async function loadBoxScore() {
                 return `
                     <tr class="pitcher-row">
                         <td class="batting-order">P</td>
-                        <td class="player-name" title="${pitcher.person?.fullName || 'Unknown'}">${pitcher.person?.fullName || 'Unknown'}</td>
+                        <td class="player-name-boxscore" title="${pitcher.person?.fullName || 'Unknown'}">${pitcher.person?.fullName || 'Unknown'}</td>
                         <td class="position">${pitcher.position?.abbreviation || 'P'}</td>
                         <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
                     </tr>
@@ -1388,7 +1447,7 @@ async function loadBoxScore() {
             return `
                 <tr class="pitcher-row">
                     <td class="batting-order">P</td>
-                    <td class="player-name" title="${stats.name}">${shortName}</td>
+                    <td class="player-name-boxscore" title="${stats.name}">${shortName}</td>
                     <td class="position">${stats.position}</td>
                     <td>${stats.ip}</td>
                     <td>${stats.h}</td>
@@ -1527,7 +1586,7 @@ async function loadBoxScore() {
 
             .boxscore-table {
                 margin: 0 auto 15px auto;
-                width: 100%;
+                width: 90%;
                 max-width: 100%;
                 border-collapse: collapse;
                 background: white;
@@ -1626,7 +1685,7 @@ async function loadBoxScore() {
 
             .team-section {
                 flex: 1;
-                width: 54%;
+                width: 52%;
                 border-radius: 6px;
                 overflow: hidden;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -1732,7 +1791,7 @@ async function loadBoxScore() {
                 text-align: center;
                 border-bottom: 1px solid #f1f3f4;
                 font-weight: 500;
-                font-size: 8px;
+                font-size: 9px;
                 white-space: nowrap;
             }
 
@@ -1740,13 +1799,13 @@ async function loadBoxScore() {
                 background-color: rgba(0,123,255,0.1);
             }
 
-            .player-name {
+            .player-name-boxscore {
                 text-align: left !important;
                 font-weight: 600;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                font-size: 8px;
+                font-size: 10px;
                 max-width: 80px;
             }
 
@@ -1894,12 +1953,24 @@ function toggleTeam(contentId, toggleId) {
 }
 
 // Set up event listeners after DOM is created
+// Modified version that initializes collapsed state
 function setupToggleHandlers() {
     const teamHeaders = document.querySelectorAll('.team-header');
     teamHeaders.forEach(header => {
+        const contentId = header.getAttribute('data-content-id');
+        const toggleId = header.getAttribute('data-toggle-id');
+        
+        // Initialize as collapsed
+        const content = document.getElementById(contentId);
+        const toggle = document.getElementById(toggleId);
+        if (content && toggle) {
+            content.classList.add('collapsed');
+            toggle.textContent = '▶';
+            toggle.classList.add('rotated');
+        }
+        
+        // Set up click handler
         header.addEventListener('click', function() {
-            const contentId = this.getAttribute('data-content-id');
-            const toggleId = this.getAttribute('data-toggle-id');
             toggleTeam(contentId, toggleId);
         });
     });
