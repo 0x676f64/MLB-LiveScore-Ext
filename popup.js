@@ -175,12 +175,13 @@ function reapplyTabVisibility() {
 }
 
 // Visibility management function
-function toggleContainers(showDynamic, isBoxscoreTab = false) {
+function toggleContainers(showDynamic, isBoxscoreTab = false, isAllPlaysTab = false) {
     const gameInfoContainer = document.getElementById('game-info');
     const gameplayInfoContainer = document.getElementById('gameplay-info-container');
     const topPerformer = document.getElementById('top-performers');
     const pitchDataSection = document.getElementById('pitch-data-section');
     const boxScoreContainer = document.getElementById('boxscore-content');
+    const allPlaysContainer = document.getElementById('all-plays-container');
 
     // Store original display values if not already stored
     ['game-info', 'gameplay-info-container', 'top-performers', 'pitch-data-section'].forEach(storeOriginalDisplay);
@@ -203,22 +204,23 @@ function toggleContainers(showDynamic, isBoxscoreTab = false) {
     if (boxScoreContainer) {
         boxScoreContainer.style.display = isBoxscoreTab ? 'block' : 'none';
     }
+    
+    // Handle all plays container
+    if (allPlaysContainer) {
+        allPlaysContainer.style.display = isAllPlaysTab ? 'block' : 'none';
+    }
 }
-
 
 // Add these function definitions to your code
 
 // Function to handle different tab content loading
 function openGameDetailsPage(tabType) {
-    // This function should handle loading different content based on the tab
     console.log(`Loading ${tabType} content`);
     
-    // Example implementation - you'll need to customize based on your API/data structure
     switch(tabType) {
         case 'live':
         case 'wrap':
         case 'pre-game':
-            // Load dynamic content based on game state
             loadDynamicContent(tabType);
             break;
         case 'boxscore':
@@ -289,7 +291,7 @@ scoringPlaysTab.addEventListener('click', () => {
 allPlaysTab.addEventListener('click', () => {
     document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
     allPlaysTab.classList.add('active');
-    toggleContainers(false); // hide dynamic & boxscore
+    toggleContainers(false, false, true); // hide dynamic, hide boxscore, show all-plays
     openGameDetailsPage('all-plays');
 });
 
@@ -1939,355 +1941,281 @@ function setupToggleHandlers() {
     });
 }
 
+const allPlaysCSS = `
+#all-plays-container {
+    width: 100%;
+    height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #e5decf;
+    border-radius: 8px;
+    font-family: Rubik, sans-serif;
+    scrollbar-width: thin;
+}
 
-// Global variable to store previous plays for animation detection
-let previousPlays = [];
+.play-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: slideIn 0.3s ease-out forwards;
+    position: relative;
+}
 
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.inning-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: #ff6a6c;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.player-image-container {
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-left: 55px;
+    position: relative;
+}
+
+.player-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #d7827e;
+    background-color: #e5decf;
+    object-fit: cover;
+}
+
+.event-icon {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #ff6a6c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    border: 2px solid white;
+}
+
+.play-details {
+    flex: 1;
+    margin-top: 5px;
+}
+
+.event-name {
+    background-color: #d7827e;
+    color: black;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 12px;
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+.play-description {
+    color: #333;
+    font-size: 11px;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.game-start-item {
+    background: linear-gradient(135deg, #ff6a6c, #d7827e);
+    color: white;
+    text-align: center;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.game-start-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+`;
+
+// Add CSS to document if not already added
+if (!document.getElementById('all-plays-styles')) {
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'all-plays-styles';
+    styleSheet.textContent = allPlaysCSS;
+    document.head.appendChild(styleSheet);
+}
+
+// Main function to load and render all plays
 async function loadAllPlays() {
+    console.log('Loading all plays content');
+    
+    // Create or get the all plays container
+    let allPlaysContainer = document.getElementById('all-plays-container');
+    if (!allPlaysContainer) {
+        allPlaysContainer = document.createElement('div');
+        allPlaysContainer.id = 'all-plays-container';
+        document.getElementById('popup-container').appendChild(allPlaysContainer);
+    }
+    
     try {
-        // Get gamePk from URL parameters
-        const params = new URLSearchParams(window.location.search);
-        const gamePk = params.get("gamePk");
-        
-        if (!gamePk) {
-            let container = document.getElementById('allPlaysContainer');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'allPlaysContainer';
-                const mainContent = document.getElementById('main-content') || 
-                                   document.getElementById('content') || 
-                                   document.querySelector('.content') ||
-                                   document.body;
-                mainContent.appendChild(container);
-            }
-            container.innerHTML = "<p style='text-align: center; padding: 20px; color: #000;'>No gamePk found in URL.</p>";
-            return;
+        // Check if we already have game data, otherwise fetch it
+        let gameData;
+        if (window.cachedGameData) {
+            gameData = window.cachedGameData;
+        } else {
+            const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+            gameData = await response.json();
+            window.cachedGameData = gameData; // Cache for future use
         }
         
-        // Fetch game data from MLB API
-        const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
-        const data = await response.json();
+        // Extract plays data
+        const allPlays = gameData.liveData?.plays?.allPlays || [];
+        const gameInfo = gameData.gameData;
         
-        const allPlays = data.liveData?.plays?.allPlays || [];
-        const gameData = data.gameData;
+        // Clear existing content
+        allPlaysContainer.innerHTML = '';
         
-        // Get or create the container element
-        let container = document.getElementById('allPlaysContainer');
-        if (!container) {
-            // Create the container if it doesn't exist
-            container = document.createElement('div');
-            container.id = 'allPlaysContainer';
-            container.style.cssText = `
-                width: 100%;
-                height: 100%;
-                background-color: #e5decf;
-                position: relative;
-            `;
-            
-            // Find where to append it - look for common container elements
-            const mainContent = document.getElementById('main-content') || 
-                               document.getElementById('content') || 
-                               document.querySelector('.content') ||
-                               document.body;
-            mainContent.appendChild(container);
-        }
-        
-        // Check for new plays for animation
-        const newPlays = allPlays.filter(play => 
-            !previousPlays.some(prevPlay => prevPlay.atBatIndex === play.atBatIndex && prevPlay.playIndex === play.playIndex)
-        );
-        
-        // Clear container
-        container.innerHTML = '';
-        
-        // Create scrollable container
-        const scrollContainer = document.createElement('div');
-        scrollContainer.className = 'all-plays-scroll';
-        scrollContainer.innerHTML = `
-            <style>
-                .all-plays-scroll {
-                    height: 550px;
-                    overflow-y: auto;
-                    padding: 20px;
-                    background-color: #e5decf;
-                }
-                
-                .all-plays-scroll::-webkit-scrollbar {
-                    width: 8px;
-                }
-                
-                .all-plays-scroll::-webkit-scrollbar-track {
-                    background: #d7827e;
-                    border-radius: 4px;
-                }
-                
-                .all-plays-scroll::-webkit-scrollbar-thumb {
-                    background: #ff6a6c;
-                    border-radius: 4px;
-                }
-                
-                .play-item {
-                    display: flex;
-                    margin-bottom: 15px;
-                    padding: 12px;
-                    background-color: rgba(255, 255, 255, 0.1);
-                    border-radius: 8px;
-                    position: relative;
-                    transition: all 0.3s ease;
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-                
-                .play-item.new-play {
-                    animation: slideInFromTop 0.5s ease-out;
-                }
-                
-                @keyframes slideInFromTop {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                
-                .inning-indicator {
-                    position: absolute;
-                    top: -5px;
-                    left: -5px;
-                    background-color: #2a283e;
-                    color: #fff;
-                    padding: 4px 8px;
-                    border-radius: 12px;
-                    font-size: 13px;
-                    font-weight: bold;
-                    z-index: 2;
-                }
-                
-                .player-image {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    margin-right: 12px;
-                    object-fit: cover;
-
-                    flex-shrink: 0;
-                }
-                
-                .play-content {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 6px;
-                }
-                
-                .event-tag {
-                    background-color: transparent;
-                    color: #2a283e;
-                    padding: 6px 12px;
-                    border-radius: 20rem;
-                    font-weight: bold;
-                    font-size: 12px;
-                    display: inline-block;
-                    max-width: fit-content;
-                    border: 4px solid #2a283e;
-                }
-                
-                .event-description {
-                    color: #000;
-                    font-size: 14px;
-                    line-height: 1.4;
-                    background-color: rgba(215, 130, 126, 0.2);
-                    padding: 6px;
-                    border-radius: 6px;
-                    font-weight: 500;
-                }
-                
-                .event-icon {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    background-color: #d7827e;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-right: 12px;
-                    flex-shrink: 0;
-                    font-size: 20px;
-                    border: 2px solid #ff6a6c;
-                }
-                
-                .game-start-item {
-                    background-color: rgba(255, 106, 108, 0.2);
-                    border: 2px solid #ff6a6c;
-                    text-align: center;
-                    padding: 15px;
-                    margin-bottom: 20px;
-                    border-radius: 12px;
-                }
-                
-                .game-start-title {
-                    font-weight: bold;
-                    font-size: 14px;
-                    color: #000;
-                    margin-bottom: 5px;
-                }
-                
-                .game-start-details {
-                    font-size: 11px;
-                    color: #000;
-                    opacity: 0.8;
-                }
-            </style>
-        `;
-        
-        // Add game start information
-        if (gameData && gameData.datetime) {
-            const gameStartDiv = document.createElement('div');
-            gameStartDiv.className = 'game-start-item';
-            const gameTime = new Date(gameData.datetime.dateTime).toLocaleTimeString();
-            const venue = gameData.venue?.name || 'Unknown Venue';
-            
-            gameStartDiv.innerHTML = `
-                <div class="event-icon">⚾</div>
-                <div class="game-start-title">First Pitch</div>
-                <div class="game-start-details">${gameTime} at ${venue}</div>
-            `;
-            
-            scrollContainer.appendChild(gameStartDiv);
+        // Add game start information if available
+        if (gameInfo) {
+            const gameStartItem = createGameStartItem(gameInfo);
+            allPlaysContainer.appendChild(gameStartItem);
         }
         
         // Reverse plays to show newest first
-        const reversedPlays = [...allPlays].reverse();
+        const sortedPlays = [...allPlays].reverse();
         
-        // Process each play
-        reversedPlays.forEach((play, index) => {
-            const playDiv = document.createElement('div');
-            playDiv.className = 'play-item';
-            
-            // Check if this is a new play for animation
-            const isNewPlay = newPlays.some(newPlay => 
-                newPlay.atBatIndex === play.atBatIndex && newPlay.playIndex === play.playIndex
-            );
-            
-            if (isNewPlay) {
-                playDiv.classList.add('new-play');
-            }
-            
-            // Get inning information
-            const inning = play.about?.inning || 1;
-            const isTop = play.about?.isTopInning;
-            const inningText = `${isTop ? 'T' : 'B'}${inning}`;
-            
-            // Get player information
-            const batter = play.matchup?.batter;
-            const batterId = batter?.id;
-            
-            // Get event information
-            const event = play.result?.event || 'Unknown Event';
-            const description = play.result?.description || 'No description available';
-            
-            // Create play HTML
-            playDiv.innerHTML = `
-                <div class="inning-indicator">${inningText}</div>
-                ${createPlayerImageOrIcon(batterId, event)}
-                <div class="play-content">
-                    <div class="event-tag">${event}</div>
-                    <div class="event-description">${description}</div>
-                </div>
-            `;
-            
-            scrollContainer.appendChild(playDiv);
+        // Create play items with staggered animation
+        sortedPlays.forEach((play, index) => {
+            setTimeout(() => {
+                const playItem = createPlayItem(play, gameData);
+                allPlaysContainer.appendChild(playItem);
+            }, index * 50); // Stagger animations by 50ms
         });
-        
-        container.appendChild(scrollContainer);
-        
-        // Update previous plays for next comparison
-        previousPlays = [...allPlays];
         
     } catch (error) {
         console.error('Error loading all plays:', error);
-        let container = document.getElementById('allPlaysContainer');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'allPlaysContainer';
-            const mainContent = document.getElementById('main-content') || 
-                               document.getElementById('content') || 
-                               document.querySelector('.content') ||
-                               document.body;
-            mainContent.appendChild(container);
-        }
-        container.innerHTML = `
-            <div style="text-align: center; padding: 20px; color: #000; background-color: #e5decf; height: 100%;">
-                <p>Error loading plays data</p>
-                <button onclick="loadAllPlays()" style="background: #ff6a6c; border: none; padding: 8px 16px; border-radius: 6px; color: #000; cursor: pointer;">
-                    Retry
-                </button>
-            </div>
-        `;
+        allPlaysContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff6a6c;">Error loading plays data</div>';
     }
 }
 
-function createPlayerImageOrIcon(playerId, event) {
-    // Special events that use icons instead of player images
-    const iconEvents = {
-        'Game Advisory': '📢',
-        'Pitching Substitution': '🔄',
-        'Defensive Substitution': '🔄',
-        'Offensive Substitution': '🔄',
-        'Stolen Base': '🏃',
-        'Wild Pitch': '👟',
-        'Passed Ball': '👟',
-        'Balk': '⚠️',
-        'Pickoff': '🎯',
-        'First Pitch': '⚾'
+// Function to create game start item
+function createGameStartItem(gameInfo) {
+    const gameStartDiv = document.createElement('div');
+    gameStartDiv.className = 'game-start-item';
+    
+    const venue = gameInfo.venue?.name || 'Unknown Venue';
+    const gameDate = new Date(gameInfo.datetime?.dateTime || gameInfo.gameDate);
+    const timeString = gameDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    gameStartDiv.innerHTML = `
+        <div class="game-start-icon"><img width="48" height="48" src="https://img.icons8.com/pulsar-line/48/baseball-ball.png" alt="baseball-ball"/></div>
+        <div style="font-weight: bold; margin-bottom: 4px;">First Pitch</div>
+        <div style="font-size: 12px;">${timeString} at ${venue}</div>
+    `;
+    
+    return gameStartDiv;
+}
+
+// Function to create individual play item
+function createPlayItem(play, gameData) {
+    const playDiv = document.createElement('div');
+    playDiv.className = 'play-item';
+    
+    const inning = play.about?.inning || 1;
+    const isTop = play.about?.isTopInning;
+    const inningText = `${isTop ? 'Top' : 'Bottom'} ${inning}`;
+    
+    // Get player info
+    const playerId = play.matchup?.batter?.id;
+    const playerName = getPlayerName(playerId, gameData) || 'Unknown Player';
+    
+    // Create event icon
+    const eventIcon = getEventIcon(play.result?.event);
+    
+    playDiv.innerHTML = `
+        <div class="inning-indicator">${inningText}</div>
+        <div class="player-image-container">
+            <img class="player-image" 
+                 src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" 
+                 alt="${playerName}"
+            <div class="event-icon">${eventIcon}</div>
+        </div>
+        <div class="play-details">
+            <div class="event-name">${play.result?.event || 'Unknown Event'}</div>
+            <p class="play-description">${play.result?.description || 'No description available'}</p>
+        </div>
+    `;
+    
+    return playDiv;
+}
+
+// Helper function to get player name from game data
+function getPlayerName(playerId, gameData) {
+    if (!playerId || !gameData.gameData?.players) return null;
+    
+    const player = gameData.gameData.players[`ID${playerId}`];
+    return player ? `${player.firstName} ${player.lastName}` : null;
+}
+
+// Function to get appropriate icon for different events
+function getEventIcon(eventType) {
+    const eventIcons = {
+        'Strikeout': '<img width="30" height="30" src="https://img.icons8.com/fluency-systems-filled/30/circled-k.png" alt="circled-k"/>',
+        'Home Run': '<img width="20" height="20" src="https://img.icons8.com/ios/20/baseball-field.png" alt="baseball-field"/>',
+        'Single': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/1-circle-c.png" alt="1-circle-c"/>',
+        'Double': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/2-circle-c.png" alt="2-circle-c"/>',
+        'Triple': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/3-circle.png" alt="3-circle"/>',
+        'Walk': '<img width="20" height="20" src="https://img.icons8.com/ios/20/walking--v1.png" alt="walking--v1"/>',
+        'Hit By Pitch': '<img width="25" height="25" src="https://img.icons8.com/ios/25/explosion.png" alt="explosion"/>',
+        'Stolen Base': '<img width="30" height="30" src="https://img.icons8.com/dotty/30/exercise.png" alt="exercise"/>',
+        'Wild Pitch': '<img width="30" height="30" src="https://img.icons8.com/dotty/30/exercise.png" alt="exercise"/>',
+        'Passed Ball': '<img width="30" height="30" src="https://img.icons8.com/dotty/30/exercise.png" alt="exercise"/>',
+        'Groundout': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/circled-down-2.png" alt="circled-down-2"/>',
+        'Flyout': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/send-letter.png" alt="send-letter"/>',
+        'Pop Out': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/send-letter.png" alt="send-letter"/>',
+        'Lineout': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/circled-right.png" alt="circled-right"/>',
+        'Balk': '<img width="30" height="30" src="https://img.icons8.com/fluency-systems-regular/30/police-badge.png" alt="police-badge"/>',
+        'Pickoff': '<img width="30" height="30" src="https://img.icons8.com/parakeet-line/30/pickaxe.png" alt="pickaxe"/>',
+        'Defensive Sub': '<img width="30" height="30" src="https://img.icons8.com/pulsar-line/30/data-in-both-directions.png" alt="data-in-both-directions"/>',
+        'Offensive Sub': '<img width="30" height="30" src="https://img.icons8.com/pulsar-line/30/data-in-both-directions.png" alt="data-in-both-directions"/>',
+        'Pitching Substitution': '<img width="30" height="30" src="https://img.icons8.com/pulsar-line/30/data-in-both-directions.png" alt="data-in-both-directions"/>',
+        'Error': 'https://img.icons8.com/?size=100&id=59754&format=png&color=000000',
+        'Fielders Choice': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>',
+        'Force Out': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>',
+        'Sacrifice Fly': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>',
+        'Sacrifice Bunt': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>',
+        'Grounded Into DP': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>'
     };
     
-    // Check if this event should use an icon
-    for (const [eventType, icon] of Object.entries(iconEvents)) {
-        if (event.toLowerCase().includes(eventType.toLowerCase()) || 
-            event.toLowerCase().includes('substitution')) {
-            return `<div class="event-icon">${icon}</div>`;
-        }
-    }
+    return eventIcons[eventType] || '<img width="25" height="25" src="https://img.icons8.com/material-rounded/25/baseball-ball.png" alt="baseball-ball"/>';
+}
+
+// refresher when All Plays tab is active
+setInterval(() => {
+    if (!gamePk) return;
     
-    // For player-specific events, try to load player image
-    if (playerId) {
-        return `
-            <img 
-                class="player-image" 
-                src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" 
-                onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                alt="Player"
-            />
-            <div class="event-icon" style="display: none;">👤</div>
-        `;
+    const activeTab = document.querySelector('.tab-button.active');
+    if (activeTab && activeTab.id === 'all-plays-tab') {
+        // Clear cached data to force fresh fetch
+        delete window.cachedGameData;
+        loadAllPlays();
     }
-    
-    // Default icon for unknown events
-    return `<div class="event-icon">⚾</div>`;
-}
-
-// Function to set up auto-refresh for live games (integrate with your existing refresh system)
-function setupAllPlaysAutoRefresh(intervalMs = 30000) {
-    return setInterval(() => {
-        // Only refresh if all plays tab is active
-        const activeTab = document.querySelector('.tab-button.active');
-        if (activeTab && activeTab.id === 'allPlaysTab') {
-            loadAllPlays();
-        }
-    }, intervalMs);
-}
-
-// Function to show/hide all plays container based on tab selection
-function toggleAllPlaysContainer(show) {
-    const container = document.getElementById('allPlaysContainer');
-    if (container) {
-        container.style.display = show ? 'block' : 'none';
-    }
-}
-
-// Remove the old setupAllPlaysTab function since you handle tabs differently
-});                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+}, 30000); // 30 seconds
+});                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             

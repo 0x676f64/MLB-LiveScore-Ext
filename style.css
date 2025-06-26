@@ -61,10 +61,6 @@ body {
     transition: transform .2s;
 }
 
-img {
-    width: 60px;
-    height: 60px;
-}
 
 .team-row {
     display: flex;
