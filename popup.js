@@ -1177,7 +1177,7 @@ gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoCont
     }
 
    // setInterval(() => fetchGameData(gamePk), 2000); // Refresh every 2s
-async function loadBoxScore() {
+    async function loadBoxScore() {
     const boxScoreContainer = document.getElementById("boxscore-content");
     boxScoreContainer.style.display = "block";
     boxScoreContainer.innerHTML = "<p>Loading Box Score...</p>";
@@ -2177,16 +2177,16 @@ function getPlayerName(playerId, gameData) {
 // Function to get appropriate icon for different events
 function getEventIcon(eventType) {
     const eventIcons = {
-        'Strikeout': '<img width="30" height="30" src="https://img.icons8.com/fluency-systems-filled/30/circled-k.png" alt="circled-k"/>',
-        'Home Run': '<img width="20" height="20" src="https://img.icons8.com/ios/20/baseball-field.png" alt="baseball-field"/>',
-        'Single': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/1-circle-c.png" alt="1-circle-c"/>',
-        'Double': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/2-circle-c.png" alt="2-circle-c"/>',
-        'Triple': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/3-circle.png" alt="3-circle"/>',
-        'Walk': '<img width="20" height="20" src="https://img.icons8.com/ios/20/walking--v1.png" alt="walking--v1"/>',
-        'Hit By Pitch': '<img width="25" height="25" src="https://img.icons8.com/ios/25/explosion.png" alt="explosion"/>',
-        'Stolen Base': '<img width="30" height="30" src="https://img.icons8.com/dotty/30/exercise.png" alt="exercise"/>',
-        'Wild Pitch': '<img width="30" height="30" src="https://img.icons8.com/dotty/30/exercise.png" alt="exercise"/>',
-        'Passed Ball': '<img width="30" height="30" src="https://img.icons8.com/dotty/30/exercise.png" alt="exercise"/>',
+        'Strikeout': '<img width="20" height="20" src="assets/icons/k.png" alt="circled-k"/>',
+        'Home Run': '<img width="30" height="30" src="assets/icons/baseball-field.png" alt="baseball-field"/>',
+        'Single': '<img width="20" height="20" src="assets/icons/one.png" alt="1-circle-c"/>',
+        'Double': '<img width="20" height="20" src="assets/icons/two.png" alt="2-circle-c"/>',
+        'Triple': '<img width="20" height="20" src="assets/icons/three.png" alt="3-circle"/>',
+        'Walk': '<img width="20" height="20" src="assets/icons/running.png" alt="walking--v1"/>',
+        'Hit By Pitch': '<img width="25" height="25" src="assets/icons/hbp.png" alt="explosion"/>',
+        'Stolen Base': '<img width="30" height="30" src="assets/icons/running.png" alt="exercise"/>',
+        'Wild Pitch': '<img width="30" height="30" src="assets/icons/running.png" alt="exercise"/>',
+        'Passed Ball': '<img width="30" height="30" src="assets/icons/running.png" alt="exercise"/>',
         'Groundout': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/circled-down-2.png" alt="circled-down-2"/>',
         'Flyout': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/send-letter.png" alt="send-letter"/>',
         'Pop Out': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/send-letter.png" alt="send-letter"/>',
@@ -2197,11 +2197,11 @@ function getEventIcon(eventType) {
         'Offensive Sub': '<img width="30" height="30" src="https://img.icons8.com/pulsar-line/30/data-in-both-directions.png" alt="data-in-both-directions"/>',
         'Pitching Substitution': '<img width="30" height="30" src="https://img.icons8.com/pulsar-line/30/data-in-both-directions.png" alt="data-in-both-directions"/>',
         'Error': 'https://img.icons8.com/?size=100&id=59754&format=png&color=000000',
-        'Fielders Choice': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>',
-        'Force Out': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>',
-        'Sacrifice Fly': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>',
-        'Sacrifice Bunt': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>',
-        'Grounded Into DP': '<img width="20" height="20" src="https://img.icons8.com/pulsar-line/20/softball-mitt.png" alt="softball-mitt"/>'
+        'Fielders Choice': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>',
+        'Force Out': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>',
+        'Sacrifice Fly': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>',
+        'Sacrifice Bunt': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>',
+        'Grounded Into DP': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>'
     };
     
     return eventIcons[eventType] || '<img width="25" height="25" src="https://img.icons8.com/material-rounded/25/baseball-ball.png" alt="baseball-ball"/>';
