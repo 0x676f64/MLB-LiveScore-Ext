@@ -926,264 +926,215 @@ toggleContainers(true);
                 </div>
             </div>
         `;
-    
-        updateSVG(count, onBase);
     }
     
 
  function renderLivePitchData(data) {
-        // Check if game is live
-        const gameState = data.gameData.status.abstractGameState;
+    const gameState = data.gameData.status.abstractGameState;
 
-        if (gameState !== "Live" && gameState !== "In Progress") return;
-        
-        // Remove any existing pitch data display
-        const existingPitchData = document.getElementById("pitch-data-section");
-        if (existingPitchData) {
-            existingPitchData.remove();
-        }
-        
-        // Create pitch data section
-        const pitchDataSection = document.createElement("div");
-        pitchDataSection.id = "pitch-data-section";
-        
-        // Create separator line
-        const separator = document.createElement("hr");
-        separator.classList.add("separator-line");
-        pitchDataSection.appendChild(separator);
-        
-        // Create pitch data container
-        const pitchDataContainer = document.createElement("div");
-        pitchDataContainer.id = "pitch-data-container";
-        
-        // Get last pitch data
-        const allPlays = data.liveData.plays.allPlays;
-        const lastPlay = allPlays[allPlays.length - 1];
-        
-        if (!lastPlay || !lastPlay.pitchIndex || !lastPlay.pitchIndex.length) return; // No pitch data available
-        
-        const lastPitchIndex = lastPlay.pitchIndex[lastPlay.pitchIndex.length - 1];
-        const pitchDetails = lastPlay.playEvents[lastPitchIndex];
-        
-        // Get pitcher details
-        const pitcher = data.liveData.plays.currentPlay.matchup.pitcher;
-        
-        // Extract relevant data
-        const pitcherName = `${pitcher.fullName.split(" ")[0][0]}. ${pitcher.fullName.split(" ")[1]}`;
-        const pitchType = pitchDetails?.details?.type?.description || "Unknown";
-        const pitchVelocity = pitchDetails.pitchData.startSpeed ? `${pitchDetails.pitchData.startSpeed.toFixed(1)} MPH` : "N/A";
-        const spinRate = pitchDetails.pitchData.breaks ? `${pitchDetails.pitchData.breaks.spinRate} RPM` : "N/A";
-        
-        // Set content in a single row format
-        pitchDataContainer.innerHTML = `
-            <span class="pitch-info"><strong>Pitcher:</strong> ${pitcherName}</span>
-            <span class="pitch-info pitch-type"><strong>Pitch:</strong> ${pitchType}</span>
-            <span class="pitch-info pitch-velo"><strong>Velocity:</strong> ${pitchVelocity}</span>
-            <span class="pitch-info"><strong>Spin:</strong> ${spinRate}</span>
-        `;
-        
-        pitchDataSection.appendChild(pitchDataContainer);
-    
-// Create pitch description section
-const pitchDescriptionContainer = document.createElement("div");
-pitchDescriptionContainer.id = "pitch-description-container";
+    if (gameState !== "Live" && gameState !== "In Progress") return;
 
-// Safely get the latest currentPlay pitch description
-const currentPlay = data.liveData.plays.currentPlay;
-
-// First, try to get the overall play description
-let pitchResult = currentPlay?.result?.description || 
-                  currentPlay?.result?.event ||
-                  "Unknown";
-
-// If that doesn't work, look in playEvents for the most recent event with a description
-if (!pitchResult || pitchResult === "Unknown") {
-    const latestEvent = [...(currentPlay?.playEvents || [])].reverse().find(e => 
-        e?.details?.description && 
-        e?.details?.description !== e?.details?.event // Avoid generic event names
-    );
-    pitchResult = latestEvent?.details?.description || "Unknown";
-}
-
-// Fallback to checking allPlays for the most recent completed play
-if (!pitchResult || pitchResult === "Unknown") {
-    const allPlays = data.liveData.plays.allPlays || [];
-    const mostRecentPlay = allPlays[allPlays.length - 1];
-    pitchResult = mostRecentPlay?.result?.description || "No play data available";
-}
-
-// Get hit data from the right source
-const getHitData = () => {
-    console.log("Searching for hit data..."); // Debug log
-    
-    // Try multiple sources for hit data
-    let hitData = null;
-    
-    // Check currentPlay playEvents (most common location)
-    if (currentPlay?.playEvents) {
-        for (let event of currentPlay.playEvents) {
-            if (event.hitData) {
-                console.log("Found hit data in currentPlay.playEvents:", event.hitData);
-                hitData = event.hitData;
-                break;
-            }
-        }
+    const existingPitchData = document.getElementById("pitch-data-section");
+    if (existingPitchData) {
+        existingPitchData.remove();
     }
-    
-    // Check currentPlay directly
-    if (!hitData && currentPlay?.hitData) {
-        console.log("Found hit data in currentPlay:", currentPlay.hitData);
-        hitData = currentPlay.hitData;
+
+    const pitchDataSection = document.createElement("div");
+    pitchDataSection.id = "pitch-data-section";
+
+    const separator = document.createElement("hr");
+    separator.classList.add("separator-line");
+    pitchDataSection.appendChild(separator);
+
+    const pitchDataContainer = document.createElement("div");
+    pitchDataContainer.id = "pitch-data-container";
+
+    const allPlays = data.liveData.plays.allPlays;
+    const lastPlay = allPlays[allPlays.length - 1];
+
+    if (!lastPlay || !lastPlay.pitchIndex || !lastPlay.pitchIndex.length) return;
+
+    const lastPitchIndex = lastPlay.pitchIndex[lastPlay.pitchIndex.length - 1];
+    const pitchDetails = lastPlay.playEvents[lastPitchIndex];
+
+    const pitcher = data.liveData.plays.currentPlay.matchup.pitcher;
+
+    const pitcherName = `${pitcher.fullName.split(" ")[0][0]}. ${pitcher.fullName.split(" ")[1]}`;
+    const pitchType = pitchDetails?.details?.type?.description || "Unknown";
+    const pitchVelocity = pitchDetails.pitchData.startSpeed ? `${pitchDetails.pitchData.startSpeed.toFixed(1)} MPH` : "N/A";
+    const spinRate = pitchDetails.pitchData.breaks ? `${pitchDetails.pitchData.breaks.spinRate} RPM` : "N/A";
+
+    pitchDataContainer.innerHTML = `
+        <span class="pitch-info"><strong>Pitcher:</strong> ${pitcherName}</span>
+        <span class="pitch-info pitch-type"><strong>Pitch:</strong> ${pitchType}</span>
+        <span class="pitch-info pitch-velo"><strong>Velocity:</strong> ${pitchVelocity}</span>
+        <span class="pitch-info"><strong>Spin:</strong> ${spinRate}</span>
+    `;
+
+    pitchDataSection.appendChild(pitchDataContainer);
+
+    const pitchDescriptionContainer = document.createElement("div");
+    pitchDescriptionContainer.id = "pitch-description-container";
+
+    const currentPlay = data.liveData.plays.currentPlay;
+
+    let pitchResult = currentPlay?.result?.description ||
+                      currentPlay?.result?.event ||
+                      "Unknown";
+
+    if (!pitchResult || pitchResult === "Unknown") {
+        const latestEvent = [...(currentPlay?.playEvents || [])].reverse().find(e =>
+            e?.details?.description &&
+            e?.details?.description !== e?.details?.event
+        );
+        pitchResult = latestEvent?.details?.description || "Unknown";
     }
-    
-    // Check allPlays for the most recent play
-    if (!hitData) {
+
+    if (!pitchResult || pitchResult === "Unknown") {
         const allPlays = data.liveData.plays.allPlays || [];
         const mostRecentPlay = allPlays[allPlays.length - 1];
-        
-        if (mostRecentPlay?.playEvents) {
-            for (let event of mostRecentPlay.playEvents) {
+        pitchResult = mostRecentPlay?.result?.description || "No play data available";
+    }
+
+    const getHitData = () => {
+        let hitData = null;
+
+        if (currentPlay?.playEvents) {
+            for (let event of currentPlay.playEvents) {
                 if (event.hitData) {
-                    console.log("Found hit data in allPlays.playEvents:", event.hitData);
                     hitData = event.hitData;
                     break;
                 }
             }
         }
-        
-        if (!hitData && mostRecentPlay?.hitData) {
-            console.log("Found hit data in allPlays play:", mostRecentPlay.hitData);
-            hitData = mostRecentPlay.hitData;
+
+        if (!hitData && currentPlay?.hitData) {
+            hitData = currentPlay.hitData;
         }
-    }
-    
-    if (!hitData) {
-        console.log("No hit data found");
-        console.log("currentPlay structure:", currentPlay);
-    }
-    
-    return hitData;
-};
 
-let resultClass = "unclassified"; // Default to gray for unknown results
+        if (!hitData) {
+            const allPlays = data.liveData.plays.allPlays || [];
+            const mostRecentPlay = allPlays[allPlays.length - 1];
 
-// Determine color based on event or description
-if (pitchResult === "Strikeout" || pitchResult.includes("Called Strike") || pitchResult.includes("Swinging Strike") || pitchResult.includes("Foul") || pitchResult.includes("Foul Ball")) {
-    resultClass = "strike";
-} else if (pitchResult.includes("Ball") || pitchResult.includes("Ball In the Dirt") || pitchResult.includes("Walk")) {
-    resultClass = "ball";
+            if (mostRecentPlay?.playEvents) {
+                for (let event of mostRecentPlay.playEvents) {
+                    if (event.hitData) {
+                        hitData = event.hitData;
+                        break;
+                    }
+                }
+            }
 
-            // Extract hit data if available
-    const hitData = getHitData();
-    console.log("Hit detected, hit data found:", hitData); // Debug log
-    if (hitData) {
-        const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
-        const launchAngle = hitData.launchAngle ? `${hitData.launchAngle.toFixed(1)}°` : "N/A";
-        const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
-
-        // Append hit data formatted correctly
-        pitchResult += `<div class="hit-data">
-        <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
-        <span><i><strong>LA:</strong></i> ${launchAngle}</span>
-        <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
-    </div>`;
-    }
-} else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") || 
-           pitchResult.includes("Flyout") || pitchResult.includes("Forceout") || 
-           pitchResult.includes("Pop Out") || pitchResult.includes("Lineout") || 
-           pitchResult.includes("Sac Fly") || pitchResult.includes("grounded") ||
-           pitchResult.includes("flied") || pitchResult.includes("lined") ||
-           pitchResult.includes("popped")) {
-    // Keep the full description for outs
-    resultClass = "out";
-
-    // Extract hit data if available (for balls put in play leading to outs)
-    const hitData = getHitData();
-    console.log("Out detected, hit data found:", hitData); // Debug log
-    if (hitData) {
-        const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
-        const launchAngle = hitData.launchAngle ? `${Math.round(hitData.launchAngle)}°` : "N/A";
-        const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
-
-        // Append hit data formatted correctly
-        pitchResult += `<div class="hit-data">
-        <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
-        <span><i><strong>LA:</strong></i> ${launchAngle}</span>
-        <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
-    </div>`;
-    }
-} else if (
-    pitchResult.includes("Foul") ||
-    pitchResult === "Foul Tip" ||
-    pitchResult === "Foul Bunt" ||
-    pitchResult === "Foul Ball" ||
-    pitchResult === "Foul Out" ||
-    pitchResult === "Foul Strike" ||
-    pitchResult === "Foul Tip Catch"
-) {
-    pitchResult = "Foul Ball";
-    resultClass = "foul";
-} else if (pitchResult.includes("Pitching Change") || 
-    pitchResult === "Mound Visit" ||
-    pitchResult === "Batter Timeout" ||
-    pitchResult === "Batting Timeout" 
-) {
-    pitchResult = "Time Out";
-    resultClass = "change";
-} else if (pitchResult.includes("Stolen Base")) {
-    pitchResult = "Stolen Base";
-    resultClass = "strike";
-} else if (pitchResult.includes("Caught Stealing")) {
-    pitchResult = "Caught Stealing";
-    resultClass = "ball";
-} else if (pitchResult.includes("Wild Pitch")) {
-    pitchResult = "Wild Pitch";
-    resultClass = "ball";
-} else {
-    // Anything not covered falls here
-    resultClass = "unclassified"; // Default gray
-}
-
-// Set pitch description content with color-coded class
-pitchDescriptionContainer.innerHTML = `
-    <span class="pitch-description ${resultClass}">${pitchResult}</span>
-`;
-
-pitchDataSection.appendChild(pitchDescriptionContainer);
-
-// Insert after gameplay-info-container
-const gameplayInfoContainer = document.getElementById("gameplay-info-container");
-gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoContainer.nextSibling);
-    }
-
-    function generateSVGField(count, onBase) {
-        return `
-            <svg id="field" width="100" height="100" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #e5decf;">
-                <circle id="out-1" cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-                <circle id="out-2" cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-                <circle id="out-3" cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-                
-                <rect id="third-base" x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-                <rect id="second-base" x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-                <rect id="first-base" x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            </svg>
-        `;
-    }
-
-    function updateSVG(count, onBase) {
-        console.log('Updating SVG:', count, onBase);
-
-        for (let i = 1; i <= 3; i++) {
-            const outCircle = document.getElementById(`out-${i}`);
-            if (outCircle) {
-                outCircle.style.fill = i <= count.outs ? '#000' : '#e5decf';
+            if (!hitData && mostRecentPlay?.hitData) {
+                hitData = mostRecentPlay.hitData;
             }
         }
+        return hitData;
+    };
 
-        document.getElementById('first-base').style.fill = onBase.first ? '#000' : '#e5decf';
-        document.getElementById('second-base').style.fill = onBase.second ? '#000' : '#e5decf';
-        document.getElementById('third-base').style.fill = onBase.third ? '#000' : '#e5decf';
+    let resultClass = "unclassified";
+
+    if (pitchResult === "Strikeout" || pitchResult.includes("Called Strike") || pitchResult.includes("Swinging Strike") || pitchResult.includes("Foul") || pitchResult.includes("Foul Ball")) {
+        resultClass = "strike";
+    } else if (pitchResult.includes("Ball") || pitchResult.includes("Ball In the Dirt") || pitchResult.includes("Walk")) {
+        resultClass = "ball";
+
+        const hitData = getHitData();
+        if (hitData) {
+            const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
+            const launchAngle = hitData.launchAngle ? `${hitData.launchAngle.toFixed(1)}°` : "N/A";
+            const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
+
+            pitchResult += `<div class="hit-data">
+            <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
+            <span><i><strong>LA:</strong></i> ${launchAngle}</span>
+            <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
+        </div>`;
+        }
+    } else if (pitchResult.includes("Out") || pitchResult.includes("Groundout") ||
+               pitchResult.includes("Flyout") || pitchResult.includes("Forceout") ||
+               pitchResult.includes("Pop Out") || pitchResult.includes("Lineout") ||
+               pitchResult.includes("Sac Fly") || pitchResult.includes("grounded") ||
+               pitchResult.includes("flied") || pitchResult.includes("lined") ||
+               pitchResult.includes("popped")) {
+        resultClass = "out";
+
+        const hitData = getHitData();
+        if (hitData) {
+            const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
+            const launchAngle = hitData.launchAngle ? `${Math.round(hitData.launchAngle)}°` : "N/A";
+            const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
+
+            pitchResult += `<div class="hit-data">
+            <span><i><strong>EV:</strong></i> ${launchSpeed}</span>
+            <span><i><strong>LA:</strong></i> ${launchAngle}</span>
+            <span><i><strong>Distance:</strong></i> ${totalDistance}</span>
+        </div>`;
+        }
+    } else if (
+        pitchResult.includes("Foul") ||
+        pitchResult === "Foul Tip" ||
+        pitchResult === "Foul Bunt" ||
+        pitchResult === "Foul Ball" ||
+        pitchResult === "Foul Out" ||
+        pitchResult === "Foul Strike" ||
+        pitchResult === "Foul Tip Catch"
+    ) {
+        pitchResult = "Foul Ball";
+        resultClass = "foul";
+    } else if (pitchResult.includes("Pitching Change") ||
+        pitchResult === "Mound Visit" ||
+        pitchResult === "Batter Timeout" ||
+        pitchResult === "Batting Timeout"
+    ) {
+        pitchResult = "Time Out";
+        resultClass = "change";
+    } else if (pitchResult.includes("Stolen Base")) {
+        pitchResult = "Stolen Base";
+        resultClass = "strike";
+    } else if (pitchResult.includes("Caught Stealing")) {
+        pitchResult = "Caught Stealing";
+        resultClass = "ball";
+    } else if (pitchResult.includes("Wild Pitch")) {
+        pitchResult = "Wild Pitch";
+        resultClass = "ball";
+    } else {
+        resultClass = "unclassified";
     }
+
+    pitchDescriptionContainer.innerHTML = `
+        <span class="pitch-description ${resultClass}">${pitchResult}</span>
+    `;
+
+    pitchDataSection.appendChild(pitchDescriptionContainer);
+
+    const gameplayInfoContainer = document.getElementById("gameplay-info-container");
+    if (gameplayInfoContainer) {
+        gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoContainer.nextSibling);
+    }
+}
+
+function generateSVGField(count, onBase) {
+    const out1Fill = count.outs >= 1 ? '#000' : '#e5decf';
+    const out2Fill = count.outs >= 2 ? '#000' : '#e5decf';
+    const out3Fill = count.outs >= 3 ? '#000' : '#e5decf';
+
+    const firstBaseFill = onBase.first ? '#000' : '#e5decf';
+    const secondBaseFill = onBase.second ? '#000' : '#e5decf';
+    const thirdBaseFill = onBase.third ? '#000' : '#e5decf';
+
+    return `
+        <svg id="field" width="100" height="100" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #e5decf;">
+            <circle id="out-1" cx="13" cy="61" r="6" fill="${out1Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle id="out-2" cx="30" cy="61" r="6" fill="${out2Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle id="out-3" cx="47" cy="61" r="6" fill="${out3Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            
+            <rect id="third-base" x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${thirdBaseFill}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect id="second-base" x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${secondBaseFill}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect id="first-base" x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${firstBaseFill}" stroke="#000" stroke-width="1" opacity="0.8"/>
+        </svg>
+    `;
+}
 
    // setInterval(() => fetchGameData(gamePk), 2000); // Refresh every 2s
     async function loadBoxScore() {
@@ -2416,19 +2367,29 @@ function createScoringPlayItem(play, gameInfo, index) {
     const playerName = batter?.fullName || 'Unknown Player';
 
     // Get inning information
-    const inningHalf = play.about?.halfInning === 'top' ? 'T' : 'B';
+    const inningHalf = play.about?.halfInning === 'top' ? 'Top' : 'Bot';
     const inning = play.about?.inning || 1;
-    const inningText = `${inningHalf}${inning}`;
+    const inningText = `${inningHalf} ${inning}`;
 
     // Get event icon based on play result
     const eventType = play.result?.event || '';
     let eventIcon = '⚾';
-    if (eventType.includes('Home Run')) eventIcon = '🏠';
-    else if (eventType.includes('Triple')) eventIcon = '3️⃣';
-    else if (eventType.includes('Double')) eventIcon = '2️⃣';
-    else if (eventType.includes('Single')) eventIcon = '1️⃣';
-    else if (eventType.includes('Sac')) eventIcon = '🎯';
-    else if (eventType.includes('Error')) eventIcon = '❌';
+    if (eventType.includes('Home Run')) eventIcon = 'HR';
+    else if (eventType.includes('Triple')) eventIcon = '3B';
+    else if (eventType.includes('Double')) eventIcon = '2B';
+    else if (eventType.includes('Single')) eventIcon = '1B';
+    else if (eventType.includes('Sac')) eventIcon = 'SAC';
+    else if (eventType.includes('Error')) eventIcon = 'E';
+    else if (eventType.includes('Walk')) eventIcon = 'BB';
+    else if (eventType.includes('Hit By Pitch')) eventIcon = 'HBP';
+    else if (eventType.includes('Forceout')) eventIcon = 'OUT';
+    else if (eventType.includes('Sac Bunt')) eventIcon = 'SAC';
+    else if (eventType.includes('Grounded Into DP')) eventIcon = 'DP';
+    else if (eventType.includes('Field Error')) eventIcon = 'E';
+    else if (eventType.includes('Fielders Choice')) eventIcon = 'FC';
+    else if (eventType.includes('Double Play')) eventIcon = 'OUT';
+    else if (eventType.includes('Catcher Interference')) eventIcon = 'E2';
+    else if (eventType.includes('Groundout')) eventIcon = 'OUT';
 
     // Get baserunners (pre-play state for visual context)
     const baserunners = getBaserunners(play);
@@ -2450,6 +2411,47 @@ function createScoringPlayItem(play, gameInfo, index) {
     if (play.result?.rbi && play.result.rbi > 0) {
         scoreRbiInfo += `<div style="color: #28a745; font-weight: bold; font-size: 13px;">RBI: ${play.result.rbi}</div>`;
     }
+
+    // Try to find the first playEvent that contains hitData
+    const statcastEvent = play.playEvents?.find(event => event?.hitData) || {};
+    const statcastData = statcastEvent.hitData || {};
+
+    
+    // Try multiple possible data locations and log for debugging
+    console.log('Play object:', play);
+    console.log('Hit data:', statcastData);
+    
+    const exitVelo = statcastData.launchSpeed ? `${Math.round(statcastData.launchSpeed)} mph` : 
+                     statcastData.exitVelocity ? `${Math.round(statcastData.exitVelocity)} mph` : '--';
+    const launchAngle = statcastData.launchAngle ? `${Math.round(statcastData.launchAngle)}°` : '--';
+    const distance = statcastData.totalDistance ? `${Math.round(statcastData.totalDistance)} ft` : 
+                     statcastData.distance ? `${Math.round(statcastData.distance)} ft` : '--';
+    
+    const statcastStats = `
+        <div class="statcast-stats" style="
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            padding: 8px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 6px;
+            border-left: 4px solid #ff6a6c;
+            border-bottom: 1px solid #d7827e;
+        ">
+            <div class="stat-item" style="text-align: center; flex: 1;">
+                <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
+                <div style="font-size: 14px; font-weight: bold; color: #333;">${exitVelo}</div>
+            </div>
+            <div class="stat-item" style="text-align: center; flex: 1;">
+                <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
+                <div style="font-size: 14px; font-weight: bold; color: #333;">${launchAngle}</div>
+            </div>
+            <div class="stat-item" style="text-align: center; flex: 1;">
+                <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Distance</div>
+                <div style="font-size: 14px; font-weight: bold; color: #333;">${distance}</div>
+            </div>
+        </div>
+    `;
 
     playDiv.innerHTML = `
         <div class="inning-indicator" style="
@@ -2493,45 +2495,48 @@ function createScoringPlayItem(play, gameInfo, index) {
                 border: 2px solid white;
             ">${eventIcon}</div>
         </div>
-        <div class="play-details" style="flex: 1; margin-top: 5px;">
-            <div class="event-name" style="
-                border: 3px solid #2a283e;
-                color: black;
-                padding: 4px 8px;
-                border-radius: 10rem;
-                font-weight: bold;
-                font-size: 16px;
-                display: inline-block;
-                margin-bottom: 6px;
-            ">${play.result?.event || 'Unknown Event'}</div>
-            <p class="play-description" style="
-                color: #333;
-                font-size: 15px;
-                line-height: 1.3;
-                margin: 0;
-                width: 90%;
-                font-weight: 400;
-            ">${play.result?.description || 'No description available'}</p>
-            ${scoreRbiInfo}
+        <div class="content-wrapper" style="display: flex; flex: 1; align-items: flex-start; gap: 16px;">
+            <div class="play-details" style="flex: 1; margin-top: 5px;">
+                <div class="event-name" style="
+                    border: 3px solid #2a283e;
+                    color: black;
+                    padding: 4px 8px;
+                    border-radius: 10rem;
+                    font-weight: bold;
+                    font-size: 16px;
+                    display: inline-block;
+                    margin-bottom: 6px;
+                ">${play.result?.event || 'Unknown Event'}</div>
+                <p class="play-description" style="
+                    color: #333;
+                    font-size: 15px;
+                    line-height: 1.3;
+                    margin: 0 0 8px 0;
+                    font-weight: 400;
+                ">${play.result?.description || 'No description available'}</p>
+                ${scoreRbiInfo}
+                ${statcastStats}
+            </div>
             <div class="game-situation" style="
                 display: flex;
+                flex-direction: row;
                 align-items: center;
-                justify-content: space-between;
-                margin-top: 8px;
                 padding: 8px;
                 background: #e5decf;
-                border-radius: 4px;
+                border-radius: 6px;
+                margin-top: 5px;
+                min-width: 90px;
             ">
                 <div class="count-info" style="
-                    display: flex;
-                    flex-direction: column;
                     font-size: 12px;
                     font-weight: bold;
+                    color: #333;
+                    margin-bottom: 8px;
+                    text-align: center;
                 ">
-                    <span class="count" style="color: #333; margin-bottom: 2px;">${count.balls}-${count.strikes}</span>
-                    <span class="outs" style="color: #666; font-size: 11px;">${count.outs} out${count.outs !== 1 ? 's' : ''}</span>
+                    <div> ${count.balls}-${count.strikes}</div>
                 </div>
-                <div class="field-display" style="flex-shrink: 0;">
+                <div class="field-display">
                     ${generateSVGField(count, baserunners)}
                 </div>
             </div>
