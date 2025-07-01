@@ -175,13 +175,15 @@ function reapplyTabVisibility() {
 }
 
 // Visibility management function
-function toggleContainers(showDynamic, isBoxscoreTab = false, isAllPlaysTab = false) {
+function toggleContainers(showDynamic, isBoxscoreTab = false, isScoringPlaysTab = false, isAllPlaysTab = false) {
     const gameInfoContainer = document.getElementById('game-info');
     const gameplayInfoContainer = document.getElementById('gameplay-info-container');
     const topPerformer = document.getElementById('top-performers');
     const pitchDataSection = document.getElementById('pitch-data-section');
     const boxScoreContainer = document.getElementById('boxscore-content');
+    const scoringPlaysContainer = document.getElementById('scoringPlays-container');
     const allPlaysContainer = document.getElementById('all-plays-container');
+    
 
     // Store original display values if not already stored
     ['game-info', 'gameplay-info-container', 'top-performers', 'pitch-data-section'].forEach(storeOriginalDisplay);
@@ -208,6 +210,11 @@ function toggleContainers(showDynamic, isBoxscoreTab = false, isAllPlaysTab = fa
     // Handle all plays container
     if (allPlaysContainer) {
         allPlaysContainer.style.display = isAllPlaysTab ? 'block' : 'none';
+    }
+
+    // Handle scoring plays container
+    if (scoringPlaysContainer) {
+        scoringPlaysContainer.style.display = isScoringPlaysTab ? 'block' : 'none'; 
     }
 }
 
@@ -1663,7 +1670,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 align-items: center;
                 padding: 10px 12px;
                 background: #0b0f13;
-                color: white;
+                color: black;
                 cursor: pointer;
                 user-select: none;
                 transition: background-color 0.2s;
@@ -1822,19 +1829,19 @@ function createPitchingStatsRow(pitcher, teamStats) {
             }
 
             .away-team .team-header {
-                background:rgb(74, 87, 100);
+                background: #eee;
             }
 
             .away-team .team-header:hover {
-                background: #5a6268;
+                background: #b9b9b9;
             }
 
             .home-team .team-header {
-                background: rgb(74, 87, 100);
+                background: #eee;
             }
 
             .home-team .team-header:hover {
-                background: #5a6268;
+                background: #b9b9b9;
             }
 
             @media (max-width: 600px) {
@@ -1941,127 +1948,6 @@ function setupToggleHandlers() {
     });
 }
 
-const allPlaysCSS = `
-#all-plays-container {
-    width: 100%;
-    height: 400px;
-    overflow-y: auto;
-    padding: 10px;
-    background-color: #e5decf;
-    border-radius: 8px;
-    font-family: Rubik, sans-serif;
-    scrollbar-width: thin;
-}
-
-.play-item {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 12px;
-    padding: 8px;
-    background-color: rgba(255, 255, 255, 0.7);
-    border-radius: 8px;
-    opacity: 0;
-    transform: translateY(-10px);
-    animation: slideIn 0.3s ease-out forwards;
-    position: relative;
-}
-
-@keyframes slideIn {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.inning-indicator {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    background-color: #ff6a6c;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: bold;
-}
-
-.player-image-container {
-    flex-shrink: 0;
-    margin-right: 12px;
-    margin-left: 55px;
-    position: relative;
-}
-
-.player-image {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid #d7827e;
-    background-color: #e5decf;
-    object-fit: cover;
-}
-
-.event-icon {
-    position: absolute;
-    bottom: -5px;
-    right: -5px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: #ff6a6c;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    color: white;
-    border: 2px solid white;
-}
-
-.play-details {
-    flex: 1;
-    margin-top: 5px;
-}
-
-.event-name {
-    background-color: #d7827e;
-    color: black;
-    padding: 4px 8px;
-    border-radius: 10px;
-    font-weight: bold;
-    font-size: 12px;
-    display: inline-block;
-    margin-bottom: 6px;
-}
-
-.play-description {
-    color: #333;
-    font-size: 11px;
-    line-height: 1.3;
-    margin: 0;
-}
-
-.game-start-item {
-    background: linear-gradient(135deg, #ff6a6c, #d7827e);
-    color: white;
-    text-align: center;
-    padding: 15px;
-    margin-bottom: 15px;
-}
-
-.game-start-icon {
-    font-size: 24px;
-    margin-bottom: 8px;
-}
-`;
-
-// Add CSS to document if not already added
-if (!document.getElementById('all-plays-styles')) {
-    const styleSheet = document.createElement('style');
-    styleSheet.id = 'all-plays-styles';
-    styleSheet.textContent = allPlaysCSS;
-    document.head.appendChild(styleSheet);
-}
-
 // Main function to load and render all plays
 async function loadAllPlays() {
     console.log('Loading all plays content');
@@ -2123,11 +2009,13 @@ function createGameStartItem(gameInfo) {
     const venue = gameInfo.venue?.name || 'Unknown Venue';
     const gameDate = new Date(gameInfo.datetime?.dateTime || gameInfo.gameDate);
     const timeString = gameDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const city = gameInfo.venue.location.city || 'Unknown';
+    const state = gameInfo.venue.location.state || 'Unknown';
     
     gameStartDiv.innerHTML = `
-        <div class="game-start-icon"><img width="48" height="48" src="https://img.icons8.com/pulsar-line/48/baseball-ball.png" alt="baseball-ball"/></div>
-        <div style="font-weight: bold; margin-bottom: 4px;">First Pitch</div>
-        <div style="font-size: 12px;">${timeString} at ${venue}</div>
+        <div style="font-weight: 400; margin-bottom: 4px; font-family: 'Rubik';">First Pitch</div>
+        <div style="font-size: 20px; font-weight: 500; font-family: 'Rubik';">${timeString} &#8226; ${venue}</div>
+        <div style="font-weight: 400; font-family: 'Rubik';">${city} &#8226; ${state}</div>
     `;
     
     return gameStartDiv;
@@ -2137,33 +2025,256 @@ function createGameStartItem(gameInfo) {
 function createPlayItem(play, gameData) {
     const playDiv = document.createElement('div');
     playDiv.className = 'play-item';
-    
+
     const inning = play.about?.inning || 1;
     const isTop = play.about?.isTopInning;
-    const inningText = `${isTop ? 'Top' : 'Bottom'} ${inning}`;
-    
+    const inningText = `${isTop ? 'Top' : 'Bot'} ${inning}`;
+
     // Get player info
     const playerId = play.matchup?.batter?.id;
     const playerName = getPlayerName(playerId, gameData) || 'Unknown Player';
-    
+
     // Create event icon
     const eventIcon = getEventIcon(play.result?.event);
+
+    // Determine baserunners AFTER the play using 'postOn' fields
+    const baserunners = {
+        first: !!play.matchup?.postOnFirst, // true if not null, false if null
+        second: !!play.matchup?.postOnSecond, // true if not null, false if null
+        third: !!play.matchup?.postOnThird // true if not null, false if null
+    };
+
+    // Get outs after the play
+    const outs = play.count?.outs || 0;
+
+// Example usage function showing how to implement this in your extension
+async function loadAndDisplayPlays(gamePk, plays) {
+    try {
+        // Step 1: Load game data once
+        console.log('Loading game data...');
+        const gameData = await getGameData(gamePk);
+        
+        if (!gameData) {
+            console.error('Failed to load game data');
+            return;
+        }
+        
+        console.log('Game data loaded successfully');
+        
+        // Step 2: Process each play using the pre-loaded data
+        const playDivs = [];
+        
+        plays.forEach((play, index) => {
+            // Extract necessary information for each play
+            const inningText = `${play.about.halfInning === 'top' ? 'T' : 'B'}${play.about.inning}`;
+            const playerId = play.matchup?.batter?.id || 'unknown';
+            const playerName = play.matchup?.batter?.fullName || 'Unknown Player';
+            const eventIcon = getEventIcon(play.result?.event); // You'll need to implement this
+            
+            // Create the play div with dynamic base runner data
+            const playDiv = createPlayDivWithGameData(
+                play, 
+                gameData, 
+                inningText, 
+                playerId, 
+                playerName, 
+                eventIcon
+            );
+            
+            playDivs.push(playDiv);
+        });
+        
+        // Step 3: Add all play divs to your container
+        const container = document.getElementById('plays-container'); // Your container ID
+        if (container) {
+            playDivs.forEach(playDiv => {
+                container.appendChild(playDiv);
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error in loadAndDisplayPlays:', error);
+    }
+}
+
+// Helper function to get event icons (you'll need to implement this based on your icons)
+function getEventIcon(eventType) {
+    const iconMap = {
+        'Single': '1B',
+        'Double': '2B',
+        'Triple': '3B',
+        'Home Run': 'HR',
+        'Strikeout': 'K',
+        'Groundout': 'OUT',
+        'Flyout': 'OUT',
+        'Walk': 'BB',
+        'Hit By Pitch': 'HBP',
+        'Lineout': 'OUT',
+        'Sac Fly': 'SAC',
+        'Pop Out': 'OUT',
+        'Forceout': 'OUT',
+        'Sac Bunt': 'OUT',
+        'Bunt Pop Out': 'OUT',
+        'Strikeout Double Play': 'OUT',
+        'Grounded Into DP': 'DP',
+        'Caught Stealing 2B': 'OUT',
+        'Caught Stealing 3B': 'OUT',
+        'Field Error': 'E',
+        'Fielders Choice': 'FC',
+        'Fielders Choice Out': 'OUT',
+        'Double Play': 'OUT',
+        'Catcher Interference': 'E2',
+        'Pickoff Caught Stealing 2B': 'OUT',
+        'Pickoff Caught Stealing 3B': 'OUT',
+        'Pitching Substitution': 'assets/icons/swap.png'
+    };
     
+    return iconMap[eventType] || '?';
+}
+
+// Function to inject CSS if not already added
+function injectCSS() {
+    if (!document.getElementById('game-situation-styles')) {
+        const style = document.createElement('style');
+        style.id = 'game-situation-styles';
+        style.textContent = gamesituationCSS;
+        document.head.appendChild(style);
+    }
+}
+
+// Initialize function to call when your extension loads
+async function initializePlayDisplay(gamePk, plays) {
+    // Inject CSS
+    injectCSS();
+    
+    // Load and display plays
+    await loadAndDisplayPlays(gamePk, plays);
+}
+
+// Function to get baserunners from play data
+function getBaserunners(play) {
+    const baserunners = {
+        first: false,
+        second: false,
+        third: false
+    };
+    
+    // Check if runners exist in the play data
+    if (play.runners && Array.isArray(play.runners)) {
+        play.runners.forEach(runner => {
+            if (runner.movement) {
+                const startBase = runner.movement.start;
+                if (startBase === '1B') baserunners.first = true;
+                if (startBase === '2B') baserunners.second = true;
+                if (startBase === '3B') baserunners.third = true;
+            }
+        });
+    }
+    
+    // Alternative: Check if there's a postOnFirst, postOnSecond, postOnThird in the play
+    if (play.postOnFirst) baserunners.first = true;
+    if (play.postOnSecond) baserunners.second = true;
+    if (play.postOnThird) baserunners.third = true;
+    
+    return baserunners;
+}
+    
+// Function to generate the SVG field
+function generateSVGField(count, onBase) {
+    return `
+        <svg id="field-${Date.now()}" width="60" height="60" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: transparent; border-radius: 4px;">
+            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            
+            <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+        </svg>
+    `;
+}
+
+// Inside the render loop
+const count = {
+    balls: play.count?.balls || 0,
+    strikes: play.count?.strikes || 0,
+    outs: play.count?.outs || 0
+};
+
+// Updated innerHTML code block with SVG integration
     playDiv.innerHTML = `
         <div class="inning-indicator">${inningText}</div>
         <div class="player-image-container">
-            <img class="player-image" 
-                 src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" 
-                 alt="${playerName}"
+            <img class="player-image"
+                 src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60"
+                 alt="${playerName}">
             <div class="event-icon">${eventIcon}</div>
         </div>
         <div class="play-details">
             <div class="event-name">${play.result?.event || 'Unknown Event'}</div>
             <p class="play-description">${play.result?.description || 'No description available'}</p>
         </div>
+        <div class="game-situation">
+            <div class="count-info">
+                <span class="count">${play.count?.balls || 0}-${play.count?.strikes || 0}</span>
+            </div>
+            <div class="field-display">
+                ${generateSVGField(
+                    { outs: outs }, // Pass the post-play outs
+                    baserunners // Pass the baserunners determined from 'postOn'
+                )}
+            </div>
+        </div>
     `;
-    
+
     return playDiv;
+}
+
+// Function to get baserunners from play data (This helper function is now largely redundant for 'post-play' state, but kept for clarity)
+// You already have a more direct implementation within createPlayItem now.
+function getBaserunners(play) {
+    const baserunners = {
+        first: false,
+        second: false,
+        third: false
+    };
+    
+    // Use matchup.postOnFirst, postOnSecond, postOnThird to determine baserunners
+    // These fields contain player info if someone is on base, null if empty
+    if (play.matchup?.postOnFirst) {
+        baserunners.first = true;
+    }
+    if (play.matchup?.postOnSecond) {
+        baserunners.second = true;
+    }
+    if (play.matchup?.postOnThird) {
+        baserunners.third = true;
+    }
+    
+    return baserunners;
+}
+
+// Function to load and display plays
+async function loadAndDisplayPlays(gamePk, plays) {
+    try {
+        const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+        const gameData = await response.json();
+        
+        const allPlays = gameData.liveData?.plays?.allPlays || [];
+        const container = document.getElementById('plays-container') || document.body;
+        
+        // Clear existing content
+        container.innerHTML = '';
+        
+        // Create and append play displays
+        allPlays.forEach((play, index) => {
+            const playDisplay = createPlayDisplay(play, allPlays, index);
+            container.appendChild(playDisplay);
+        });
+        
+    } catch (error) {
+        console.error('Error loading game data:', error);
+    }
 }
 
 // Helper function to get player name from game data
@@ -2174,48 +2285,52 @@ function getPlayerName(playerId, gameData) {
     return player ? `${player.firstName} ${player.lastName}` : null;
 }
 
-// Function to get appropriate icon for different events
-function getEventIcon(eventType) {
-    const eventIcons = {
-        'Strikeout': '<img width="20" height="20" src="assets/icons/k.png" alt="circled-k"/>',
-        'Home Run': '<img width="30" height="30" src="assets/icons/baseball-field.png" alt="baseball-field"/>',
-        'Single': '<img width="20" height="20" src="assets/icons/one.png" alt="1-circle-c"/>',
-        'Double': '<img width="20" height="20" src="assets/icons/two.png" alt="2-circle-c"/>',
-        'Triple': '<img width="20" height="20" src="assets/icons/three.png" alt="3-circle"/>',
-        'Walk': '<img width="20" height="20" src="assets/icons/running.png" alt="walking--v1"/>',
-        'Hit By Pitch': '<img width="25" height="25" src="assets/icons/hbp.png" alt="explosion"/>',
-        'Stolen Base': '<img width="30" height="30" src="assets/icons/running.png" alt="exercise"/>',
-        'Wild Pitch': '<img width="30" height="30" src="assets/icons/running.png" alt="exercise"/>',
-        'Passed Ball': '<img width="30" height="30" src="assets/icons/running.png" alt="exercise"/>',
-        'Groundout': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/circled-down-2.png" alt="circled-down-2"/>',
-        'Flyout': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/send-letter.png" alt="send-letter"/>',
-        'Pop Out': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/send-letter.png" alt="send-letter"/>',
-        'Lineout': '<img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/circled-right.png" alt="circled-right"/>',
-        'Balk': '<img width="30" height="30" src="https://img.icons8.com/fluency-systems-regular/30/police-badge.png" alt="police-badge"/>',
-        'Pickoff': '<img width="30" height="30" src="https://img.icons8.com/parakeet-line/30/pickaxe.png" alt="pickaxe"/>',
-        'Defensive Sub': '<img width="30" height="30" src="https://img.icons8.com/pulsar-line/30/data-in-both-directions.png" alt="data-in-both-directions"/>',
-        'Offensive Sub': '<img width="30" height="30" src="https://img.icons8.com/pulsar-line/30/data-in-both-directions.png" alt="data-in-both-directions"/>',
-        'Pitching Substitution': '<img width="30" height="30" src="https://img.icons8.com/pulsar-line/30/data-in-both-directions.png" alt="data-in-both-directions"/>',
-        'Error': 'https://img.icons8.com/?size=100&id=59754&format=png&color=000000',
-        'Fielders Choice': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>',
-        'Force Out': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>',
-        'Sacrifice Fly': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>',
-        'Sacrifice Bunt': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>',
-        'Grounded Into DP': '<img width="30" height="30" src="assets/icons/baseball-glove.png" alt="softball-mitt"/>'
-    };
-    
-    return eventIcons[eventType] || '<img width="25" height="25" src="https://img.icons8.com/material-rounded/25/baseball-ball.png" alt="baseball-ball"/>';
+// Dynamic refresher when All Plays tab is active
+let refreshInterval;
+
+async function checkGameStatus(gamePk) {
+    try {
+        const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+        const data = await response.json();
+        return data.gameData.status.detailedState;
+    } catch (error) {
+        console.error('Error fetching game status:', error);
+        return null;
+    }
 }
 
-// refresher when All Plays tab is active
-setInterval(() => {
+function shouldRefresh(gameStatus) {
+    const nonRefreshStates = ["Final", "Game Over", "Pre-Game", "Scheduled", "Suspended: Rain"];
+    return !nonRefreshStates.includes(gameStatus);
+}
+
+async function conditionalRefresh() {
     if (!gamePk) return;
     
     const activeTab = document.querySelector('.tab-button.active');
     if (activeTab && activeTab.id === 'all-plays-tab') {
-        // Clear cached data to force fresh fetch
-        delete window.cachedGameData;
-        loadAllPlays();
+        const gameStatus = await checkGameStatus(gamePk);
+        
+        if (gameStatus && shouldRefresh(gameStatus)) {
+            console.log(`Game status: ${gameStatus} - Refreshing...`);
+            // Clear cached data to force fresh fetch
+            delete window.cachedGameData;
+            loadAllPlays();
+        } else {
+            console.log(`Game status: ${gameStatus} - Not refreshing`);
+            // If game is over, clear the interval to stop future checks
+            if (gameStatus && !shouldRefresh(gameStatus)) {
+                clearInterval(refreshInterval);
+                console.log('Game finished - stopping auto-refresh');
+            }
+        }
     }
-}, 30000); // 30 seconds
+}
+
+async function loadScoringPlays() {
+    console.log('Loading all plays content');
+    testHTML.innerHTML = `
+    <p>pussy boy</p>
+    `;
+}
 });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             

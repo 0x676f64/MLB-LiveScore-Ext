@@ -539,6 +539,151 @@ h4 {
     padding: 5px;
     border-radius: 3px;
 }
+
+/* All Plays */
+
+#all-plays-container {
+    width: 100%;
+    height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #e5decf;
+    border-radius: 8px;
+    font-family: Rubik, sans-serif;
+    scrollbar-width: thin;
+}
+
+.play-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: slideIn 0.3s ease-out forwards;
+    position: relative;
+}
+
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.inning-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: #ff6a6c;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.player-image-container {
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-left: 55px;
+    position: relative;
+}
+
+.player-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #d7827e;
+    background-color: #e5decf;
+    object-fit: cover;
+}
+
+.event-icon {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #ff6a6c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: white;
+    border: 2px solid white;
+}
+
+.play-details {
+    flex: 1;
+    margin-top: 5px;
+}
+
+.event-name {
+    border: 3px solid #2a283e;
+    color: black;
+    padding: 4px 8px;
+    border-radius: 10rem;
+    font-weight: bold;
+    font-size: 16px;
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+.play-description {
+    color: #333;
+    font-size: 15px;
+    line-height: 1.3;
+    margin: 0;
+    width: 90%;
+    font-weight: 400;
+}
+
+.game-start-item {
+    display: flex;
+    background: linear-gradient(135deg, #2a283e, #2a283e9d);
+    color: white;
+    flex-direction: column;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+}
+
+/* All Plays SVG */
+
+.game-situation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 8px;
+    background: #e5decf;
+    border-radius: 4px;
+}
+
+.count-info {
+    display: flex;
+    flex-direction: column; 
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.count {
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.outs {
+    color: #666;
+    font-size: 11px;
+}
+
+.field-display {
+    flex-shrink: 0;
+}
     </style>
     </div>
 </head>
