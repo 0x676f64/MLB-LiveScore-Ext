@@ -172,7 +172,7 @@ function reapplyTabVisibility() {
     } else if (activeTab) {
         toggleContainers(false);
     }
-}
+} 
 
 // Visibility management function
 function toggleContainers(showDynamic, isBoxscoreTab = false, isScoringPlaysTab = false, isAllPlaysTab = false) {
@@ -181,7 +181,7 @@ function toggleContainers(showDynamic, isBoxscoreTab = false, isScoringPlaysTab 
     const topPerformer = document.getElementById('top-performers');
     const pitchDataSection = document.getElementById('pitch-data-section');
     const boxScoreContainer = document.getElementById('boxscore-content');
-    const scoringPlaysContainer = document.getElementById('scoringPlays-container');
+    const scoringPlaysContainer = document.getElementById('scoring-plays-container');
     const allPlaysContainer = document.getElementById('all-plays-container');
     
 
@@ -262,14 +262,16 @@ function loadDynamicContent(tabType) {
     console.log(`Loading dynamic content for ${tabType}`);
 }
 
+function loadBoxScore() {  
+    console.log(`Loading dynamic content for ${tabType}`); 
+}
+
 function loadScoringPlays() {
-    // Load scoring plays data
-    console.log('Loading scoring plays');
+    console.log(`Loading dynamic content for ${tabType}`);
 }
 
 function loadAllPlays() {
-    // Load all plays data
-    console.log('Loading all plays');
+    console.log(`Loading dynamic content for ${tabType}`);
 }
 
 // Event listeners for all tabs
@@ -291,14 +293,14 @@ boxscoreTab.addEventListener('click', () => {
 scoringPlaysTab.addEventListener('click', () => {
     document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
     scoringPlaysTab.classList.add('active');
-    toggleContainers(false); // hide dynamic & boxscore
+    toggleContainers(false, false, true, false); // hide dynamic & boxscore
     openGameDetailsPage('scoring-plays');
 });
 
 allPlaysTab.addEventListener('click', () => {
     document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
     allPlaysTab.classList.add('active');
-    toggleContainers(false, false, true); // hide dynamic, hide boxscore, show all-plays
+    toggleContainers(false, false, false, true); // hide dynamic, hide boxscore, show all-plays
     openGameDetailsPage('all-plays');
 });
 
@@ -2328,9 +2330,266 @@ async function conditionalRefresh() {
 }
 
 async function loadScoringPlays() {
-    console.log('Loading all plays content');
-    testHTML.innerHTML = `
-    <p>pussy boy</p>
+    console.log('Loading scoring plays content');
+    
+    // Create or get all scoring plays 
+    let scoringPlaysContainer = document.getElementById('scoring-plays-container');
+    if (!scoringPlaysContainer) {
+        scoringPlaysContainer = document.createElement('div');
+        scoringPlaysContainer.id = 'scoring-plays-container';
+        scoringPlaysContainer.style.cssText = `
+            width: 100%;
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #e5decf;
+            border-radius: 8px;
+            font-family: Rubik, sans-serif;
+            scrollbar-width: thin;
+        `;
+        document.getElementById('popup-container').appendChild(scoringPlaysContainer);
+    }
+
+    try {
+        // Check if we already have game data, otherwise fetch it
+        let gameData;
+        if (window.cachedGameData) {
+            gameData = window.cachedGameData;
+        } else {
+            const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+            gameData = await response.json();
+            window.cachedGameData = gameData; // Cache for future use 
+        }
+
+        // Extract plays data
+        const scoringPlays = gameData.liveData?.plays?.scoringPlays || [];
+        const allPlays = gameData.liveData?.plays?.allPlays || [];
+        const gameInfo = gameData.gameData;
+
+        // Clear existing content
+        scoringPlaysContainer.innerHTML = '';
+
+        // Check if there are any scoring plays
+        if (scoringPlays.length === 0) {
+            scoringPlaysContainer.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">No scoring plays in this game.</p>';
+            return;
+        }
+
+        // Get detailed play information for each scoring play
+        scoringPlays.forEach((playIndex, index) => {
+            // Find the corresponding play in allPlays array
+            const play = allPlays[playIndex];
+            
+            if (play) {
+                const playDiv = createScoringPlayItem(play, gameInfo, index);
+                scoringPlaysContainer.appendChild(playDiv);
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading scoring plays:', error);
+        scoringPlaysContainer.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">Error loading scoring plays. Please try again.</p>';
+    }
+}
+
+// Helper function to create individual scoring play items
+function createScoringPlayItem(play, gameInfo, index) {
+    const playDiv = document.createElement('div');
+    playDiv.className = 'play-item';
+    playDiv.style.cssText = `
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        padding: 8px;
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        opacity: 0;
+        transform: translateY(-10px);
+        animation: slideIn 0.3s ease-out forwards;
+        animation-delay: ${index * 0.1}s;
+        position: relative;
     `;
+
+    // Get player information
+    const batter = play.matchup?.batter;
+    const playerId = batter?.id || '';
+    const playerName = batter?.fullName || 'Unknown Player';
+
+    // Get inning information
+    const inningHalf = play.about?.halfInning === 'top' ? 'T' : 'B';
+    const inning = play.about?.inning || 1;
+    const inningText = `${inningHalf}${inning}`;
+
+    // Get event icon based on play result
+    const eventType = play.result?.event || '';
+    let eventIcon = '⚾';
+    if (eventType.includes('Home Run')) eventIcon = '🏠';
+    else if (eventType.includes('Triple')) eventIcon = '3️⃣';
+    else if (eventType.includes('Double')) eventIcon = '2️⃣';
+    else if (eventType.includes('Single')) eventIcon = '1️⃣';
+    else if (eventType.includes('Sac')) eventIcon = '🎯';
+    else if (eventType.includes('Error')) eventIcon = '❌';
+
+    // Get baserunners (pre-play state for visual context)
+    const baserunners = getBaserunners(play);
+
+    // Get count and outs
+    const count = {
+        balls: play.count?.balls || 0,
+        strikes: play.count?.strikes || 0,
+        outs: play.count?.outs || 0
+    };
+
+    // Create score and RBI info
+    let scoreRbiInfo = '';
+    if (play.result?.homeScore !== undefined && play.result?.awayScore !== undefined) {
+        const awayTeam = gameInfo.teams?.away?.abbreviation || 'Away';
+        const homeTeam = gameInfo.teams?.home?.abbreviation || 'Home';
+        scoreRbiInfo += `<div style="color: #007bff; font-weight: bold; font-size: 13px; margin-top: 4px;">Score: ${awayTeam} ${play.result.awayScore} - ${homeTeam} ${play.result.homeScore}</div>`;
+    }
+    if (play.result?.rbi && play.result.rbi > 0) {
+        scoreRbiInfo += `<div style="color: #28a745; font-weight: bold; font-size: 13px;">RBI: ${play.result.rbi}</div>`;
+    }
+
+    playDiv.innerHTML = `
+        <div class="inning-indicator" style="
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background-color: #ff6a6c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        ">${inningText}</div>
+        <div class="player-image-container" style="
+            flex-shrink: 0;
+            margin-right: 12px;
+            margin-left: 55px;
+            position: relative;
+        ">
+            <img class="player-image" style="
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                border: 2px solid #d7827e;
+                background-color: #e5decf;
+                object-fit: cover;
+            " src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" alt="${playerName}">
+            <div class="event-icon" style="
+                position: absolute;
+                bottom: -5px;
+                right: -5px;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background-color: #ff6a6c;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 15px;
+                color: white;
+                border: 2px solid white;
+            ">${eventIcon}</div>
+        </div>
+        <div class="play-details" style="flex: 1; margin-top: 5px;">
+            <div class="event-name" style="
+                border: 3px solid #2a283e;
+                color: black;
+                padding: 4px 8px;
+                border-radius: 10rem;
+                font-weight: bold;
+                font-size: 16px;
+                display: inline-block;
+                margin-bottom: 6px;
+            ">${play.result?.event || 'Unknown Event'}</div>
+            <p class="play-description" style="
+                color: #333;
+                font-size: 15px;
+                line-height: 1.3;
+                margin: 0;
+                width: 90%;
+                font-weight: 400;
+            ">${play.result?.description || 'No description available'}</p>
+            ${scoreRbiInfo}
+            <div class="game-situation" style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-top: 8px;
+                padding: 8px;
+                background: #e5decf;
+                border-radius: 4px;
+            ">
+                <div class="count-info" style="
+                    display: flex;
+                    flex-direction: column;
+                    font-size: 12px;
+                    font-weight: bold;
+                ">
+                    <span class="count" style="color: #333; margin-bottom: 2px;">${count.balls}-${count.strikes}</span>
+                    <span class="outs" style="color: #666; font-size: 11px;">${count.outs} out${count.outs !== 1 ? 's' : ''}</span>
+                </div>
+                <div class="field-display" style="flex-shrink: 0;">
+                    ${generateSVGField(count, baserunners)}
+                </div>
+            </div>
+        </div>
+    `;
+
+    return playDiv;
+}
+
+// Function to get baserunners from play data
+function getBaserunners(play) {
+    const baserunners = {
+        first: false,
+        second: false,
+        third: false
+    };
+    
+    // Use matchup.postOnFirst, postOnSecond, postOnThird to determine baserunners
+    if (play.matchup?.postOnFirst) {
+        baserunners.first = true;
+    }
+    if (play.matchup?.postOnSecond) {
+        baserunners.second = true;
+    }
+    if (play.matchup?.postOnThird) {
+        baserunners.third = true;
+    }
+    
+    return baserunners;
+}
+
+// Function to generate the SVG field
+function generateSVGField(count, onBase) {
+    return `
+        <svg width="60" height="60" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: transparent; border-radius: 4px;">
+            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            
+            <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+        </svg>
+    `;
+}
+
+// Add slideIn animation keyframes to document if not already present
+if (!document.querySelector('#scoring-plays-styles')) {
+    const style = document.createElement('style');
+    style.id = 'scoring-plays-styles';
+    style.textContent = `
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
 });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
