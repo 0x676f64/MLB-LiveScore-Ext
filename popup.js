@@ -920,7 +920,7 @@ toggleContainers(true);
     
         scorebugContainer.innerHTML = `
             <div class="scorebug">
-                ${generateSVGField(count, onBase)}
+                ${generatedSVGField(count, onBase)}
                 <div class="balls-strikes" id="count" style="color: #2f4858;">
                     ${count.balls} - ${count.strikes}
                 </div>
@@ -1114,7 +1114,7 @@ toggleContainers(true);
     }
 }
 
-function generateSVGField(count, onBase) {
+function generatedSVGField(count, onBase) {
     const out1Fill = count.outs >= 1 ? '#000' : '#e5decf';
     const out2Fill = count.outs >= 2 ? '#000' : '#e5decf';
     const out3Fill = count.outs >= 3 ? '#000' : '#e5decf';
@@ -1124,7 +1124,7 @@ function generateSVGField(count, onBase) {
     const thirdBaseFill = onBase.third ? '#000' : '#e5decf';
 
     return `
-        <svg id="field" width="100" height="100" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #e5decf;">
+        <svg id="field" width="110" height="110" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #e5decf;">
             <circle id="out-1" cx="13" cy="61" r="6" fill="${out1Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
             <circle id="out-2" cx="30" cy="61" r="6" fill="${out2Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
             <circle id="out-3" cx="47" cy="61" r="6" fill="${out3Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
@@ -1643,6 +1643,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 flex: 1;
                 font-weight: 600;
                 font-size: 12px;
+                font-family: 'Rubik';
             }
 
             .toggle-icon {
@@ -2050,7 +2051,7 @@ async function loadAndDisplayPlays(gamePk, plays) {
     }
 }
 
-// Helper function to get event icons (you'll need to implement this based on your icons)
+// Helper function to get event icons
 function getEventIcon(eventType) {
     const iconMap = {
         'Single': '1B',
@@ -2079,7 +2080,8 @@ function getEventIcon(eventType) {
         'Catcher Interference': 'E2',
         'Pickoff Caught Stealing 2B': 'OUT',
         'Pickoff Caught Stealing 3B': 'OUT',
-        'Pitching Substitution': 'assets/icons/swap.png'
+        'Pitching Substitution': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
+        'Intent Walk': 'BB'
     };
     
     return iconMap[eventType] || '?';
@@ -2154,28 +2156,133 @@ const count = {
     outs: play.count?.outs || 0
 };
 
+// Try to find the first playEvent that contains hitData
+    const statcastEvent = play.playEvents?.find(event => event?.hitData) || {};
+    const statcastData = statcastEvent.hitData || {};
+
+    
+    // Try multiple possible data locations and log for debugging
+    console.log('Play object:', play);
+    console.log('Hit data:', statcastData);
+    
+    const exitVelo = statcastData.launchSpeed ? `${Math.round(statcastData.launchSpeed)} mph` : 
+                     statcastData.exitVelocity ? `${Math.round(statcastData.exitVelocity)} mph` : '--';
+    const launchAngle = statcastData.launchAngle ? `${Math.round(statcastData.launchAngle)}°` : '--';
+    const distance = statcastData.totalDistance ? `${Math.round(statcastData.totalDistance)} ft` : 
+                     statcastData.distance ? `${Math.round(statcastData.distance)} ft` : '--';
+
+    const statcastStats = `
+      <div class="statcast-stats" style="
+        display: flex;
+        gap: 16px;
+        margin-top: 8px;
+        padding: 8px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 6px;
+        border-left: 4px solid #ff6a6c;
+        border-bottom: 1px solid #d7827e;
+    ">
+        <div class="stat-item" style="text-align: center; flex: 1;">
+            <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
+            <div style="font-size: 14px; font-weight: bold; color: #333;">${exitVelo}</div>
+        </div>
+        <div class="stat-item" style="text-align: center; flex: 1;">
+            <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
+            <div style="font-size: 14px; font-weight: bold; color: #333;">${launchAngle}</div>
+        </div>
+        <div class="stat-item" style="text-align: center; flex: 1;">
+            <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Distance</div>
+            <div style="font-size: 14px; font-weight: bold; color: #333;">${distance}</div>
+        </div>
+    </div>
+    `;
+
 // Updated innerHTML code block with SVG integration
-    playDiv.innerHTML = `
-        <div class="inning-indicator">${inningText}</div>
-        <div class="player-image-container">
-            <img class="player-image"
-                 src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60"
-                 alt="${playerName}">
-            <div class="event-icon">${eventIcon}</div>
+ playDiv.innerHTML = `
+        <div class="inning-indicator" style="
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background-color: #ff6a6c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        ">${inningText}</div>
+        <div class="player-image-container" style="
+            flex-shrink: 0;
+            margin-right: 12px;
+            margin-left: 55px;
+            position: relative;
+        ">
+            <img class="player-image" style="
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                border: 2px solid #d7827e;
+                background-color: #e5decf;
+                object-fit: cover;
+            " src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" alt="${playerName}">
+            <div class="event-icon" style="
+                position: absolute;
+                bottom: -5px;
+                right: -5px;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background-color: #ff6a6c;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 15px;
+                color: white;
+                border: 2px solid white;
+            ">${eventIcon}</div>
         </div>
-        <div class="play-details">
-            <div class="event-name">${play.result?.event || 'Unknown Event'}</div>
-            <p class="play-description">${play.result?.description || 'No description available'}</p>
-        </div>
-        <div class="game-situation">
-            <div class="count-info">
-                <span class="count">${play.count?.balls || 0}-${play.count?.strikes || 0}</span>
+        <div class="content-wrapper" style="display: flex; flex: 1; align-items: flex-start; gap: 16px;">
+            <div class="play-details" style="flex: 1; margin-top: 5px;">
+                <div class="event-name" style="
+                    border: 3px solid #2a283e;
+                    color: black;
+                    padding: 4px 8px;
+                    border-radius: 10rem;
+                    font-weight: bold;
+                    font-size: 16px;
+                    display: inline-block;
+                    margin-bottom: 6px;
+                ">${play.result?.event || 'Unknown Event'}</div>
+                <p class="play-description" style="
+                    color: #333;
+                    font-size: 15px;
+                    line-height: 1.3;
+                    margin: 0 0 8px 0;
+                    font-weight: 400;
+                ">${play.result?.description || 'No description available'}</p>
+                ${statcastStats}
             </div>
-            <div class="field-display">
-                ${generateSVGField(
-                    { outs: outs }, // Pass the post-play outs
-                    baserunners // Pass the baserunners determined from 'postOn'
-                )}
+            <div class="game-situation" style="
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                padding: 8px;
+                background: #e5decf;
+                border-radius: 6px;
+                margin-top: 5px;
+                min-width: 90px;
+            ">
+                <div class="count-info" style="
+                    font-size: 12px;
+                    font-weight: bold;
+                    color: #333;
+                    margin-bottom: 8px;
+                    text-align: center;
+                ">
+                    <div> ${count.balls}-${count.strikes}</div>
+                </div>
+                <div class="field-display">
+                    ${generateSVGField(count, baserunners)}
+                </div>
             </div>
         </div>
     `;
