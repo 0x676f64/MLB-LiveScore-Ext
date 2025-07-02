@@ -245,7 +245,21 @@ body {
     align-items: center;
     padding: 5px 10px;
     background-color: transparent;
-    border-radius: 4px;
+    border-radius: 10rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-left: #D7827E 3px solid;
+    border-bottom: #D7827E 1px solid;
+}
+
+.pitch-event {
+    border: 3px solid #2a283e;
+    color: black;
+    padding: 4px 8px;
+    border-radius: 10rem;
+    font-weight: bold;
+    font-size: 16px;
+    display: inline-block;
+    margin-bottom: 6px;
 }
 
 .pitch-info {
@@ -258,10 +272,6 @@ body {
 .winning-pitcher, .losing-pitcher {
     color: #D7827E;
     font-weight: 500;
-}
-
-.pitch-velo {
-    color: #eb6f92;
 }
 
 #top-performers {
@@ -308,18 +318,22 @@ body {
 }
 
 #pitch-description-container {
-    text-align: center;
-    margin-top: 10px;
-    font-size: 18px;
+    display: flex; 
+	flex: 1; align-items: 
+	flex-start; 
+	gap: 16px;
 }
 
 .pitch-description {
-    display: inline-block;
-    padding: 5px 12px;
+    flex: 1;
+	 margin-top: 5px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #333;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 10px;
     border-radius: 8px;
-    font-weight: 400;
-    margin-top: 20px;
-    width: 80%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .ball {
@@ -353,14 +367,14 @@ body {
 }
 
 .hit-data {
-    margin-top: 10px;
-    font-size: 16px;
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    width: 100%;
-    color: #ff6a6c;
-    padding: 5px 0;
+    gap: 16px;
+    margin-top: 8px;
+    padding: 8px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 6px;
+    border-left: 4px solid #ff6a6c;
+    border-bottom: 1px solid #d7827e;
 }
 
 .hit-data span i {
