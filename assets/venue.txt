@@ -1,0 +1,32 @@
+1 - BAL
+2- BOS
+3 - LAA
+4 - CHI
+5 - CLE
+7 - KC
+11 - ATH
+14 - TOR
+16 - CHC
+19 - LAD
+27 - COL
+30 - ARZ
+31 - TB (actually playing in George Steinbrenner Stadium in TB which is 72)
+41 - SEA
+43 - SF
+44 - HOU
+45 - DET
+47 - PIT
+83 - CIN
+84 - PHI
+85 - SD 
+87 - STL
+89 - WAS
+208 - NYY
+209 - NYM
+210 - MINN
+212 - MIA
+218 - ATL 
+231 - TEX
+4242 - MIL
+
+endpoint - https://a.espncdn.com/i/venues/mlb/day/${team-number-venue}.jpg
