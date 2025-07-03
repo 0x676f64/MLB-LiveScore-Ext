@@ -242,24 +242,105 @@ body {
 #pitch-data-container {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 5px 10px;
-    background-color: transparent;
-    border-radius: 10rem;
+    align-items: flex-start;
+    padding: 4px;
+    position: relative;
+    width: 100%;
+    bottom: 15px;
     background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
     border-left: #D7827E 3px solid;
     border-bottom: #D7827E 1px solid;
 }
 
+.inning-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: #ff6a6c;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.player-image-container {
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-left: 55px;
+    position: relative;
+}
+
+.player-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #d7827e;
+    background-color: #e5decf;
+    object-fit: cover;
+}
+
+.content-wrapper {
+    display: flex;
+    flex: 1;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.play-details {
+    flex: 1;
+    margin-top: 5px;
+}
+
 .pitch-event {
-    border: 3px solid #2a283e;
-    color: black;
+    background-color: #ff6a6c;
+    color: white;
     padding: 4px 8px;
     border-radius: 10rem;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 15px;
     display: inline-block;
-    margin-bottom: 6px;
+}
+
+.pitch-description {
+    color: #333;
+    font-size: 18px;
+    line-height: 1.3;
+    margin: 0 0 8px 0;
+    font-weight: 400;
+    padding: 10px 0;
+    align-items: center;
+    text-align: center;
+}
+
+.hit-data {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    margin: 8px auto 0 auto;
+    padding: 3px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 6px;
+    border-left: 4px solid #ff6a6c;
+    border-bottom: 1px solid #d7827e;
+    width: 60%;
+}
+
+.hit-data span {
+    display: flex;
+    flex-direction: column;
+    text-align: center; 
+    flex: 1;
+    font-size: 14px; 
+    font-weight: bold; 
+    color: #333;
+}
+
+.hit-data span strong {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 4px;
 }
 
 .pitch-info {
@@ -317,25 +398,6 @@ body {
     display: block;
 }
 
-#pitch-description-container {
-    display: flex; 
-	flex: 1; align-items: 
-	flex-start; 
-	gap: 16px;
-}
-
-.pitch-description {
-    flex: 1;
-	 margin-top: 5px;
-    font-size: 14px;
-    line-height: 1.4;
-    color: #333;
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
 .ball {
     color: white;
     background-color: #33a378;
@@ -364,26 +426,6 @@ body {
 .unclassified {
     color: white;
     background-color: #004f6f;
-}
-
-.hit-data {
-    display: flex;
-    gap: 16px;
-    margin-top: 8px;
-    padding: 8px;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    border-radius: 6px;
-    border-left: 4px solid #ff6a6c;
-    border-bottom: 1px solid #d7827e;
-}
-
-.hit-data span i {
-    font-style: italic;
-    font-weight: bold;
-}
-
-.hit-data span i strong {
-    font-size: 0.95em;
 }
 
 #away-player-stats, #home-player-stats {
@@ -617,8 +659,8 @@ h4 {
 
 .event-icon {
     position: absolute;
-    bottom: -5px;
-    right: -5px;
+    bottom: -15px;
+    right: -10px;
     width: 30px;
     height: 30px;
     border-radius: 50%;

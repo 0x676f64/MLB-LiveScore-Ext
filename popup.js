@@ -940,8 +940,6 @@ function renderLivePitchData(data) {
     const pitchDataSection = document.createElement("div");
     pitchDataSection.id = "pitch-data-section";
 
-    pitchDataSection.innerHTML = `<hr class="separator-line">`;
-
     const pitchDataContainer = document.createElement("div");
     pitchDataContainer.id = "pitch-data-container";
 
@@ -954,6 +952,7 @@ function renderLivePitchData(data) {
     const lastPitchIndex = lastPlay.pitchIndex[lastPlay.pitchIndex.length - 1];
     const pitchDetails = lastPlay.playEvents[lastPitchIndex];
     const pitcher = currentPlay.matchup.pitcher;
+    const batter = currentPlay.matchup.batter;
 
     const pitcherName = `${pitcher.fullName.split(" ")[0][0]}. ${pitcher.fullName.split(" ")[1]}`;
     const pitchType = pitchDetails?.details?.type?.description || "Unknown";
@@ -990,7 +989,85 @@ function renderLivePitchData(data) {
     const pitchDescriptionContainer = document.createElement("div");
     pitchDescriptionContainer.id = "pitch-description-container";
 
-    const formattedEvent = event ? `<div class="pitch-event"><strong>${event}</strong></div>` : "";
+    // Create container for hitter image and play result
+    const playResultContainer = document.createElement("div");
+    playResultContainer.style.display = "flex";
+    playResultContainer.style.alignItems = "flex-start";
+    playResultContainer.style.marginTop = "10px";
+    playResultContainer.style.position = "relative";
+    playResultContainer.style.marginLeft = '-32';
+
+    // Add hitter image
+    const batterName = batter?.fullName || "Unknown";
+    const batterId = batter?.id || "";
+    
+    // Simple event icon mapping - you can customize this based on your needs
+    const getEventIcon = (eventType) => {
+        if (!eventType) return null;
+        
+        if (eventType.includes('Home Run')) return 'HR';
+        else if (eventType.includes('Triple')) return '3B';
+        else if (eventType.includes('Double')) return '2B';
+        else if (eventType.includes('Single')) return '1B';
+        else if (eventType.includes('Sac')) return 'SAC';
+        else if (eventType.includes('Error')) return 'E';
+        else if (eventType.includes('Walk')) return 'BB';
+        else if (eventType.includes('Hit By Pitch')) return 'HBP';
+        else if (eventType.includes('Forceout')) return 'OUT';
+        else if (eventType.includes('Sac Bunt')) return 'SAC';
+        else if (eventType.includes('Grounded Into DP')) return 'DP';
+        else if (eventType.includes('Field Error')) return 'E';
+        else if (eventType.includes('Fielders Choice')) return 'FC';
+        else if (eventType.includes('Double Play')) return 'OUT';
+        else if (eventType.includes('Catcher Interference')) return 'E2';
+        else if (eventType.includes('Groundout')) return 'OUT';
+        else if (eventType.includes('Strikeout')) return 'K';
+        else return null; // Return null if no matching event
+    };
+
+    const eventIcon = getEventIcon(event);
+
+    const playerImageContainer = document.createElement("div");
+    playerImageContainer.className = "player-image-container";
+
+    const playerImage = document.createElement("img");
+    playerImage.className = "player-image";
+    playerImage.src = `https://midfield.mlbstatic.com/v1/people/${batterId}/spots/60`;
+    playerImage.alt = batterName;
+
+    const eventIconDiv = document.createElement("div");
+    eventIconDiv.className = "event-icon";
+    eventIconDiv.style.cssText = `
+        position: absolute;
+        bottom: -5px;
+        right: -5px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #ff6a6c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        color: white;
+        border: 2px solid white;
+    `;
+    eventIconDiv.textContent = eventIcon;
+
+    playerImageContainer.appendChild(playerImage);
+    if (eventIcon) {
+        playerImageContainer.appendChild(eventIconDiv);
+    }
+
+    // Create content wrapper for centering
+    const contentWrapper = document.createElement("div");
+    contentWrapper.className = "content-wrapper";
+
+    // Create play details container
+    const playDetailsContainer = document.createElement("div");
+    playDetailsContainer.className = "play-details";
+
+    const formattedEvent = event ? `<div class="pitch-event">${event}</div>` : "";
     const formattedDescription = description ? `<div class="pitch-description">${description}</div>` : "";
     let pitchResultHTML = formattedEvent + formattedDescription;
 
@@ -1011,14 +1088,21 @@ function renderLivePitchData(data) {
 
         pitchResultHTML += `
             <div class="hit-data">
-                <span><i><strong>EXIT VELO:</strong></i> ${launchSpeed}</span>
-                <span><i><strong>LAUNCH ANGLE:</strong></i> ${launchAngle}</span>
-                <span><i><strong>DISTANCE:</strong></i> ${totalDistance}</span>
+                <span><strong>EXIT VELO:</strong> ${launchSpeed}</span>
+                <span><strong>LAUNCH ANGLE:</strong> ${launchAngle}</span>
+                <span><strong>DISTANCE:</strong> ${totalDistance}</span>
             </div>
         `;
     }
 
-    pitchDescriptionContainer.innerHTML = pitchResultHTML;
+    playDetailsContainer.innerHTML = pitchResultHTML;
+    contentWrapper.appendChild(playDetailsContainer);
+
+    // Assemble the play result container
+    playResultContainer.appendChild(playerImageContainer);
+    playResultContainer.appendChild(contentWrapper);
+
+    pitchDescriptionContainer.appendChild(playResultContainer);
     pitchDataSection.appendChild(pitchDescriptionContainer);
 
     const gameplayInfoContainer = document.getElementById("gameplay-info-container");
@@ -1995,7 +2079,8 @@ function getEventIcon(eventType) {
         'Pickoff Caught Stealing 2B': 'OUT',
         'Pickoff Caught Stealing 3B': 'OUT',
         'Pitching Substitution': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
-        'Intent Walk': 'BB'
+        'Intent Walk': 'BB',
+        'Defensive Switch': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">'
     };
     
     return iconMap[eventType] || '?';
