@@ -933,21 +933,40 @@ function renderLivePitchData(data) {
     const gameState = data.gameData.status.abstractGameState;
     if (gameState !== "Live" && gameState !== "In Progress") return;
 
-    // Remove existing display if it exists
-    const existingPitchData = document.getElementById("pitch-data-section");
-    if (existingPitchData) existingPitchData.remove();
+    // Get or create the main container
+    let pitchDataSection = document.getElementById("pitch-data-section");
+    if (!pitchDataSection) {
+        pitchDataSection = document.createElement("div");
+        pitchDataSection.id = "pitch-data-section";
+        
+        const gameplayInfoContainer = document.getElementById("gameplay-info-container");
+        if (gameplayInfoContainer) {
+            gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoContainer.nextSibling);
+        }
+    }
 
-    const pitchDataSection = document.createElement("div");
-    pitchDataSection.id = "pitch-data-section";
-
-    const pitchDataContainer = document.createElement("div");
-    pitchDataContainer.id = "pitch-data-container";
+    // Get or create pitch data container
+    let pitchDataContainer = document.getElementById("pitch-data-container");
+    if (!pitchDataContainer) {
+        pitchDataContainer = document.createElement("div");
+        pitchDataContainer.id = "pitch-data-container";
+        pitchDataSection.appendChild(pitchDataContainer);
+    }
 
     const allPlays = data.liveData.plays.allPlays;
     const currentPlay = data.liveData.plays.currentPlay;
     const lastPlay = allPlays[allPlays.length - 1];
 
-    if (!lastPlay?.pitchIndex?.length) return;
+    // Hide the section if no pitch data is available
+    if (!lastPlay?.pitchIndex?.length) {
+        if (pitchDataSection) {
+            pitchDataSection.style.display = 'none';
+        }
+        return;
+    }
+
+    // Show the section since we have pitch data
+    pitchDataSection.style.display = 'block';
 
     const lastPitchIndex = lastPlay.pitchIndex[lastPlay.pitchIndex.length - 1];
     const pitchDetails = lastPlay.playEvents[lastPitchIndex];
@@ -959,13 +978,13 @@ function renderLivePitchData(data) {
     const pitchVelocity = pitchDetails?.pitchData?.startSpeed ? `${pitchDetails.pitchData.startSpeed.toFixed(1)} MPH` : "N/A";
     const spinRate = pitchDetails?.pitchData?.breaks?.spinRate ? `${pitchDetails.pitchData.breaks.spinRate} RPM` : "N/A";
 
+    // Update pitch data container content
     pitchDataContainer.innerHTML = `
         <span class="pitch-info"><strong>Pitcher:</strong> ${pitcherName}</span>
         <span class="pitch-info pitch-type"><strong>Pitch:</strong> ${pitchType}</span>
         <span class="pitch-info pitch-velo"><strong>Velocity:</strong> ${pitchVelocity}</span>
         <span class="pitch-info"><strong>Spin:</strong> ${spinRate}</span>
     `;
-    pitchDataSection.appendChild(pitchDataContainer);
 
     // --- Get Play Result: Event & Description ---
     let event = currentPlay?.result?.event || null;
@@ -985,23 +1004,125 @@ function renderLivePitchData(data) {
         description = mostRecentPlay?.result?.description || "No play data available";
     }
 
-    // Combine for output
-    const pitchDescriptionContainer = document.createElement("div");
-    pitchDescriptionContainer.id = "pitch-description-container";
+ // Define result categories and their shared styles
+const resultCategories = {
+    strike: {
+        results: ['Strike', 'Swinging Strike', 'Called Strike', 'Strikeout', 'Flyout'],
+        style: {
+            background: '#dc3545',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            display: 'inline-block',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            borderLeft: '3px solid #333',
+            borderBottom: '1px solid #333'
+        }
+    },
+    ball: {
+        results: ['Ball', 'Ball In Dirt', 'Pitch Out', 'Intentional Ball', 'Walk'],
+        style: {
+            background: '#28a745',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            display: 'inline-block',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            borderLeft: '3px solid #333',
+            borderBottom: '1px solid #333'
+        }
+    },
+    foul: {
+        results: ['Foul', 'Foul Tip', 'Foul Bunt', 'Foul Ball'],
+        style: {
+            background: '#6f42c1',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            display: 'inline-block',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            borderLeft: '3px solid #333',
+            borderBottom: '1px solid #333'
+        }
+    }
+};
 
-    // Create container for hitter image and play result
-    const playResultContainer = document.createElement("div");
-    playResultContainer.style.display = "flex";
-    playResultContainer.style.alignItems = "flex-start";
-    playResultContainer.style.marginTop = "10px";
-    playResultContainer.style.position = "relative";
-    playResultContainer.style.marginLeft = '-32';
+// Function to style specific pitch descriptions
+const styleDescription = (desc) => {
+    if (!desc) return desc;
+    
+    // Find which category this description belongs to
+    for (const [categoryName, category] of Object.entries(resultCategories)) {
+        if (category.results.includes(desc.trim())) {
+            // Convert style object to CSS string
+            const styleString = Object.entries(category.style)
+                .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+                .join('; ');
+            return `<span style="${styleString}">${desc}</span>`;
+        }
+    }
+    
+    // Return original description if no match
+    return desc;
+};
 
-    // Add hitter image
+    // Get or create pitch description container
+    let pitchDescriptionContainer = document.getElementById("pitch-description-container");
+    if (!pitchDescriptionContainer) {
+        pitchDescriptionContainer = document.createElement("div");
+        pitchDescriptionContainer.id = "pitch-description-container";
+        pitchDataSection.appendChild(pitchDescriptionContainer);
+    }
+
+    // Get or create play result container
+    let playResultContainer = pitchDescriptionContainer.querySelector(".play-result-container");
+    if (!playResultContainer) {
+        playResultContainer = document.createElement("div");
+        playResultContainer.className = "play-result-container";
+        playResultContainer.style.display = "flex";
+        playResultContainer.style.alignItems = "flex-start";
+        playResultContainer.style.marginTop = "10px";
+        playResultContainer.style.position = "relative";
+        pitchDescriptionContainer.appendChild(playResultContainer);
+    }
+
+    // Get or create player image container
+    let playerImageContainer = playResultContainer.querySelector(".player-image-container");
+    if (!playerImageContainer) {
+        playerImageContainer = document.createElement("div");
+        playerImageContainer.className = "player-image-container";
+        playResultContainer.appendChild(playerImageContainer);
+    }
+
     const batterName = batter?.fullName || "Unknown";
     const batterId = batter?.id || "";
     
-    // Simple event icon mapping - you can customize this based on your needs
+    // Get or create player image (preserve existing image to prevent blinking)
+    let playerImage = playerImageContainer.querySelector(".player-image");
+    if (!playerImage) {
+        playerImage = document.createElement("img");
+        playerImage.className = "player-image";
+        playerImage.alt = batterName;
+        playerImageContainer.appendChild(playerImage);
+    }
+
+    // Only update image src if batter changed
+    const expectedSrc = `https://midfield.mlbstatic.com/v1/people/${batterId}/spots/60`;
+    if (playerImage.src !== expectedSrc) {
+        playerImage.src = expectedSrc;
+        playerImage.alt = batterName;
+    }
+
+    // Simple event icon mapping
     const getEventIcon = (eventType) => {
         if (!eventType) return null;
         
@@ -1022,53 +1143,58 @@ function renderLivePitchData(data) {
         else if (eventType.includes('Catcher Interference')) return 'E2';
         else if (eventType.includes('Groundout')) return 'OUT';
         else if (eventType.includes('Strikeout')) return 'K';
-        else return null; // Return null if no matching event
+        else return null;
     };
 
     const eventIcon = getEventIcon(event);
 
-    const playerImageContainer = document.createElement("div");
-    playerImageContainer.className = "player-image-container";
-
-    const playerImage = document.createElement("img");
-    playerImage.className = "player-image";
-    playerImage.src = `https://midfield.mlbstatic.com/v1/people/${batterId}/spots/60`;
-    playerImage.alt = batterName;
-
-    const eventIconDiv = document.createElement("div");
-    eventIconDiv.className = "event-icon";
-    eventIconDiv.style.cssText = `
-        position: absolute;
-        bottom: -5px;
-        right: -5px;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background-color: #ff6a6c;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 15px;
-        color: white;
-        border: 2px solid white;
-    `;
-    eventIconDiv.textContent = eventIcon;
-
-    playerImageContainer.appendChild(playerImage);
+    // Get or create event icon div
+    let eventIconDiv = playerImageContainer.querySelector(".event-icon");
     if (eventIcon) {
-        playerImageContainer.appendChild(eventIconDiv);
+        if (!eventIconDiv) {
+            eventIconDiv = document.createElement("div");
+            eventIconDiv.className = "event-icon";
+            eventIconDiv.style.cssText = `
+                position: absolute;
+                bottom: -5px;
+                right: -5px;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background-color: #ff6a6c;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 15px;
+                color: white;
+                border: 2px solid white;
+            `;
+            playerImageContainer.appendChild(eventIconDiv);
+        }
+        eventIconDiv.textContent = eventIcon;
+    } else if (eventIconDiv) {
+        // Remove event icon if no event
+        eventIconDiv.remove();
     }
 
-    // Create content wrapper for centering
-    const contentWrapper = document.createElement("div");
-    contentWrapper.className = "content-wrapper";
+    // Get or create content wrapper
+    let contentWrapper = playResultContainer.querySelector(".content-wrapper");
+    if (!contentWrapper) {
+        contentWrapper = document.createElement("div");
+        contentWrapper.className = "content-wrapper";
+        playResultContainer.appendChild(contentWrapper);
+    }
 
-    // Create play details container
-    const playDetailsContainer = document.createElement("div");
-    playDetailsContainer.className = "play-details";
+    // Get or create play details container
+    let playDetailsContainer = contentWrapper.querySelector(".play-details");
+    if (!playDetailsContainer) {
+        playDetailsContainer = document.createElement("div");
+        playDetailsContainer.className = "play-details";
+        contentWrapper.appendChild(playDetailsContainer);
+    }
 
     const formattedEvent = event ? `<div class="pitch-event">${event}</div>` : "";
-    const formattedDescription = description ? `<div class="pitch-description">${description}</div>` : "";
+    const formattedDescription = description ? `<div class="pitch-description">${styleDescription(description)}</div>` : "";
     let pitchResultHTML = formattedEvent + formattedDescription;
 
     // --- Statcast Hit Data if available ---
@@ -1086,31 +1212,27 @@ function renderLivePitchData(data) {
         const launchAngle = hitData.launchAngle ? `${Math.round(hitData.launchAngle)}°` : "N/A";
         const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
 
-        pitchResultHTML += `
-            <div class="hit-data">
-                <span><strong>EXIT VELO:</strong> ${launchSpeed}</span>
-                <span><strong>LAUNCH ANGLE:</strong> ${launchAngle}</span>
-                <span><strong>DISTANCE:</strong> ${totalDistance}</span>
-            </div>
+    pitchResultHTML += `
+    <div class="hit-data">
+            <div>
+            <span style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">EXIT VELO:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #333;">${launchSpeed}</span>
+        </div>
+        <div>
+            <span style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">LAUNCH ANGLE:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #333;">${launchAngle}</span>
+        </div>
+        <div>
+            <span style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">DISTANCE:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #333;">${totalDistance}</span>
+        </div>
+    </div>
         `;
     }
 
+    // Update play details content
     playDetailsContainer.innerHTML = pitchResultHTML;
-    contentWrapper.appendChild(playDetailsContainer);
-
-    // Assemble the play result container
-    playResultContainer.appendChild(playerImageContainer);
-    playResultContainer.appendChild(contentWrapper);
-
-    pitchDescriptionContainer.appendChild(playResultContainer);
-    pitchDataSection.appendChild(pitchDescriptionContainer);
-
-    const gameplayInfoContainer = document.getElementById("gameplay-info-container");
-    if (gameplayInfoContainer) {
-        gameplayInfoContainer.parentNode.insertBefore(pitchDataSection, gameplayInfoContainer.nextSibling);
-    }
 }
-
 
 function generatedSVGField(count, onBase) {
     const out1Fill = count.outs >= 1 ? '#000' : '#e5decf';
@@ -2080,7 +2202,10 @@ function getEventIcon(eventType) {
         'Pickoff Caught Stealing 3B': 'OUT',
         'Pitching Substitution': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
         'Intent Walk': 'BB',
-        'Defensive Switch': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">'
+        'Defensive Switch': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
+        'Offensive Switch': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
+        'Offensive Substitution': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">'
+
     };
     
     return iconMap[eventType] || '?';

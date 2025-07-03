@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { name: 'doubles', display: 'Doubles', goodHigh: true },
             { name: 'triples', display: 'Triples', goodHigh: true },
             { name: 'strikeOuts', display: 'Strike Outs', goodLow: true },
-            { name: 'leftOnBase', display: 'Left On Base', goodLow: true },
+            { name: 'runs', display: 'Runs', goodHigh: true },
             { name: 'baseOnBalls', display: 'Walks', goodHigh: true },
             { name: 'totalBases', display: 'Total Bases', goodHigh: true },
             { name: 'plateAppearances', display: 'Plate Appearances', goodHigh: true },
