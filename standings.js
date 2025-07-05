@@ -99,9 +99,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             data.records.forEach(record => {
                 record.teamRecords.forEach(team => {
                     if (team.wildCardRank) {
-                        if (record.league.id === 103 && parseInt(team.wildCardRank) <= 3) {
+                        if (record.league.id === 103 && parseInt(team.wildCardRank) <= 5) {
                             alWildcardTeams.push(team);
-                        } else if (record.league.id === 104 && parseInt(team.wildCardRank) <= 3) {
+                        } else if (record.league.id === 104 && parseInt(team.wildCardRank) <= 5) {
                             nlWildcardTeams.push(team);
                         }
                     }
@@ -133,10 +133,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 `;
                 wildcardContainer.appendChild(headerRow);
 
-                // Create team rows
-                wildcardTeams.forEach(team => {
+               // Create team rows
+                wildcardTeams.forEach((team, index) => {
                     const teamRow = document.createElement("div");
-                    teamRow.classList.add("team-row");
+                    teamRow.classList.add("team-row", "wildcard-team-row");
+                    
+                    // Add class for first non-playoff team (4th place)
+                    if (parseInt(team.wildCardRank) === 4) {
+                        teamRow.classList.add("playoff-cutoff");
+                    }
+                    // Creates red line for all non-playoff wildcard teams (after 3rd place ... 4th place)
                     teamRow.innerHTML = `
                         <span><img src="https://www.mlbstatic.com/team-logos/${team.team.id}.svg" alt="${team.team.name} Logo" class="team-logo-standing"></span>
                         <span>${team.wins}</span>

@@ -316,14 +316,15 @@ body {
 
 .hit-data {
     display: flex;
-    gap: 16px;
+    gap: 24px; /* Increased gap for better spacing */
     margin-top: 8px;
-    padding: 8px;
+    padding: 12px 20px; /* Added horizontal padding */
     background: linear-gradient(135deg, #f8f9fa, #e9ecef);
     border-radius: 6px;
     border-left: 4px solid #ff6a6c;
-    border-bottom: 1px solid #d7827e;
-    width: 60%;
+    border-bottom: 1px solid #ff6a6c;
+    width: 80%; /* Increased width to spread out more */
+    justify-content: space-evenly; /* This will evenly distribute the 3 stats */
 }
 
 .hit-data span {

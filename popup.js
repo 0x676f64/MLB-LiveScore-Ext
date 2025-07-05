@@ -1095,6 +1095,16 @@ const styleDescription = (desc) => {
         pitchDescriptionContainer.appendChild(playResultContainer);
     }
 
+    const playDescription = playResultContainer.querySelector(".pitch-description");
+    if (playDescription) {
+    const descriptionLength = playDescription.textContent.length;
+    if (descriptionLength <= 30) { // Adjust threshold as needed
+        playResultContainer.classList.add("short-play");
+    } else {
+        playResultContainer.classList.remove("short-play");
+    }
+}
+
     // Get or create player image container
     let playerImageContainer = playResultContainer.querySelector(".player-image-container");
     if (!playerImageContainer) {
@@ -1197,7 +1207,7 @@ const styleDescription = (desc) => {
     const formattedDescription = description ? `<div class="pitch-description">${styleDescription(description)}</div>` : "";
     let pitchResultHTML = formattedEvent + formattedDescription;
 
-    // --- Statcast Hit Data if available ---
+    // --- Statcast Hit Data - ALWAYS display ---
     const getHitData = (play) => {
         return (
             play?.playEvents?.find(e => e.hitData)?.hitData ||
@@ -1207,14 +1217,14 @@ const styleDescription = (desc) => {
     };
     const hitData = getHitData(currentPlay) || getHitData(lastPlay);
 
-    if (hitData) {
-        const launchSpeed = hitData.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "N/A";
-        const launchAngle = hitData.launchAngle ? `${Math.round(hitData.launchAngle)}°` : "N/A";
-        const totalDistance = hitData.totalDistance ? `${hitData.totalDistance} ft` : "N/A";
+    // Always display hit data section, using actual data if available, otherwise '--'
+    const launchSpeed = hitData?.launchSpeed ? `${hitData.launchSpeed.toFixed(1)} MPH` : "--";
+    const launchAngle = hitData?.launchAngle ? `${Math.round(hitData.launchAngle)}°` : "--";
+    const totalDistance = hitData?.totalDistance ? `${hitData.totalDistance} ft` : "--";
 
     pitchResultHTML += `
     <div class="hit-data">
-            <div>
+        <div>
             <span style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">EXIT VELO:</span>
             <span style="font-size: 14px; font-weight: bold; color: #333;">${launchSpeed}</span>
         </div>
@@ -1227,8 +1237,7 @@ const styleDescription = (desc) => {
             <span style="font-size: 14px; font-weight: bold; color: #333;">${totalDistance}</span>
         </div>
     </div>
-        `;
-    }
+    `;
 
     // Update play details content
     playDetailsContainer.innerHTML = pitchResultHTML;
@@ -2023,6 +2032,12 @@ function setupToggleHandlers() {
 }
 
 // Main function to load and render all plays
+// Global variables for refresh management
+let refreshInterval;
+let lastPlayCount = 0;
+let isRefreshActive = false;
+
+// Main function to load and render all plays
 async function loadAllPlays() {
     console.log('Loading all plays content');
     
@@ -2045,33 +2060,47 @@ async function loadAllPlays() {
             window.cachedGameData = gameData; // Cache for future use
         }
         
-        // Extract plays data
+        // Extract plays data and game status
         const allPlays = gameData.liveData?.plays?.allPlays || [];
         const gameInfo = gameData.gameData;
+        const gameStatus = gameData.gameData?.status?.detailedState;
         
-        // Clear existing content
-        allPlaysContainer.innerHTML = '';
+        // Update play count for change detection
+        const currentPlayCount = allPlays.length;
+        const hasNewPlays = currentPlayCount > lastPlayCount;
+        lastPlayCount = currentPlayCount;
         
-        // Add game start information if available
-        if (gameInfo) {
-            const gameStartItem = createGameStartItem(gameInfo);
-            allPlaysContainer.appendChild(gameStartItem);
+        // Only update UI if there are new plays or this is the initial load
+        if (hasNewPlays || allPlaysContainer.children.length === 0) {
+            // Clear existing content
+            allPlaysContainer.innerHTML = '';
+            
+            // Add game start information if available
+            if (gameInfo) {
+                const gameStartItem = createGameStartItem(gameInfo);
+                allPlaysContainer.appendChild(gameStartItem);
+            }
+            
+            // Reverse plays to show newest first
+            const sortedPlays = [...allPlays].reverse();
+            
+            // Create play items with staggered animation
+            sortedPlays.forEach((play, index) => {
+                setTimeout(() => {
+                    const playItem = createPlayItem(play, gameData);
+                    allPlaysContainer.appendChild(playItem);
+                }, index * 50); // Stagger animations by 50ms
+            });
         }
         
-        // Reverse plays to show newest first
-        const sortedPlays = [...allPlays].reverse();
-        
-        // Create play items with staggered animation
-        sortedPlays.forEach((play, index) => {
-            setTimeout(() => {
-                const playItem = createPlayItem(play, gameData);
-                allPlaysContainer.appendChild(playItem);
-            }, index * 50); // Stagger animations by 50ms
-        });
+        // Manage auto-refresh based on game status
+        manageAutoRefresh(gameStatus);
         
     } catch (error) {
         console.error('Error loading all plays:', error);
         allPlaysContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff6a6c;">Error loading plays data</div>';
+        // Stop refreshing on error
+        stopAutoRefresh();
     }
 }
 
@@ -2121,170 +2150,17 @@ function createPlayItem(play, gameData) {
     // Get outs after the play
     const outs = play.count?.outs || 0;
 
-// Example usage function showing how to implement this in your extension
-async function loadAndDisplayPlays(gamePk, plays) {
-    try {
-        // Step 1: Load game data once
-        console.log('Loading game data...');
-        const gameData = await getGameData(gamePk);
-        
-        if (!gameData) {
-            console.error('Failed to load game data');
-            return;
-        }
-        
-        console.log('Game data loaded successfully');
-        
-        // Step 2: Process each play using the pre-loaded data
-        const playDivs = [];
-        
-        plays.forEach((play, index) => {
-            // Extract necessary information for each play
-            const inningText = `${play.about.halfInning === 'top' ? 'T' : 'B'}${play.about.inning}`;
-            const playerId = play.matchup?.batter?.id || 'unknown';
-            const playerName = play.matchup?.batter?.fullName || 'Unknown Player';
-            const eventIcon = getEventIcon(play.result?.event); // You'll need to implement this
-            
-            // Create the play div with dynamic base runner data
-            const playDiv = createPlayDivWithGameData(
-                play, 
-                gameData, 
-                inningText, 
-                playerId, 
-                playerName, 
-                eventIcon
-            );
-            
-            playDivs.push(playDiv);
-        });
-        
-        // Step 3: Add all play divs to your container
-        const container = document.getElementById('plays-container'); // Your container ID
-        if (container) {
-            playDivs.forEach(playDiv => {
-                container.appendChild(playDiv);
-            });
-        }
-        
-    } catch (error) {
-        console.error('Error in loadAndDisplayPlays:', error);
-    }
-}
-
-// Helper function to get event icons
-function getEventIcon(eventType) {
-    const iconMap = {
-        'Single': '1B',
-        'Double': '2B',
-        'Triple': '3B',
-        'Home Run': 'HR',
-        'Strikeout': 'K',
-        'Groundout': 'OUT',
-        'Flyout': 'OUT',
-        'Walk': 'BB',
-        'Hit By Pitch': 'HBP',
-        'Lineout': 'OUT',
-        'Sac Fly': 'SAC',
-        'Pop Out': 'OUT',
-        'Forceout': 'OUT',
-        'Sac Bunt': 'OUT',
-        'Bunt Pop Out': 'OUT',
-        'Strikeout Double Play': 'OUT',
-        'Grounded Into DP': 'DP',
-        'Caught Stealing 2B': 'OUT',
-        'Caught Stealing 3B': 'OUT',
-        'Field Error': 'E',
-        'Fielders Choice': 'FC',
-        'Fielders Choice Out': 'OUT',
-        'Double Play': 'OUT',
-        'Catcher Interference': 'E2',
-        'Pickoff Caught Stealing 2B': 'OUT',
-        'Pickoff Caught Stealing 3B': 'OUT',
-        'Pitching Substitution': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
-        'Intent Walk': 'BB',
-        'Defensive Switch': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
-        'Offensive Switch': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
-        'Offensive Substitution': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">'
-
+    // Inside the render loop
+    const count = {
+        balls: play.count?.balls || 0,
+        strikes: play.count?.strikes || 0,
+        outs: play.count?.outs || 0
     };
-    
-    return iconMap[eventType] || '?';
-}
 
-// Function to inject CSS if not already added
-function injectCSS() {
-    if (!document.getElementById('game-situation-styles')) {
-        const style = document.createElement('style');
-        style.id = 'game-situation-styles';
-        style.textContent = gamesituationCSS;
-        document.head.appendChild(style);
-    }
-}
-
-// Initialize function to call when your extension loads
-async function initializePlayDisplay(gamePk, plays) {
-    // Inject CSS
-    injectCSS();
-    
-    // Load and display plays
-    await loadAndDisplayPlays(gamePk, plays);
-}
-
-// Function to get baserunners from play data
-function getBaserunners(play) {
-    const baserunners = {
-        first: false,
-        second: false,
-        third: false
-    };
-    
-    // Check if runners exist in the play data
-    if (play.runners && Array.isArray(play.runners)) {
-        play.runners.forEach(runner => {
-            if (runner.movement) {
-                const startBase = runner.movement.start;
-                if (startBase === '1B') baserunners.first = true;
-                if (startBase === '2B') baserunners.second = true;
-                if (startBase === '3B') baserunners.third = true;
-            }
-        });
-    }
-    
-    // Alternative: Check if there's a postOnFirst, postOnSecond, postOnThird in the play
-    if (play.postOnFirst) baserunners.first = true;
-    if (play.postOnSecond) baserunners.second = true;
-    if (play.postOnThird) baserunners.third = true;
-    
-    return baserunners;
-}
-    
-// Function to generate the SVG field
-function generateSVGField(count, onBase) {
-    return `
-        <svg id="field-${Date.now()}" width="60" height="60" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: transparent; border-radius: 4px;">
-            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            
-            <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-        </svg>
-    `;
-}
-
-// Inside the render loop
-const count = {
-    balls: play.count?.balls || 0,
-    strikes: play.count?.strikes || 0,
-    outs: play.count?.outs || 0
-};
-
-// Try to find the first playEvent that contains hitData
+    // Try to find the first playEvent that contains hitData
     const statcastEvent = play.playEvents?.find(event => event?.hitData) || {};
     const statcastData = statcastEvent.hitData || {};
 
-    
     // Try multiple possible data locations and log for debugging
     console.log('Play object:', play);
     console.log('Hit data:', statcastData);
@@ -2321,8 +2197,8 @@ const count = {
     </div>
     `;
 
-// Updated innerHTML code block with SVG integration
- playDiv.innerHTML = `
+    // Updated innerHTML code block with SVG integration
+    playDiv.innerHTML = `
         <div class="inning-indicator" style="
             position: absolute;
             top: 8px;
@@ -2414,8 +2290,239 @@ const count = {
     return playDiv;
 }
 
-// Function to get baserunners from play data (This helper function is now largely redundant for 'post-play' state, but kept for clarity)
-// You already have a more direct implementation within createPlayItem now.
+// Helper function to get event icons
+function getEventIcon(eventType) {
+    const iconMap = {
+        'Single': '1B',
+        'Double': '2B',
+        'Triple': '3B',
+        'Home Run': 'HR',
+        'Strikeout': 'K',
+        'Groundout': 'OUT',
+        'Flyout': 'OUT',
+        'Walk': 'BB',
+        'Hit By Pitch': 'HBP',
+        'Lineout': 'OUT',
+        'Sac Fly': 'SAC',
+        'Pop Out': 'OUT',
+        'Forceout': 'OUT',
+        'Sac Bunt': 'OUT',
+        'Bunt Pop Out': 'OUT',
+        'Strikeout Double Play': 'OUT',
+        'Grounded Into DP': 'DP',
+        'Caught Stealing 2B': 'OUT',
+        'Caught Stealing 3B': 'OUT',
+        'Field Error': 'E',
+        'Fielders Choice': 'FC',
+        'Fielders Choice Out': 'OUT',
+        'Double Play': 'OUT',
+        'Catcher Interference': 'E2',
+        'Pickoff Caught Stealing 2B': 'OUT',
+        'Pickoff Caught Stealing 3B': 'OUT',
+        'Pitching Substitution': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
+        'Intent Walk': 'BB',
+        'Defensive Switch': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
+        'Offensive Switch': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">',
+        'Offensive Substitution': '<img src="assets/icons/swap.png" alt="Pitching Substitution" class="event-icon" width="20" height="20">'
+    };
+    
+    return iconMap[eventType] || '?';
+}
+
+// Function to generate the SVG field
+function generateSVGField(count, onBase) {
+    return `
+        <svg id="field-${Date.now()}" width="60" height="60" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: transparent; border-radius: 4px;">
+            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            
+            <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+        </svg>
+    `;
+}
+
+// Helper function to get player name from game data
+function getPlayerName(playerId, gameData) {
+    if (!playerId || !gameData.gameData?.players) return null;
+    
+    const player = gameData.gameData.players[`ID${playerId}`];
+    return player ? `${player.firstName} ${player.lastName}` : null;
+}
+
+// Enhanced game status checker
+async function checkGameStatus(gamePk) {
+    try {
+        const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+        const data = await response.json();
+        return {
+            detailedState: data.gameData.status.detailedState,
+            statusCode: data.gameData.status.statusCode,
+            abstractGameState: data.gameData.status.abstractGameState
+        };
+    } catch (error) {
+        console.error('Error fetching game status:', error);
+        return null;
+    }
+}
+
+// Improved function to determine if game should refresh
+function shouldRefresh(gameStatus) {
+    if (!gameStatus) return false;
+    
+    // Games that should NOT refresh
+    const finishedStates = [
+        "Final", 
+        "Game Over", 
+        "Completed Early", 
+        "Suspended",
+        "Cancelled",
+        "Postponed"
+    ];
+    
+    const preGameStates = [
+        "Pre-Game", 
+        "Scheduled", 
+        "Warmup"
+    ];
+    
+    // Check detailed state first
+    if (finishedStates.includes(gameStatus.detailedState || gameStatus)) {
+        return false;
+    }
+    
+    // Don't refresh pre-game states unless specifically requested
+    if (preGameStates.includes(gameStatus.detailedState || gameStatus)) {
+        return false;
+    }
+    
+    // Live games should refresh
+    if ((gameStatus.detailedState || gameStatus) === "Live" || 
+        (gameStatus.detailedState || gameStatus) === "In Progress" ||
+        gameStatus.abstractGameState === "Live") {
+        return true;
+    }
+    
+    // Default to not refreshing for unknown states
+    return false;
+}
+
+// Auto-refresh management
+function manageAutoRefresh(gameStatusData) {
+    const gameStatus = typeof gameStatusData === 'string' ? 
+        { detailedState: gameStatusData } : gameStatusData;
+    
+    if (shouldRefresh(gameStatus)) {
+        startAutoRefresh();
+    } else {
+        stopAutoRefresh();
+        console.log(`Game status: ${gameStatus.detailedState || gameStatusData} - Auto-refresh stopped`);
+    }
+}
+
+// Start auto-refresh
+function startAutoRefresh() {
+    if (isRefreshActive) return; // Already running
+    
+    console.log('Starting auto-refresh for live game');
+    isRefreshActive = true;
+    
+    refreshInterval = setInterval(async () => {
+        // Only refresh if All Plays tab is active
+        const activeTab = document.querySelector('.tab-button.active');
+        if (activeTab && activeTab.id === 'all-plays-tab') {
+            await conditionalRefresh();
+        }
+    }, 10000); // Refresh every 10 seconds for live games
+}
+
+// Stop auto-refresh
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+        isRefreshActive = false;
+        console.log('Auto-refresh stopped');
+    }
+}
+
+// Enhanced conditional refresh function
+async function conditionalRefresh() {
+    if (!gamePk) return;
+    
+    try {
+        const gameStatus = await checkGameStatus(gamePk);
+        
+        if (gameStatus && shouldRefresh(gameStatus)) {
+            console.log(`Game status: ${gameStatus.detailedState} - Refreshing...`);
+            
+            // Clear cached data to force fresh fetch
+            delete window.cachedGameData;
+            
+            // Reload plays
+            await loadAllPlays();
+        } else if (gameStatus) {
+            console.log(`Game status: ${gameStatus.detailedState} - Not refreshing`);
+            stopAutoRefresh();
+        }
+    } catch (error) {
+        console.error('Error in conditional refresh:', error);
+        stopAutoRefresh();
+    }
+}
+
+// Tab change handler - call this when switching tabs
+function onTabChange(tabId) {
+    if (tabId === 'all-plays-tab') {
+        // When switching to All Plays tab, load data and potentially start refresh
+        loadAllPlays();
+    } else {
+        // When switching away from All Plays tab, stop refreshing to save resources
+        stopAutoRefresh();
+    }
+}
+
+// Enhanced initialization
+async function initializeAllPlays(gameId) {
+    window.gamePk = gameId;
+    
+    // Reset state
+    lastPlayCount = 0;
+    stopAutoRefresh();
+    
+    // Load initial data
+    await loadAllPlays();
+}
+
+// Cleanup function - call when extension is closed or game changes
+function cleanup() {
+    stopAutoRefresh();
+    delete window.cachedGameData;
+    lastPlayCount = 0;
+}
+
+// Function to inject CSS if not already added
+function injectCSS() {
+    if (!document.getElementById('game-situation-styles')) {
+        const style = document.createElement('style');
+        style.id = 'game-situation-styles';
+        style.textContent = gamesituationCSS;
+        document.head.appendChild(style);
+    }
+}
+
+// Initialize function to call when your extension loads
+async function initializePlayDisplay(gamePk, plays) {
+    // Inject CSS
+    injectCSS();
+    
+    // Load and display plays
+    await loadAndDisplayPlays(gamePk, plays);
+}
+
+// Function to get baserunners from play data
 function getBaserunners(play) {
     const baserunners = {
         first: false,
@@ -2461,55 +2568,32 @@ async function loadAndDisplayPlays(gamePk, plays) {
     }
 }
 
-// Helper function to get player name from game data
-function getPlayerName(playerId, gameData) {
-    if (!playerId || !gameData.gameData?.players) return null;
-    
-    const player = gameData.gameData.players[`ID${playerId}`];
-    return player ? `${player.firstName} ${player.lastName}` : null;
-}
-
-// Dynamic refresher when All Plays tab is active
-let refreshInterval;
-
-async function checkGameStatus(gamePk) {
-    try {
-        const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
-        const data = await response.json();
-        return data.gameData.status.detailedState;
-    } catch (error) {
-        console.error('Error fetching game status:', error);
-        return null;
-    }
-}
-
-function shouldRefresh(gameStatus) {
-    const nonRefreshStates = ["Final", "Game Over", "Pre-Game", "Scheduled", "Suspended: Rain"];
-    return !nonRefreshStates.includes(gameStatus);
-}
-
-async function conditionalRefresh() {
-    if (!gamePk) return;
-    
-    const activeTab = document.querySelector('.tab-button.active');
-    if (activeTab && activeTab.id === 'all-plays-tab') {
-        const gameStatus = await checkGameStatus(gamePk);
-        
-        if (gameStatus && shouldRefresh(gameStatus)) {
-            console.log(`Game status: ${gameStatus} - Refreshing...`);
-            // Clear cached data to force fresh fetch
-            delete window.cachedGameData;
-            loadAllPlays();
-        } else {
-            console.log(`Game status: ${gameStatus} - Not refreshing`);
-            // If game is over, clear the interval to stop future checks
-            if (gameStatus && !shouldRefresh(gameStatus)) {
-                clearInterval(refreshInterval);
-                console.log('Game finished - stopping auto-refresh');
-            }
+// Add event listener for tab visibility changes (optional enhancement)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        // Page is hidden, stop refreshing to save resources
+        stopAutoRefresh();
+    } else {
+        // Page is visible again, check if we need to resume refreshing
+        const activeTab = document.querySelector('.tab-button.active');
+        if (activeTab && activeTab.id === 'all-plays-tab') {
+            loadAllPlays(); // This will restart refresh if needed
         }
     }
-}
+});
+
+// Export functions for use in your extension
+window.allPlaysManager = {
+    initializeAllPlays,
+    loadAllPlays,
+    onTabChange,
+    cleanup,
+    startAutoRefresh,
+    stopAutoRefresh
+};
+
+// Global variable to track refresh interval
+let scoringPlaysRefreshInterval = null;
 
 async function loadScoringPlays() {
     console.log('Loading scoring plays content');
@@ -2543,6 +2627,29 @@ async function loadScoringPlays() {
             window.cachedGameData = gameData; // Cache for future use 
         }
 
+        // Get game state to determine if we should refresh
+        const gameDetailedState = gameData.gameData?.status?.detailedState || '';
+        const isLiveGame = gameDetailedState === 'Live';
+        const isGameOver = gameDetailedState === 'Game Over' || gameDetailedState === 'Final';
+
+        console.log('Game state:', gameDetailedState, 'Is live:', isLiveGame, 'Is over:', isGameOver);
+
+        // Clear any existing refresh interval
+        if (scoringPlaysRefreshInterval) {
+            clearInterval(scoringPlaysRefreshInterval);
+            scoringPlaysRefreshInterval = null;
+        }
+
+        // Set up auto-refresh for live games only
+        if (isLiveGame) {
+            scoringPlaysRefreshInterval = setInterval(async () => {
+                console.log('Auto-refreshing scoring plays for live game');
+                // Clear cache to force fresh data
+                window.cachedGameData = null;
+                await loadScoringPlays();
+            }, 30000); // Refresh every 30 seconds for live games
+        }
+
         // Extract plays data
         const scoringPlays = gameData.liveData?.plays?.scoringPlays || [];
         const allPlays = gameData.liveData?.plays?.allPlays || [];
@@ -2551,9 +2658,28 @@ async function loadScoringPlays() {
         // Clear existing content
         scoringPlaysContainer.innerHTML = '';
 
+        // Add game status indicator
+        const statusIndicator = document.createElement('div');
+        statusIndicator.style.cssText = `
+            text-align: center;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            ${isLiveGame ? 'background-color: #28a745; color: white;' : 'background-color: #6c757d; color: white;'}
+        `;
+        statusIndicator.textContent = isLiveGame ? 
+            `🔴 LIVE - Auto-refreshing every 30 seconds` : 
+            `Game Status: ${gameDetailedState}`;
+        scoringPlaysContainer.appendChild(statusIndicator);
+
         // Check if there are any scoring plays
         if (scoringPlays.length === 0) {
-            scoringPlaysContainer.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">No scoring plays in this game.</p>';
+            const noPlaysMessage = document.createElement('p');
+            noPlaysMessage.style.cssText = 'text-align: center; color: #666; margin-top: 20px;';
+            noPlaysMessage.textContent = 'No scoring plays in this game.';
+            scoringPlaysContainer.appendChild(noPlaysMessage);
             return;
         }
 
@@ -2570,6 +2696,13 @@ async function loadScoringPlays() {
 
     } catch (error) {
         console.error('Error loading scoring plays:', error);
+        
+        // Clear any existing refresh interval on error
+        if (scoringPlaysRefreshInterval) {
+            clearInterval(scoringPlaysRefreshInterval);
+            scoringPlaysRefreshInterval = null;
+        }
+        
         scoringPlaysContainer.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">Error loading scoring plays. Please try again.</p>';
     }
 }
@@ -2812,6 +2945,15 @@ function generateSVGField(count, onBase) {
             <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
         </svg>
     `;
+}
+
+// Function to clear refresh interval (call this when user switches tabs or closes extension)
+function clearScoringPlaysRefresh() {
+    if (scoringPlaysRefreshInterval) {
+        clearInterval(scoringPlaysRefreshInterval);
+        scoringPlaysRefreshInterval = null;
+        console.log('Cleared scoring plays refresh interval');
+    }
 }
 
 // Add slideIn animation keyframes to document if not already present
