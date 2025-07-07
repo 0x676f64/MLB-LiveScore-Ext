@@ -1,5 +1,7 @@
 MLB live feed extension. View live game results, and stats while still remaining productive with every day work. 
 
+https://chromewebstore.google.com/detail/mlb-scoreboard/agpdhoieggfkoamgpgnldkgdcgdbdkpi?authuser=0&hl=en
+
 ![Screenshot 2025-06-13 110202](https://github.com/user-attachments/assets/9d277762-ec5c-4f3d-84c6-4529dc2bb811)
 
 ![Screenshot 2025-07-02 215215](https://github.com/user-attachments/assets/47c7fdb6-e37b-45b2-b622-71db9ae6ce20)
