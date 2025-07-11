@@ -1,26 +1,71 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    const gamesContainer = document.getElementById("games-container");
+// Updated default.js - Main page with dark mode toggle
 
-    // Add header section
-    const headerContainer = document.createElement("div");
-    headerContainer.classList.add("header-container");
-    headerContainer.innerHTML = `
-        <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
-        
-    `;
-    document.body.prepend(headerContainer);
+// Dark mode functionality using the shared utility
+document.addEventListener('DOMContentLoaded', async () => {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    
+    if (darkModeToggle) {
+        // Set initial state
+        const isDark = await window.darkModeManager.isDarkModeEnabled();
+        if (isDark) {
+            darkModeToggle.classList.add('active');
+        }
 
-    const today = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
-    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1`;
-
-    function formatGameTime(gameDate) {
-        const dateTime = new Date(gameDate);
-        const hours = dateTime.getHours();
-        const minutes = dateTime.getMinutes();
-        const ampm = hours >= 12 ? "PM" : "AM";
-        return `${(hours % 12) || 12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+        // Toggle dark mode when clicked
+        darkModeToggle.addEventListener('click', async () => {
+            await window.darkModeManager.toggle();
+        });
     }
 
+    // Listen for dark mode changes (useful if you have multiple toggles)
+    document.addEventListener('darkModeChanged', (event) => {
+        console.log('Dark mode changed:', event.detail.isDark);
+        // You can add additional logic here if needed
+    });
+});
+
+       // Enhanced MLB games functionality with datepicker
+document.addEventListener("DOMContentLoaded", async () => {
+    const gamesContainer = document.getElementById("games-container");
+    const dateInput = document.getElementById("date-input");
+    const applyButton = document.querySelector('.apply');
+    const datepickerContainer = document.querySelector('.datepicker');
+    
+    // Get the current "baseball date" - if before 9am, use previous day
+    function getCurrentBaseballDate() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        // If it's before 9am, use previous day's games
+        if (currentHour < 9) {
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            return formatDateForAPI(yesterday);
+        }
+        
+        return formatDateForAPI(now);
+    }
+    
+    // Format date for API (YYYY-MM-DD)
+    function formatDateForAPI(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
+    // Format game time to local time
+    function formatGameTime(gameDate) {
+        const dateTime = new Date(gameDate);
+        return dateTime.toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZoneName: 'short'
+        });
+    }
+
+    // Fetch team abbreviation
     async function fetchAbbreviation(teamId) {
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`);
@@ -32,6 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
+    // Fetch live game details for in-progress games
     async function fetchGameDetails(gamePk) {
         try {
             const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
@@ -49,15 +95,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         return "In Progress";
     }
 
-    async function refreshGames() {
+    // Main function to fetch and display games for a specific date
+    async function fetchGameData(selectedDate) {
+        const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${selectedDate}`;
+        
         try {
             const response = await fetch(apiUrl);
             const data = await response.json();
 
-            gamesContainer.innerHTML = ""; // Clear container before adding new data
+            gamesContainer.innerHTML = "";
 
-            if (!data.dates.length) {
-                gamesContainer.innerHTML = "<p>No games found for today...</p>";
+            if (!data.dates.length || !data.dates[0].games.length) {
+                gamesContainer.innerHTML = `<p>No games found for ${selectedDate}...</p>`;
                 return;
             }
 
@@ -76,6 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const homeAbbr = await fetchAbbreviation(homeTeamId);
                 const awayAbbr = await fetchAbbreviation(awayTeamId);
 
+                // Format status based on game state
                 if (status === "Final" || status === "Game Over" || status === "Completed Early") {
                     status = "FINAL";
                 } else if (status === "Pre-Game" || status === "Scheduled") {
@@ -84,15 +134,25 @@ document.addEventListener("DOMContentLoaded", async () => {
                     status = await fetchGameDetails(game.gamePk);
                 }
 
+                const isDarkMode = document.body.classList.contains("dark-mode");
+
+                const homeLogoSrc = isDarkMode
+                    ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${homeTeamId}.svg`
+                    : `https://www.mlbstatic.com/team-logos/${homeTeamId}.svg`;
+
+                const awayLogoSrc = isDarkMode
+                    ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${awayTeamId}.svg`
+                    : `https://www.mlbstatic.com/team-logos/${awayTeamId}.svg`;
+
                 gameBox.innerHTML = `
                     <div class="game-status">${status}</div>
                     <div class="team-row">
-                        <img src="https://www.mlbstatic.com/team-logos/${awayTeamId}.svg" alt="${awayAbbr} logo" class="team-logo">
+                        <img src="${awayLogoSrc}" alt="${awayAbbr} logo" class="team-logo">
                         <p class="team-abbr">${awayAbbr}</p>
                         <p class="team-score">${awayScore}</p>
                     </div>
                     <div class="team-row">
-                        <img src="https://www.mlbstatic.com/team-logos/${homeTeamId}.svg" alt="${homeAbbr} logo" class="team-logo">
+                        <img src="${homeLogoSrc}" alt="${homeAbbr} logo" class="team-logo">
                         <p class="team-abbr">${homeAbbr}</p>
                         <p class="team-score">${homeScore}</p>
                     </div>
@@ -107,8 +167,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Sort games: Live on top, then Scheduled by time, then Final
             gameBoxes.sort((a, b) => {
-                if (a.gameStatus === "In Progress" && b.gameStatus !== "In Progress") return -1;
-                if (b.gameStatus === "In Progress" && a.gameStatus !== "In Progress") return 1;
+                if (a.gameStatus.includes("TOP") || a.gameStatus.includes("BOT")) return -1;
+                if (b.gameStatus.includes("TOP") || b.gameStatus.includes("BOT")) return 1;
                 if (a.gameStatus === "FINAL" && b.gameStatus !== "FINAL") return 1;
                 if (b.gameStatus === "FINAL" && a.gameStatus !== "FINAL") return -1;
                 return a.gameDate - b.gameDate;
@@ -121,21 +181,78 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Initial fetch of games
-    await refreshGames();
+    // Auto-refresh function for live games (only for today's date)
+    async function autoRefreshGames() {
+        const currentSelectedDate = dateInput.value;
+        const todaysBaseballDate = getCurrentBaseballDate();
+        
+        // Only auto-refresh if we're viewing today's games
+        if (currentSelectedDate === todaysBaseballDate) {
+            await fetchGameData(currentSelectedDate);
+        }
+    }
 
-    // Set up interval to refresh games every 10 seconds
-    setInterval(refreshGames, 10000);
-});
+    // Initialize datepicker and load initial data
+    function initializeDatepicker() {
+        const today = getCurrentBaseballDate();
+        dateInput.value = today;
+        fetchGameData(today);
+        
+        // Set min and max dates for the datepicker
+        const minDate = new Date();
+        minDate.setDate(minDate.getDate() - 30); // Allow 30 days back
+        const maxDate = new Date();
+        maxDate.setDate(maxDate.getDate() + 30); // Allow 30 days forward
+        
+        dateInput.min = formatDateForAPI(minDate);
+        dateInput.max = formatDateForAPI(maxDate);
+    }
 
-// In the script where users click on game boxes
-function onGameClick(gameId) {
-    // Save the current view state
-    chrome.storage.local.set({
-        'currentView': 'game',
-        'currentGameId': gameId
-    }, function() {
-        // Navigate to the game view
-        window.location.href = 'popup.html';
+    // Event listeners for datepicker
+    applyButton.addEventListener('click', () => {
+        const selectedDate = dateInput.value;
+        if (selectedDate) {
+            fetchGameData(selectedDate);
+            datepickerContainer.hidden = true;
+        }
     });
-}
+
+    // Optional: Apply date on Enter key press
+    dateInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const selectedDate = dateInput.value;
+            if (selectedDate) {
+                fetchGameData(selectedDate);
+                datepickerContainer.hidden = true;
+            }
+        }
+    });
+
+    // Optional: Show/hide datepicker on input focus
+    dateInput.addEventListener('focus', () => {
+        datepickerContainer.hidden = false;
+    });
+
+    // Initialize the extension
+    initializeDatepicker();
+
+    // Set up interval to refresh games every 30 seconds (only for today's games)
+    setInterval(autoRefreshGames, 30000);
+    
+    // Check every minute if we need to update the "baseball date" at 9am
+    setInterval(() => {
+        const currentBaseballDate = getCurrentBaseballDate();
+        if (dateInput.value !== currentBaseballDate) {
+            // If the baseball date has changed (crossed 9am), update to new date
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            
+            // Only auto-update if it's exactly 9:00am (within the check interval)
+            if (currentHour === 9 && currentMinute === 0) {
+                dateInput.value = currentBaseballDate;
+                fetchGameData(currentBaseballDate);
+            }
+        }
+    }, 60000); // Check every minute
+});

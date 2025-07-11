@@ -3,6 +3,7 @@
     <title>Game Details</title>
     <link rel="stylesheet" href="style.css">
     <script defer src="popup.js" ></script>
+    <script defer src="darkMode.js"></script>
     <meta charset="UTF-8">
     <style>
 html {
@@ -16,6 +17,11 @@ body {
     height: 600px;
     transform: scale(0.9);
     transform-origin: top left;
+}
+
+body.dark-mode #popup-container {
+    background-color: #101012;
+    color: #ffffff;
 }
 
 #popup-container {

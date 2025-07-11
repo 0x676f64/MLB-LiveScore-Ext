@@ -14,7 +14,6 @@ body {
     transform-origin: top left; /* Ensures it scales from the top left corner */
     display: flex;
     flex-direction: column;
-  
 }
 
 #scorebug {
@@ -33,7 +32,7 @@ body {
 
 #games-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 10px; /* Reduce spacing between game boxes */
     padding: 5px; /* Reduce padding */
 }
@@ -114,4 +113,4 @@ body {
   .player-info {
     font-size: 14px;
   }
-  
+

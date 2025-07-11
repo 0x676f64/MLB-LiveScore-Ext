@@ -6,24 +6,96 @@
     <link rel="stylesheet" href="style.css">
     <script src="default.js" defer></script>
     <script src="navigation.js" defer></script>
+    <script src="darkMode.js" defer></script>
 <head>
     <style>
-        html {
+         html {
             scrollbar-width: thin;
         }
+        
         body {
-            width: 488px;
-            height: 100dvh;
+            width: 610px;
             font-family: "Rubik", sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-color: #ffffff;
+            color: #333333;
+        }
+
+        /* Forces dynamic height */
+        body, html {
+        height: 0 !important;
+        min-height: 0 !important;
+        }
+
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #101012;
+            color: #ffffff;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 15px 10px;
+            position: relative;
+            margin-left: 100px;
         }
 
         .header-container img {
-            margin-left: 14.5rem;
             width: 250px;
             height: 90px;
-            margin-top: 15px;
-            margin-bottom: 15px;
+            margin-left: 14.5rem;
         }
+
+        .dark-mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 50px;
+        }
+
+        .toggle-switch {
+            position: absolute;
+            right: 0;
+            width: 50px;
+            height: 24px;
+            background-color: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .toggle-switch.active {
+    background-color: #D7827E;
+}
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+    transform: translateX(26px);
+}
+
+        .toggle-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        body.dark-mode .toggle-label {
+            color: #D7827E;
+        }
+
         .nav-container {
             display: flex;
             justify-content: space-around;
@@ -32,14 +104,20 @@
             align-items: center;
             padding: 10px;
             height: 50px;
-            bottom: 0;
             width: 140%;
+            bottom: 0;
             align-items: center;
             margin-right: auto;
             margin-left: auto;
             margin-top: 10px;
-            
+            margin-bottom: 0px;
+            transition: background-color 0.3s ease;
         }
+
+        body.dark-mode .nav-container {
+            background-color: #222222;
+        }
+
         .nav-container button {
             background: none;
             border: none;
@@ -54,15 +132,127 @@
             transition: fill 0.2s; 
         }
 
+         body.dark-mode .nav-container svg {
+            fill: #b0b0b0;
+        }
+
         .nav-container svg:hover {
             fill: #D7827E;
-            background-color: #e5decf;
+            background-color: transparent;
+        }
+
+        body.dark-mode .nav-container svg:hover {
+            fill: #D7827E;
+            background-color: transparent;
+        }
+
+        body.dark-mode .game-box {
+            background-color: #131415;
+            border-color: #ff6a6d31;
+        }
+
+        body.dark-mode .team-abbr {
+            color: #b9b9bb;
+        }
+
+        body.dark-mode .team-score {
+            color: #b9b9bb;
+        }
+
+        body.dark-mode .game-box:active, body.dark-mode .game-box:hover, body.dark-mode .game-box:focus,
+        body.dark-mode .game-box:focus-within {
+            transform: scale(1.03);
+            box-shadow: #ff6a6c 0px 0px 10px 1px;
+            transition: transform .2s;
+        }
+
+         /* Datepicker Styles */
+        .date-picker-container {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+            margin-right: 45px;
+        }
+
+        .datepicker {
+            background: rgba(255, 255, 255, 0.062);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            justify-content: center;
+        }
+
+        .datepicker:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .date-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgb(15, 15, 15);
+            border-radius: 5px;
+            padding: 5px 10px;
+            color: #000;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+        }
+
+        .date-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        .apply {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border: none;
+            border-radius: 5px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-size: 14px;
+        }
+
+        .apply:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .apply:active {
+            transform: scale(0.95);
         }
 
     </style>
 
 </head>
 <body>
+    <div class="header-container">
+        <img src="assets/teams-darkmode/1.svg" alt="MLB Icon" class="header-logo">
+        <div class="dark-mode-toggle">
+            <div class="toggle-switch" id="darkModeToggle">
+                <div class="toggle-slider"></div>
+            </div>
+        </div>
+    </div>
+    <div class="date-picker-container">
+            <div class="datepicker">
+                <input type="date" id="date-input" class="date-input">
+                <button class="apply">Apply</button>
+            </div>
+        </div>
     <div id="scorebug">
         <div id="games-container-wrapper">
             <div id="games-container"></div>
