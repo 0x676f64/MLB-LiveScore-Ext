@@ -8,7 +8,6 @@ html {
 }
 
 body {
-    font-family: "Afacad Flux", Arial, sans-serif;
     margin: 0;
     transform: scale(0.7); /* 80% of the original size */
     transform-origin: top left; /* Ensures it scales from the top left corner */
@@ -16,87 +15,11 @@ body {
     flex-direction: column;
 }
 
-#scorebug {
-    text-align: center;
-    background-color: #fff;
-    color: #000;
-}
-
-#scorebug h2 {
-    text-align: center;
-}
-
-.balls-strikes {
-    font-weight: 400;
-}
-
-#games-container {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px; /* Reduce spacing between game boxes */
-    padding: 5px; /* Reduce padding */
-}
-
-.game-box {
-    border: 2px solid #0B0F13; /* Thinner border */
-    padding: 5px; /* Less padding */
-    text-align: center;
-    background-color: #e5decf;
-    border-radius: 5px; /* Smaller border radius */
-    font-size: 10px; /* Reduce text size */
-    width: 150px; /* Set a smaller width */
-    height: 120px; /* Set a smaller height */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-}
-
-.game-box:active, .game-box:hover, .game-box:focus,
-.game-box:focus-within {
-    transform: scale(1.03);
-    box-shadow: rgba(0, 0, 0, 1) 0px 0px 10px 1px;
-    transition: transform .2s;
-}
-
-
-.team-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.team-logo {
-    width: 35px; /* Smaller logos */
-    height: 35px;
-}
-
-.team-abbr, .team-score {
-    font-size: 16px; /* Reduce font size */
-    margin: 0 5px;
-    font-weight: 500;
-    color: #373838;
-}
-
-.game-status {
-    font-size: 15px;
-    font-weight: 700;
-    align-self: flex-start;
-    color: #ff6a6c;
-}
-
-#scorebug {
-    background-color: transparent;
-    top: 150px;
-}
-
 /* Add this to your CSS file, or update an existing #backButton rule */
 #backButton {
     font-family: 'Rubik', sans-serif; /* Use Rubik font */
-    background-color: #2a283e; /* Button background color */
-    color: #ff6a6c; /* Font color */
+    background-color: #041e41; /* Button background color */
+    color: white; /* Font color */
     padding: 10px 15px; /* Adjust padding as needed */
     border-radius: 8px; /* Slightly rounded corners */
     cursor: pointer; /* Indicate it's clickable */
@@ -106,8 +29,8 @@ body {
 }
 
 #backButton:hover {
-    background-color: #2a283ee7; /* Slightly lighter background on hover */
-    border-color: #ffd1d2; /* Match border color on hover */
+    background-color: #052857; /* Slightly lighter background on hover */
+    border-color: #bf0d3d; /* Match border color on hover */
 }
 
   .player-info {

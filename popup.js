@@ -404,7 +404,7 @@ toggleContainers(true);
         .player-position {
             font-style: italic;
             margin-bottom: 5px;
-            color: #D7827E;
+            color: #bf0d3d;
             font-size: 12px;
         }
         
@@ -1171,7 +1171,7 @@ const styleDescription = (desc) => {
                 width: 30px;
                 height: 30px;
                 border-radius: 50%;
-                background-color: #ff6a6c;
+                background-color: #bf0d3d;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1225,16 +1225,16 @@ const styleDescription = (desc) => {
     pitchResultHTML += `
     <div class="hit-data">
         <div>
-            <span style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">EXIT VELO:</span>
-            <span style="font-size: 14px; font-weight: bold; color: #333;">${launchSpeed}</span>
+            <span style="font-size: 11px; color: #041e41; font-weight: 600; text-transform: uppercase;">EXIT VELO:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #bf0d3d;">${launchSpeed}</span>
         </div>
         <div>
-            <span style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">LAUNCH ANGLE:</span>
-            <span style="font-size: 14px; font-weight: bold; color: #333;">${launchAngle}</span>
+            <span style="font-size: 11px; color: #041e41; font-weight: 600; text-transform: uppercase;">LAUNCH ANGLE:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #bf0d3d;">${launchAngle}</span>
         </div>
         <div>
-            <span style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">DISTANCE:</span>
-            <span style="font-size: 14px; font-weight: bold; color: #333;">${totalDistance}</span>
+            <span style="font-size: 11px; color: #041e41; font-weight: 600; text-transform: uppercase;">DISTANCE:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #bf0d3d;">${totalDistance}</span>
         </div>
     </div>
     `;
@@ -1244,23 +1244,23 @@ const styleDescription = (desc) => {
 }
 
 function generatedSVGField(count, onBase) {
-    const out1Fill = count.outs >= 1 ? '#000' : '#e5decf';
-    const out2Fill = count.outs >= 2 ? '#000' : '#e5decf';
-    const out3Fill = count.outs >= 3 ? '#000' : '#e5decf';
+    const out1Fill = count.outs >= 1 ? '#bf0d3d' : '#e2e8f0';
+    const out2Fill = count.outs >= 2 ? '#bf0d3d' : '#e2e8f0';
+    const out3Fill = count.outs >= 3 ? '#bf0d3d' : '#e2e8f0';
 
-    const firstBaseFill = onBase.first ? '#000' : '#e5decf';
-    const secondBaseFill = onBase.second ? '#000' : '#e5decf';
-    const thirdBaseFill = onBase.third ? '#000' : '#e5decf';
+    const firstBaseFill = onBase.first ? '#bf0d3d' : '#e2e8f0';
+    const secondBaseFill = onBase.second ? '#bf0d3d' : '#e2e8f0';
+    const thirdBaseFill = onBase.third ? '#bf0d3d' : '#e2e8f0';
 
     return `
-        <svg id="field" width="110" height="110" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #e5decf;">
-            <circle id="out-1" cx="13" cy="61" r="6" fill="${out1Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle id="out-2" cx="30" cy="61" r="6" fill="${out2Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle id="out-3" cx="47" cy="61" r="6" fill="${out3Fill}" stroke="#000" stroke-width="1" opacity="0.8"/>
+        <svg id="field" width="110" height="110" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #f7fafc;">
+            <circle id="out-1" cx="13" cy="61" r="6" fill="${out1Fill}" stroke="#bf0d3d" stroke-width="1" opacity="0.8"/>
+            <circle id="out-2" cx="30" cy="61" r="6" fill="${out2Fill}" stroke="#bf0d3d" stroke-width="1" opacity="0.8"/>
+            <circle id="out-3" cx="47" cy="61" r="6" fill="${out3Fill}" stroke="#bf0d3d" stroke-width="1" opacity="0.8"/>
             
-            <rect id="third-base" x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${thirdBaseFill}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <rect id="second-base" x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${secondBaseFill}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <rect id="first-base" x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${firstBaseFill}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect id="third-base" x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${thirdBaseFill}" stroke="#bf0d3d" stroke-width="1" opacity="0.8"/>
+            <rect id="second-base" x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${secondBaseFill}" stroke="#bf0d3d" stroke-width="1" opacity="0.8"/>
+            <rect id="first-base" x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${firstBaseFill}" stroke="#bf0d3d" stroke-width="1" opacity="0.8"/>
         </svg>
     `;
 }
@@ -1617,17 +1617,18 @@ function createPitchingStatsRow(pitcher, teamStats) {
 
         // Enhanced HTML with modern styling
         let fullHTML = `
-            <style>
+        <style>
             .boxscore-container {
                 width: 600px;
                 height: 400px;
                 margin: 0 auto;
                 padding: 10px;
                 font-family: 'Rubik', Tahoma, Geneva, Verdana, sans-serif;
-                background: #e5decf;
+                background: #f8f9fa;
                 overflow-y: auto;
                 display: block;
                 scrollbar-width: thin;
+              
             }
 
             .boxscore-title {
@@ -1635,7 +1636,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 margin: 0 0 12px 0;
                 font-size: 18px;
                 font-weight: 600;
-                color: #0b0f13;
+                color: #041e41;
             }
 
             .boxscore-table {
@@ -1646,11 +1647,11 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 background: white;
                 border-radius: 8px;
                 overflow: hidden;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                box-shadow: 0 2px 8px rgba(4,30,65,0.15);
             }
 
             .boxscore-table thead {
-                background: #0b0f13;
+                background: #041e41;
                 color: white;
             }
 
@@ -1659,7 +1660,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 text-align: center;
                 font-weight: 600;
                 font-size: 11px;
-                border-right: 1px solid rgba(255,255,255,0.1);
+                border-right: 1px solid rgba(255,255,255,0.2);
             }
 
             .boxscore-table th:last-child {
@@ -1671,20 +1672,20 @@ function createPitchingStatsRow(pitcher, teamStats) {
             }
 
             .boxscore-table tbody tr:hover {
-                background-color: rgba(255,106,108,0.1);
+                background-color: rgba(191,13,61,0.1);
             }
 
             .boxscore-table tbody tr:nth-child(even) {
-                background-color: rgba(229,222,207,0.3);
+                background-color: rgba(4,30,65,0.05);
             }
 
             .boxscore-table td {
                 padding: 8px 4px;
                 text-align: center;
-                border-right: 1px solid rgba(215,130,126,0.3);
-                border-bottom: 1px solid rgba(215,130,126,0.3);
+                border-right: 1px solid rgba(4,30,65,0.15);
+                border-bottom: 1px solid rgba(4,30,65,0.15);
                 font-weight: 500;
-                color: #0b0f13;
+                color: #041e41;
                 font-size: 11px;
             }
 
@@ -1709,9 +1710,9 @@ function createPitchingStatsRow(pitcher, teamStats) {
             }
 
             .total-stats {
-                background: rgba(255,106,108,0.2) !important;
+                background: rgba(191,13,61,0.15) !important;
                 font-weight: 700;
-                color: #0b0f13;
+                color: #041e41;
             }
 
             .inning-score {
@@ -1725,9 +1726,9 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 margin: 15px 0 8px 0;
                 font-size: 14px;
                 font-weight: 600;
-                color: #0b0f13;
+                color: #041e41;
                 padding: 5px 0;
-                border-bottom: 2px solid #d7827e;
+                border-bottom: 2px solid #bf0d3d;
             }
 
             .teams-row {
@@ -1742,8 +1743,10 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 width: 100%;
                 border-radius: 6px;
                 overflow: hidden;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                background: white;
+                box-shadow: 0 4px 16px rgba(4,30,65,0.1), 0 2px 8px rgba(191,13,61,0.05);
+                background: rgba(255,255,255,0.8);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(4,30,65,0.1);
                 margin-bottom: 8px;
             }
 
@@ -1751,15 +1754,18 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 display: flex;
                 align-items: center;
                 padding: 10px 12px;
-                background: #0b0f13;
-                color: black;
+                background: rgba(255,255,255,0.9);
+                backdrop-filter: blur(15px);
+                color: #041e41;
                 cursor: pointer;
                 user-select: none;
-                transition: background-color 0.2s;
+                transition: all 0.2s;
+                border-bottom: 1px solid rgba(4,30,65,0.1);
             }
 
             .team-header:hover {
-                background: #1a2025;
+                background: rgba(248,249,250,0.95);
+                box-shadow: 0 2px 8px rgba(4,30,65,0.1);
             }
 
             .team-logo-small {
@@ -1790,6 +1796,8 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 overflow-y: auto;
                 transition: max-height 0.3s ease;
                 scrollbar-width: thin;
+                background: rgba(255,255,255,0.7);
+                backdrop-filter: blur(8px);
             }
 
             .team-content.collapsed {
@@ -1805,12 +1813,13 @@ function createPitchingStatsRow(pitcher, teamStats) {
             }
 
             .section-subtitle {
-                background: #f8f9fa;
+                background: rgba(248,249,250,0.8);
+                backdrop-filter: blur(5px);
                 padding: 6px 8px;
                 font-weight: 600;
                 font-size: 10px;
-                color: #495057;
-                border-bottom: 1px solid #dee2e6;
+                color: #041e41;
+                border-bottom: 1px solid rgba(4,30,65,0.15);
                 margin-top: 8px;
             }
 
@@ -1825,7 +1834,8 @@ function createPitchingStatsRow(pitcher, teamStats) {
             }
 
             .stats-table thead {
-                background: #f8f9fa;
+                background: rgba(248,249,250,0.9);
+                backdrop-filter: blur(10px);
                 position: sticky;
                 top: 0;
                 z-index: 1;
@@ -1835,23 +1845,23 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 padding: 6px 2px;
                 text-align: center;
                 font-weight: 600;
-                border-bottom: 2px solid #dee2e6;
+                border-bottom: 2px solid rgba(4,30,65,0.2);
                 font-size: 8px;
-                color: #495057;
+                color: #041e41;
                 white-space: nowrap;
             }
 
             .stats-table td {
                 padding: 4px 2px;
                 text-align: center;
-                border-bottom: 1px solid #f1f3f4;
+                border-bottom: 1px solid rgba(4,30,65,0.1);
                 font-weight: 500;
                 font-size: 9px;
                 white-space: nowrap;
             }
 
             .stats-table tr:hover {
-                background-color: rgba(0,123,255,0.1);
+                background-color: rgba(191,13,61,0.1);
             }
 
             .player-name-boxscore {
@@ -1891,40 +1901,46 @@ function createPitchingStatsRow(pitcher, teamStats) {
 
             .batting-order {
                 font-weight: bold;
-                color: #0b0f13;
-                background-color: rgba(11,15,19,0.1);
+                color: #041e41;
+                background-color: rgba(4,30,65,0.1);
             }
 
             .position {
                 font-weight: 600;
-                color: #495057;
+                color: #041e41;
             }
 
             .pitcher-row {
-                background-color: rgba(108,117,125,0.1);
-                border-top: 2px solid #dee2e6;
+                background-color: rgba(191,13,61,0.05);
+                border-top: 2px solid rgba(4,30,65,0.2);
             }
 
             .pitcher-row .batting-order {
-                background-color: rgba(108,117,125,0.3);
+                background-color: rgba(191,13,61,0.15);
                 font-weight: bold;
-                color: #495057;
+                color: #041e41;
             }
 
             .away-team .team-header {
-                background: #eee;
+                background: rgba(255,255,255,0.9);
+                backdrop-filter: blur(15px);
+                border-left: 3px solid #041e41;
             }
 
             .away-team .team-header:hover {
-                background: #b9b9b9;
+                background: rgba(248,249,250,0.95);
+                box-shadow: 0 2px 8px rgba(4,30,65,0.15);
             }
 
             .home-team .team-header {
-                background: #eee;
+                background: rgba(255,255,255,0.9);
+                backdrop-filter: blur(15px);
+                border-left: 3px solid #bf0d3d;
             }
 
             .home-team .team-header:hover {
-                background: #b9b9b9;
+                background: rgba(248,249,250,0.95);
+                box-shadow: 0 2px 8px rgba(191,13,61,0.15);
             }
 
             @media (max-width: 600px) {
@@ -1936,7 +1952,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                     width: 100%;
                 }
             }
-            </style>
+</style>
             
             <div class="boxscore-container">
                 <table class="boxscore-table">
@@ -2203,7 +2219,7 @@ function createPlayItem(play, gameData) {
             position: absolute;
             top: 8px;
             left: 8px;
-            background-color: #ff6a6c;
+            background-color: #bf0d3d;
             color: white;
             padding: 2px 6px;
             border-radius: 4px;
@@ -2220,7 +2236,7 @@ function createPlayItem(play, gameData) {
                 width: 60px;
                 height: 60px;
                 border-radius: 50%;
-                border: 2px solid #d7827e;
+                border: 2px solid #bf0d3d;
                 background-color: #e5decf;
                 object-fit: cover;
             " src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" alt="${playerName}">
@@ -2231,7 +2247,7 @@ function createPlayItem(play, gameData) {
                 width: 30px;
                 height: 30px;
                 border-radius: 50%;
-                background-color: #ff6a6c;
+                background-color: #bf0d3d;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -2243,8 +2259,8 @@ function createPlayItem(play, gameData) {
         <div class="content-wrapper" style="display: flex; flex: 1; align-items: flex-start; gap: 16px;">
             <div class="play-details" style="flex: 1; margin-top: 5px;">
                 <div class="event-name" style="
-                    border: 3px solid #2a283e;
-                    color: black;
+                    border: 3px solid #041e41;
+                    color: #041e41;
                     padding: 4px 8px;
                     border-radius: 10rem;
                     font-weight: bold;
@@ -2266,7 +2282,7 @@ function createPlayItem(play, gameData) {
                 flex-direction: row;
                 align-items: center;
                 padding: 8px;
-                background: #e5decf;
+                background: linear-gradient(135deg, #f8f9fa, #d9e6f3ff);
                 border-radius: 6px;
                 margin-top: 5px;
                 min-width: 90px;
