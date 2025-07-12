@@ -865,16 +865,16 @@ toggleContainers(true);
     
             if (gameStatusText === "Suspended: Rain") {
                 inningText = "SUSPENDED";
-                inningBoxStyle = "color: #ff6a6c;";
+                inningBoxStyle = "color: #bf0d3e;";
             } else if (gameStatusText === "Cancelled") {
                 inningText = "RAIN";
-                inningBoxStyle = "color: #ff6a6c;";
+                inningBoxStyle = "color: #bf0d3e;";
             } else if (gameStatusText === "Final" || gameStatusText === "Game Over" || gameStatusText === "Final: Tied") {
                 inningText = "FINAL";
-                inningBoxStyle = "color: #ff6a6c;";
+                inningBoxStyle = "color: #bf0d3e;";
             } else if (gameStatusText === "Pre-Game" || gameStatusText === "Scheduled") {
                 inningText = formatGameTime(game.datetime.dateTime);
-                inningBoxStyle = "color: #ff6a6c;";
+                inningBoxStyle = "color: #bf0d3e;";
             } else {
                 const inningHalf = linescore.inningHalf ? (linescore.inningHalf === "Top" ? "TOP" : "BOT") : "";
                 const currentInning = linescore.currentInning || "";
@@ -1041,7 +1041,7 @@ const resultCategories = {
     foul: {
         results: ['Foul', 'Foul Tip', 'Foul Bunt', 'Foul Ball'],
         style: {
-            background: '#6f42c1',
+            background: '#dc3545',
             color: 'white',
             padding: '4px 12px',
             borderRadius: '20px',
@@ -2134,7 +2134,7 @@ function createGameStartItem(gameInfo) {
     gameStartDiv.innerHTML = `
         <div style="font-weight: 400; margin-bottom: 4px; font-family: 'Rubik';">First Pitch</div>
         <div style="font-size: 20px; font-weight: 500; font-family: 'Rubik';">${timeString} &#8226; ${venue}</div>
-        <div style="font-weight: 400; font-family: 'Rubik';">${city} &#8226; ${state}</div>
+        <div style="font-weight: 400; font-family: 'Rubik'; color: #fc2461ff;">${city} &#8226; ${state}</div>
     `;
     
     return gameStartDiv;
@@ -2193,22 +2193,22 @@ function createPlayItem(play, gameData) {
         gap: 16px;
         margin-top: 8px;
         padding: 8px;
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        background: linear-gradient(135deg, #f8f9fa, #d9e6f3ff);
         border-radius: 6px;
-        border-left: 4px solid #ff6a6c;
-        border-bottom: 1px solid #d7827e;
+        border-left: 4px solid #bf0d3e;
+        border-bottom: 1px solid #bf0d3e;
     ">
         <div class="stat-item" style="text-align: center; flex: 1;">
-            <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
-            <div style="font-size: 14px; font-weight: bold; color: #333;">${exitVelo}</div>
+            <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
+            <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${exitVelo}</div>
         </div>
         <div class="stat-item" style="text-align: center; flex: 1;">
-            <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
-            <div style="font-size: 14px; font-weight: bold; color: #333;">${launchAngle}</div>
+            <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
+            <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${launchAngle}</div>
         </div>
         <div class="stat-item" style="text-align: center; flex: 1;">
-            <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Distance</div>
-            <div style="font-size: 14px; font-weight: bold; color: #333;">${distance}</div>
+            <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Distance</div>
+            <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${distance}</div>
         </div>
     </div>
     `;
@@ -2237,7 +2237,7 @@ function createPlayItem(play, gameData) {
                 height: 60px;
                 border-radius: 50%;
                 border: 2px solid #bf0d3d;
-                background-color: #e5decf;
+                background-color: #041e42;
                 object-fit: cover;
             " src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" alt="${playerName}">
             <div class="event-icon" style="
@@ -2290,7 +2290,7 @@ function createPlayItem(play, gameData) {
                 <div class="count-info" style="
                     font-size: 12px;
                     font-weight: bold;
-                    color: #333;
+                    color: #bf0d3e;
                     margin-bottom: 8px;
                     text-align: center;
                 ">
@@ -2349,13 +2349,13 @@ function getEventIcon(eventType) {
 function generateSVGField(count, onBase) {
     return `
         <svg id="field-${Date.now()}" width="60" height="60" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: transparent; border-radius: 4px;">
-            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
             
-            <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
         </svg>
     `;
 }
@@ -2624,7 +2624,7 @@ async function loadScoringPlays() {
             height: 400px;
             overflow-y: auto;
             padding: 10px;
-            background-color: #e5decf;
+            background-color: #e0eaf8ff;
             border-radius: 8px;
             font-family: Rubik, sans-serif;
             scrollbar-width: thin;
@@ -2683,7 +2683,7 @@ async function loadScoringPlays() {
             border-radius: 6px;
             font-weight: bold;
             font-size: 14px;
-            ${isLiveGame ? 'background-color: #28a745; color: white;' : 'background-color: #6c757d; color: white;'}
+            ${isLiveGame ? 'background-color: #28a745; color: white;' : 'background-color: #041e42; color: white;'}
         `;
         statusIndicator.textContent = isLiveGame ? 
             `🔴 LIVE - Auto-refreshing every 30 seconds` : 
@@ -2693,7 +2693,7 @@ async function loadScoringPlays() {
         // Check if there are any scoring plays
         if (scoringPlays.length === 0) {
             const noPlaysMessage = document.createElement('p');
-            noPlaysMessage.style.cssText = 'text-align: center; color: #666; margin-top: 20px;';
+            noPlaysMessage.style.cssText = 'text-align: center; color: #041e42; margin-top: 20px;';
             noPlaysMessage.textContent = 'No scoring plays in this game.';
             scoringPlaysContainer.appendChild(noPlaysMessage);
             return;
@@ -2786,10 +2786,10 @@ function createScoringPlayItem(play, gameInfo, index) {
     if (play.result?.homeScore !== undefined && play.result?.awayScore !== undefined) {
         const awayTeam = gameInfo.teams?.away?.abbreviation || 'Away';
         const homeTeam = gameInfo.teams?.home?.abbreviation || 'Home';
-        scoreRbiInfo += `<div style="color: #007bff; font-weight: bold; font-size: 13px; margin-top: 4px;">Score: ${awayTeam} ${play.result.awayScore} - ${homeTeam} ${play.result.homeScore}</div>`;
+        scoreRbiInfo += `<div style="color: #063069ff; font-weight: bold; font-size: 13px; margin-top: 4px;">Score: ${awayTeam} ${play.result.awayScore} - ${homeTeam} ${play.result.homeScore}</div>`;
     }
     if (play.result?.rbi && play.result.rbi > 0) {
-        scoreRbiInfo += `<div style="color: #28a745; font-weight: bold; font-size: 13px;">RBI: ${play.result.rbi}</div>`;
+        scoreRbiInfo += `<div style="color: #00787a; font-weight: bold; font-size: 13px;">RBI: ${play.result.rbi}</div>`;
     }
 
     // Try to find the first playEvent that contains hitData
@@ -2813,22 +2813,22 @@ function createScoringPlayItem(play, gameInfo, index) {
             gap: 16px;
             margin-top: 8px;
             padding: 8px;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            background: linear-gradient(135deg, #f8f9fa, #d9e6f3ff);
             border-radius: 6px;
-            border-left: 4px solid #ff6a6c;
-            border-bottom: 1px solid #d7827e;
+            border-left: 4px solid #bf0d3e;
+            border-bottom: 1px solid #bf0d3e;
         ">
             <div class="stat-item" style="text-align: center; flex: 1;">
-                <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
-                <div style="font-size: 14px; font-weight: bold; color: #333;">${exitVelo}</div>
+                <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
+                <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${exitVelo}</div>
             </div>
             <div class="stat-item" style="text-align: center; flex: 1;">
-                <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
-                <div style="font-size: 14px; font-weight: bold; color: #333;">${launchAngle}</div>
+                <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
+                <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${launchAngle}</div>
             </div>
             <div class="stat-item" style="text-align: center; flex: 1;">
-                <div style="font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase;">Distance</div>
-                <div style="font-size: 14px; font-weight: bold; color: #333;">${distance}</div>
+                <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Distance</div>
+                <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${distance}</div>
             </div>
         </div>
     `;
@@ -2838,7 +2838,7 @@ function createScoringPlayItem(play, gameInfo, index) {
             position: absolute;
             top: 8px;
             left: 8px;
-            background-color: #ff6a6c;
+            background-color: #bf0d3e;
             color: white;
             padding: 2px 6px;
             border-radius: 4px;
@@ -2855,8 +2855,8 @@ function createScoringPlayItem(play, gameInfo, index) {
                 width: 60px;
                 height: 60px;
                 border-radius: 50%;
-                border: 2px solid #d7827e;
-                background-color: #e5decf;
+                border: 2px solid #bf0d3e;
+                background-color: #041e42;
                 object-fit: cover;
             " src="https://midfield.mlbstatic.com/v1/people/${playerId}/spots/60" alt="${playerName}">
             <div class="event-icon" style="
@@ -2866,7 +2866,7 @@ function createScoringPlayItem(play, gameInfo, index) {
                 width: 30px;
                 height: 30px;
                 border-radius: 50%;
-                background-color: #ff6a6c;
+                background-color: #bf0d3e;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -2878,8 +2878,8 @@ function createScoringPlayItem(play, gameInfo, index) {
         <div class="content-wrapper" style="display: flex; flex: 1; align-items: flex-start; gap: 16px;">
             <div class="play-details" style="flex: 1; margin-top: 5px;">
                 <div class="event-name" style="
-                    border: 3px solid #2a283e;
-                    color: black;
+                    border: 3px solid #041e42;
+                    color: #041e42;
                     padding: 4px 8px;
                     border-radius: 10rem;
                     font-weight: bold;
@@ -2902,7 +2902,7 @@ function createScoringPlayItem(play, gameInfo, index) {
                 flex-direction: row;
                 align-items: center;
                 padding: 8px;
-                background: #e5decf;
+                background: linear-gradient(135deg, #f8f9fa, #d9e6f3ff);
                 border-radius: 6px;
                 margin-top: 5px;
                 min-width: 90px;
@@ -2910,7 +2910,7 @@ function createScoringPlayItem(play, gameInfo, index) {
                 <div class="count-info" style="
                     font-size: 12px;
                     font-weight: bold;
-                    color: #333;
+                    color: #bf0d3e;
                     margin-bottom: 8px;
                     text-align: center;
                 ">
@@ -2951,14 +2951,14 @@ function getBaserunners(play) {
 // Function to generate the SVG field
 function generateSVGField(count, onBase) {
     return `
-        <svg width="60" height="60" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: transparent; border-radius: 4px;">
-            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+        <svg width="60" height="60" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style=" ; border-radius: 4px;">
+            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#bf0d3e' : '#e2e8f0'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#bf0d3e' : '#e2e8f0'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#bf0d3e' : '#e2e8f0'}" stroke="#000" stroke-width="1" opacity="0.8"/>
             
-            <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#000' : '#e5decf'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <rect x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${onBase.first ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
         </svg>
     `;
 }
