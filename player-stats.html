@@ -19,6 +19,7 @@ body {
     display: flex; /* Make body a flex container to stack children */
     flex-direction: column;
     align-items: center; /* Center children horizontally */
+    background-color: #f7fafc;
 }
 
 /* Hide scrollbar in Webkit browsers */
@@ -45,21 +46,20 @@ body::-webkit-scrollbar {
 /* --- Search Container --- */
 .search-container {
     margin: 10px 0;
-    width: 80%;
+    width: 50%;
     display: flex;
     gap: 10px;
     padding: 0 15px;
     justify-content: center;
     box-sizing: border-box;
     margin-left: 19rem;
-    margin-bottom: 10px;
 }
 
 .search-container input {
     flex-grow: 1;
     max-width: 400px;
     padding: 10px 15px;
-    border: 1px solid #ddd;
+    border: 1px solid #041e42;
     border-radius: 25px;
     font-size: 16px;
     outline: none;
@@ -67,12 +67,12 @@ body::-webkit-scrollbar {
 }
 
 .search-container input:focus {
-    border-color: #fb6a6a;
-    box-shadow: 0 0 0 3px rgba(251, 106, 106, 0.3);
+    border-color: #041e42;
+    box-shadow: 1px 3px 3px 1px #041e4259;
 }
 
 .search-container button {
-    background-color: #fb6a6a;
+    background-color: #bf0d3e;
     color: white;
     border: none;
     border-radius: 25px;
@@ -84,7 +84,7 @@ body::-webkit-scrollbar {
 }
 
 .search-container button:hover {
-    background-color: #ad4c4c;
+    background-color: #980a31;
     transform: translateY(-1px);
 }
 
@@ -125,7 +125,6 @@ body::-webkit-scrollbar {
     text-align: center;
     width: 100%; /* Spans full body width */
     box-sizing: border-box;
-    display: none;
 }
 
 .player-image {
@@ -134,7 +133,7 @@ body::-webkit-scrollbar {
     border-radius: 50%;
     object-fit: cover;
     margin: 0 auto 10px;
-    border: 3px solid #fb6a6a;
+    border: 3px solid #bf0d3e;
     background-color: #f0f0f0;
     display: flex;
     align-items: center;
@@ -154,14 +153,14 @@ body::-webkit-scrollbar {
     font-weight: 700;
     margin-bottom: 5px;
     font-family: "Roboto Condensed", sans-serif;
-    color: #2a283e;
+    color: #041e42;
     line-height: 1.1;
     margin-left: 19rem;
 }
 
 .player-position {
     font-size: 1.6rem;
-    color: #666;
+    color: #041e42;
     margin-bottom: 15px;
     font-weight: 400;
     font-family: "Roboto Condensed", sans-serif;
@@ -178,10 +177,9 @@ body::-webkit-scrollbar {
     display: flex; /* Stack its direct children (summary row, stat grid) vertically */
     flex-direction: column;
     align-items: center; /* Center content horizontally within the container */
-    margin-top: 15px; /* Margin above the whole stats block */
     padding: 15px; /* Padding inside the entire stats block */
-    background-color: #e5decf;
-    border: 3px solid #000;
+    background: linear-gradient(135deg, #f8f9fa, #d9e6f3ff);
+    border: 3px solid #041e42;
     border-radius: 8px;
     box-sizing: border-box;
     width: 970px; /* Adjusted width to better fit 5 columns with padding/border */
@@ -221,9 +219,9 @@ body::-webkit-scrollbar {
 
 /* Specific colors for qualification status */
 .qualification-status.qualified {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #2e7d32;
+    background-color: #e5f2ee;
+    color: #007d56;
+    border: 1px solid #007d56;
 }
 
 .qualification-status.not-qualified {
@@ -254,7 +252,7 @@ body::-webkit-scrollbar {
     flex-basis: calc(20% - 8px); /* 10px gap / 5 items = 2px per side, 8px total deduction */
     min-width: 0; /* Allow item to shrink if needed */
     padding: 10px 5px; /* Slightly reduced padding */
-    background-color: #ffffff;
+    background-color: #f7fafc;
     border-radius: 8px;
     box-shadow: 0 3px 8px rgba(0,0,0,0.15);
     box-sizing: border-box;
@@ -265,7 +263,7 @@ body::-webkit-scrollbar {
     font-weight: 600;
     text-align: center;
     font-size: 13px; /* Slightly smaller to fit 5 columns */
-    color: #555;
+    color: #041e42;
     margin-bottom: 5px; /* Reduced margin */
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -281,7 +279,7 @@ body::-webkit-scrollbar {
     text-align: center;
     font-size: 1.7em; /* Adjusted for 5 columns */
     margin-bottom: 8px; /* Reduced margin */
-    color: #2a283e;
+    color: #041e42;
     line-height: 1;
     order: 2;
     font-style: italic; /* Italic for emphasis */
@@ -291,7 +289,7 @@ body::-webkit-scrollbar {
     width: 90%;
     max-width: 100px; /* Reduced max-width for percentile bar */
     height: 12px; /* Reduced height */
-    background-color: #e0e0e0;
+    background-color: #e0eaf8ff;
     border-radius: 6px; /* Adjusted radius */
     position: relative;
     margin: 0 auto;
@@ -329,18 +327,24 @@ body::-webkit-scrollbar {
     z-index: 2;
 }
 
+/* --- Navigation Container --- */
 .nav-container {
     display: flex;
-            justify-content: space-around;
-            background-color: #e5decf;
-            position: relative;
-            align-items: center;
-            padding: 10px;
-            bottom: 0;
-            width: 140%;
-            align-items: center;
-            margin-right: auto;
-            margin-left: auto;
+    justify-content: space-around;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #ef4444;
+    position: relative;
+    align-items: center;
+    padding: 10px;
+    height: 50px;
+    width: 140%;
+    bottom: 0;
+    align-items: center;
+    margin-right: auto;
+    margin-left: auto;
+    margin-bottom: 0px;
+    transition: background-color 0.3s ease;
 }
 
 .nav-container button {
@@ -348,19 +352,19 @@ body::-webkit-scrollbar {
     border: none;
     cursor: pointer;
     padding: 10px;
-    margin-right: 0;
+    margin-right: 20px;
 }
 
 .nav-container svg {
     height: 28px;
     width: 28px;
-    fill: rgb(59, 59, 59);
-    transition: fill 0.2s;
+    fill: #6b7280;
+    transition: fill 0.2s; 
 }
 
 .nav-container svg:hover {
-    fill: #D7827E;
-    background-color: #e5decf;
+    fill: #3b82f6;
+    background-color: transparent;
 }
 </style>
 </head>

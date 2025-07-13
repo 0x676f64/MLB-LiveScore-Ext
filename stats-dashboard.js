@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const statsheaderContainer = document.createElement("div");
   statsheaderContainer.classList.add("statsheader-container");
   statsheaderContainer.innerHTML = `
-      <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
+      <img src="assets/teams-darkmode/1.svg" alt="MLB Icon" class="header-logo">
   `;
   
   // 2 & 3. team-city and team-name elements
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     .tab.active {
-      background-color: #D7827E !important;
+      background-color: #bf0d3e !important;
       color: white !important;
     }
 
@@ -197,7 +197,7 @@ statsContainer.style.borderRadius = '8px';
 statsContainer.style.overflow = 'hidden'; // Hide any overflow (e.g., from shadows)
 statsContainer.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)'; // Stronger shadow
 statsContainer.style.padding = '15px'; // Padding inside the entire stats block
-statsContainer.style.backgroundColor = '#E5DECF'; // Keep the background color
+statsContainer.style.background = 'linear-gradient(135deg, #f8f9fa, #d9e6f3ff)'; // Keep the background color
 statsContainer.style.marginLeft = '7px'; // Add some space from the header
   
   // Create tabs container
@@ -215,12 +215,12 @@ statsContainer.style.marginLeft = '7px'; // Add some space from the header
   battingTab.style.fontSize = '14px'; // Increased font size
   battingTab.style.fontWeight = '600';
   battingTab.style.cursor = 'pointer';
-  battingTab.style.backgroundColor = '#e5decf';
-  battingTab.style.border = '2px solid #D7827E';
+  battingTab.style.backgroundColor = '#bf0d3e';
+  battingTab.style.border = '2px solid #bf0d3e';
   battingTab.style.borderRadius = '8px';
   battingTab.style.transition = 'all 0.3s ease'; 
   battingTab.style.fontWeight = 'bold';
-  battingTab.style.color = '#3b3b3b';
+  battingTab.style.color = '#041e42';
   battingTab.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'; // Rounded top corners
   
   // Create pitching tab
@@ -232,11 +232,11 @@ statsContainer.style.marginLeft = '7px'; // Add some space from the header
   pitchingTab.style.fontWeight = '600';
   pitchingTab.style.cursor = 'pointer';
   pitchingTab.style.backgroundColor = 'transparent';
-  pitchingTab.style.border = '2px solid #D7827E';
+  pitchingTab.style.border = '2px solid #bf0d3e';
   pitchingTab.style.borderRadius = '8px';
   pitchingTab.style.transition = 'all 0.3s ease'; 
   pitchingTab.style.fontWeight = 'bold';
-  pitchingTab.style.color = '#3b3b3b';
+  pitchingTab.style.color = '#041e42';
   pitchingTab.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
   
   // Add tabs to container

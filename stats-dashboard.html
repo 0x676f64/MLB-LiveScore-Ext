@@ -93,6 +93,7 @@ body::-webkit-scrollbar {
       font-weight: 300;
       line-height: 1;
       margin-left: 200px;
+      color: #041e42;
     }
 
     .team-name {
@@ -101,44 +102,49 @@ body::-webkit-scrollbar {
       font-weight: 600;
       line-height: 1;
       margin-left: 200px;
+      color: #041e42;
     }
 
-     .nav-container {
-        display: flex;
-        justify-content: space-around;
-        background-color: #e5decf;
-        position: relative;
-        align-items: center;
-        padding: 10px;
-        bottom: 0;
-        width: 140%;
-        align-items: center;
-        margin-right: auto;
-        margin-left: auto;
-        margin-top: 10px;
-        overflow: visible;
-        
-    }
+ /* --- Navigation Container --- */
+.nav-container {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #ef4444;
+    position: relative;
+    align-items: center;
+    padding: 10px;
+    height: 50px;
+    width: 140%;
+    bottom: 0;
+    align-items: center;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 10px;
+    margin-bottom: 0px;
+    transition: background-color 0.3s ease;
+}
 
-    .nav-container button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 10px;
-        margin-right: 20px;
-    }
+.nav-container button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    margin-right: 20px;
+}
 
-    .nav-container svg {
-        height: 28px;
-        width: 28px;
-        fill:rgb(59, 59, 59);
-        transition: fill 0.2s; 
-    }
-    .nav-container svg:hover {
-        fill: #D782
-7E;
-        background-color: #e5decf;
-    }
+.nav-container svg {
+    height: 28px;
+    width: 28px;
+    fill: #6b7280;
+    transition: fill 0.2s; 
+}
+
+.nav-container svg:hover {
+    fill: #3b82f6;
+    background-color: transparent;
+}
 
     /* Styles for the stats container (outer wrapper) */
         .stats-container {
@@ -220,7 +226,7 @@ body::-webkit-scrollbar {
             padding: 15px 10px; /* Increased padding */
             flex-basis: calc(25% - 15px); /* Adjusted for 4 columns with 15px gap */
             min-width: 0; /* Allows shrinking on smaller screens */
-            background-color: #ffffff; /* White background for each row */
+            background-color: #f7fafc; /* White background for each row */
             border-radius: 10px; /* Slightly more rounded */
             box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Softer shadow */
             box-sizing: border-box; /* Include padding and border in sizing */
@@ -233,7 +239,7 @@ body::-webkit-scrollbar {
             width: 100%;
             font-weight: 600;
             text-align: center;
-            color: #555;
+            color: #041e42;
             text-transform: capitalize;
             letter-spacing: 0.5px;
             white-space: nowrap;
@@ -248,7 +254,7 @@ body::-webkit-scrollbar {
             width: 100%;
             text-align: center; /* Center align value */
             font-weight: 700;
-            color: #2a283e;
+            color: #041e42;
             order: 2;
             font-style: italic;
         }
@@ -258,7 +264,7 @@ body::-webkit-scrollbar {
             width: 90%;
             max-width: 100px; /* Max width for consistency */
             height: 12px; /* Slightly taller bar */
-            background-color: #e0e0e0;
+            background-color: #e0eaf8ff;
             border-radius: 7px; /* Match taller bar */
             position: relative;
             display: flex;

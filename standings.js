@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const headerContainer = document.createElement("div");
     headerContainer.classList.add("header-container");
     headerContainer.innerHTML = `
-        <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
+        <img src="assets/teams-darkmode/1.svg" alt="MLB Icon" class="header-logo">
     `;
     document.body.prepend(headerContainer);
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MLB Scoreboard",
-  "version": "1.9",
+  "version": "2.0",
   "description": "View live scores, stats, and results for all things Baseball in real time.",
   "permissions": ["storage"],
   "content_scripts": [
@@ -17,9 +17,9 @@
   "action": {
     "default_popup": "default.html",
     "default_icon": {
-      "16": "assets/binbot.png",
-      "48": "assets/binbot.png",
-      "128": "assets/Group 1.png"
+      "16": "assets/52a8244e0b.png",
+      "48": "assets/52a8244e0b.png",
+      "128": "assets/MLB-EXT.png"
     }
   }
 }

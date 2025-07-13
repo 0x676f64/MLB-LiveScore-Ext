@@ -23,10 +23,11 @@
       text-align: center;
       width: 500px;
       box-sizing: border-box;
+      background-color: #f7fafc;
     }
 
     h1 {
-      color: #333;
+      color: #041e42;
       font-weight: 400;
       font-size: 16px;
     }
@@ -62,48 +63,51 @@
     transform: scale(1.2);
     }
 
-    .nav-container {
-        display: flex;
-        justify-content: space-around;
-        background-color: #e5decf;
-        position: relative;
-        align-items: center;
-        padding: 10px;
-        height: 50px;
-        bottom: 0;
-        width: 100%;
-        align-items: center;
-        margin-right: auto;
-        margin-left: auto;
-        margin-top: 10px;
-        overflow: visible;
-        
-    }
+   /* --- Navigation Container --- */
+.nav-container {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #ef4444;
+    position: relative;
+    align-items: center;
+    padding: 10px;
+    height: 50px;
+    width: 100%;
+    bottom: 0;
+    align-items: center;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 10px;
+    margin-bottom: 0px;
+    transition: background-color 0.3s ease;
+}
 
-    .nav-container button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 10px;
-        margin-right: 20px;
-    }
+.nav-container button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    margin-right: 20px;
+}
 
-    .nav-container svg {
-        height: 28px;
-        width: 28px;
-        fill:rgb(59, 59, 59);
-        transition: fill 0.2s; 
-    }
+.nav-container svg {
+    height: 28px;
+    width: 28px;
+    fill: #6b7280;
+    transition: fill 0.2s; 
+}
 
-    .nav-container svg:hover {
-        fill: #D7827E;
-        background-color: #e5decf;
-    }
+.nav-container svg:hover {
+    fill: #3b82f6;
+    background-color: transparent;
+}
 
 </style>
 <body>
     <div class="header-container">
-        <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
+        <img src="assets/teams-darkmode/1.svg" alt="MLB Icon" class="header-logo">
     </div>
     <h1>Select a Team to View Stats</h1>
 

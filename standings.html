@@ -62,20 +62,20 @@ body::-webkit-scrollbar {
 #tabs-container button {
     padding: 10px 20px;
     margin: 0 10px;
-    background-color: #e5decf;
-    border: 1px solid #D7827E;
+    background-color: #041e42;
+    border: 1px solid #bf0d3e;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: bold;
-    color: #3b3b3b;
+    color: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 #tabs-container button.active {
-    background-color: #D7827E;
+    background-color: #bf0d3e;
     color: white;
-    border-color: #D7827E;
+    border-color: #041e42;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     transform: translateY(-2px);
 }
@@ -101,9 +101,9 @@ body::-webkit-scrollbar {
     min-width: 200px; /* Increase min-width for better content display, adjust as needed */
     flex-shrink: 0; /* Prevent them from shrinking below their calculated width */
     margin-bottom: 0;
-    border: 2px solid #D7827E;
+    border: 2px solid #bf0d3e;
     padding: 15px;
-    background-color: #e5decf;
+    background: linear-gradient(135deg, #f8f9fa, #d9e6f3ff);
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
@@ -112,7 +112,7 @@ body::-webkit-scrollbar {
 .wildcard-container h2 {
     text-align: center;
     margin-bottom: 10px;
-    color: #ff6a6c;
+    color: #bf0d3e;
     font-size: 16px;
     letter-spacing: 0.5px;
 }
@@ -127,14 +127,14 @@ body::-webkit-scrollbar {
     align-items: center;
     width: 100%;
     font-size: 14px;
-    color: #3b3b3b;
+    color: #041e42;
     font-weight: 500;
 }
 
 .team-row:first-of-type {
     font-weight: bold;
     font-size: 13px;
-    color: #555;
+    color: #041e42;
     text-transform: uppercase;
 }
 
@@ -149,25 +149,28 @@ body::-webkit-scrollbar {
 }
 
 .wildcard-team-row.playoff-cutoff {
-    border-top: 1px solid red;
+    border-top: 1px solid #bf0d3e;
 }
 
 /* --- Navigation Container --- */
 .nav-container {
     display: flex;
     justify-content: space-around;
-    background-color: #e5decf;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #ef4444;
     position: relative;
     align-items: center;
     padding: 10px;
     height: 50px;
-    bottom: 0;
     width: 100%;
+    bottom: 0;
     align-items: center;
     margin-right: auto;
     margin-left: auto;
     margin-top: 10px;
-            
+    margin-bottom: 0px;
+    transition: background-color 0.3s ease;
 }
 
 .nav-container button {
@@ -181,13 +184,13 @@ body::-webkit-scrollbar {
 .nav-container svg {
     height: 28px;
     width: 28px;
-    fill:rgb(59, 59, 59);
+    fill: #6b7280;
     transition: fill 0.2s; 
 }
 
 .nav-container svg:hover {
-    fill: #D7827E;
-    background-color: #e5decf;
+    fill: #3b82f6;
+    background-color: transparent;
 }
     </style>
         

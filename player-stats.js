@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statsheaderContainer = document.createElement("div");
     statsheaderContainer.classList.add("statsheader-container");
     statsheaderContainer.innerHTML = `
-        <img src="assets/Group 1.png" alt="MLB Icon" class="header-logo">
+        <img src="assets/teams-darkmode/1.svg" alt="MLB Icon" class="header-logo">
     `;
 
     // 2. Append the header to the body
@@ -415,14 +415,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (recentERA < 3.00) {
                 recentPerformanceText = `🔥 HOT: ERA in last ${gamesCount} games: ${recentERADisplay}`;
-                textColor = '#d32f2f'; // Red for hot (good for pitchers)
-                bgColor = '#f6d5d5'; // Light red background
-                borderColor = '1px solid #d32f2f'; // Red border
+                textColor = '#bf0d3e'; // Red for hot (good for pitchers)
+                bgColor = '#f2ced8'; // Light red background
+                borderColor = '1px solid #bf0d3e'; // Red border
             } else if (recentERA >= 3.00 && recentERA <= 3.90) {
                 recentPerformanceText = `⚖️ STEADY: ERA in last ${gamesCount} games: ${recentERADisplay}`;
-                textColor = '#616161'; // Gray for steady
-                bgColor = '#dfdfdf'; // Light gray background
-                borderColor = '1px solid #616161'; // Gray border
+                textColor = '#041e42'; // Gray for steady
+                bgColor = '#d5deebff'; // Light gray background
+                borderColor = '1px solid #041e42'; // Gray border
             } else {
                 recentPerformanceText = `❄️ COLD: ERA in last ${gamesCount} games: ${recentERADisplay}`;
                 textColor = '#1976d2'; // Blue for cold (bad for pitchers)
@@ -441,14 +441,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (recentAVG > 0.285) {
                 recentPerformanceText = `🔥 HOT: AVG in last ${gamesCount} games: ${recentAVGDisplay}`;
-                textColor = '#d32f2f'; // Red for hot (good for hitters)
-                bgColor = '#f6d5d5'; // Light red background
-                borderColor = '1px solid #d32f2f'; // Red border
+                textColor = '#bf0d3e'; // Red for hot (good for hitters)
+                bgColor = '#f2ced8'; // Light red background
+                borderColor = '1px solid #bf0d3e'; // Red border
             } else if (recentAVG >= 0.225 && recentAVG <= 0.285) {
                 recentPerformanceText = `⚖️ STEADY: AVG in last ${gamesCount} games: ${recentAVGDisplay}`;
-                textColor = '#616161'; // Gray for steady
-                bgColor = '#dfdfdf'; // Light gray background
-                borderColor = '1px solid #616161'; // Gray border
+                textColor = '#041e42'; // Gray for steady
+                bgColor = '#d5deebff'; // Light gray background
+                borderColor = '1px solid #041e42'; // Gray border
             } else {
                 recentPerformanceText = `❄️ COLD: AVG in last ${gamesCount} games: ${recentAVGDisplay}`;
                 textColor = '#1976d2'; // Blue for cold (bad for hitters)

@@ -1244,13 +1244,13 @@ const styleDescription = (desc) => {
 }
 
 function generatedSVGField(count, onBase) {
-    const out1Fill = count.outs >= 1 ? '#bf0d3d' : '#e2e8f0';
-    const out2Fill = count.outs >= 2 ? '#bf0d3d' : '#e2e8f0';
-    const out3Fill = count.outs >= 3 ? '#bf0d3d' : '#e2e8f0';
+    const out1Fill = count.outs >= 1 ? '#bf0d3d' : '#f7fafc';
+    const out2Fill = count.outs >= 2 ? '#bf0d3d' : '#f7fafc';
+    const out3Fill = count.outs >= 3 ? '#bf0d3d' : '#f7fafc';
 
-    const firstBaseFill = onBase.first ? '#bf0d3d' : '#e2e8f0';
-    const secondBaseFill = onBase.second ? '#bf0d3d' : '#e2e8f0';
-    const thirdBaseFill = onBase.third ? '#bf0d3d' : '#e2e8f0';
+    const firstBaseFill = onBase.first ? '#bf0d3d' : '#f7fafc';
+    const secondBaseFill = onBase.second ? '#bf0d3d' : '#f7fafc';
+    const thirdBaseFill = onBase.third ? '#bf0d3d' : '#f7fafc';
 
     return `
         <svg id="field" width="110" height="110" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: #f7fafc;">
@@ -1647,11 +1647,11 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 background: white;
                 border-radius: 8px;
                 overflow: hidden;
-                box-shadow: 0 2px 8px rgba(4,30,65,0.15);
+                box-shadow: 0 2px 8px #041e42;
             }
 
             .boxscore-table thead {
-                background: #041e41;
+                background: #041e42;
                 color: white;
             }
 
@@ -1660,7 +1660,9 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 text-align: center;
                 font-weight: 600;
                 font-size: 11px;
-                border-right: 1px solid rgba(255,255,255,0.2);
+                background: #041e42;
+                border-right: 1px solid rgba(255, 255, 255, 0.39);
+                color: white;
             }
 
             .boxscore-table th:last-child {
@@ -2952,9 +2954,9 @@ function getBaserunners(play) {
 function generateSVGField(count, onBase) {
     return `
         <svg width="60" height="60" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style=" ; border-radius: 4px;">
-            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#bf0d3e' : '#e2e8f0'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#bf0d3e' : '#e2e8f0'}" stroke="#000" stroke-width="1" opacity="0.8"/>
-            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#bf0d3e' : '#e2e8f0'}" stroke="#000" stroke-width="1" opacity="0.8"/>
+            <circle cx="13" cy="61" r="6" fill="${count.outs >= 1 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <circle cx="30" cy="61" r="6" fill="${count.outs >= 2 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <circle cx="47" cy="61" r="6" fill="${count.outs >= 3 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
             
             <rect x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${onBase.third ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
             <rect x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${onBase.second ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
