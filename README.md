@@ -1,21 +1,19 @@
-MLB live feed extension. View live game results, and stats while still remaining productive with every day work. 
+MLB live feed Addon for the Chrome Browser. View live game results, data, and stats while still remaining productive with every day work. 
 
-https://chromewebstore.google.com/detail/mlb-scoreboard/agpdhoieggfkoamgpgnldkgdcgdbdkpi?authuser=0&hl=en
+https://chromewebstore.google.com/detail/mlb-scoreboard/agpdhoieggfkoamgpgnldkgdcgdbdkpi
 
-![Screenshot 2025-06-13 110202](https://github.com/user-attachments/assets/9d277762-ec5c-4f3d-84c6-4529dc2bb811)
+<img width="615" height="482" alt="Screenshot 2025-07-12 210804" src="https://github.com/user-attachments/assets/d12b2195-adf7-4041-aa9c-567da884ce5a" />
 
-![Screenshot 2025-07-02 215215](https://github.com/user-attachments/assets/47c7fdb6-e37b-45b2-b622-71db9ae6ce20)
+<img width="608" height="548" alt="Screenshot 2025-07-12 210856" src="https://github.com/user-attachments/assets/03052f04-7525-4b4d-99a8-cef02ec4e42b" />
 
-![Screenshot 2025-07-01 213104](https://github.com/user-attachments/assets/6fa73d25-ed9c-46fb-b3c2-0f953de41742)
+<img width="605" height="602" alt="Screenshot 2025-07-12 210923" src="https://github.com/user-attachments/assets/ce8eff05-456f-459c-b7dc-9304547d31a4" />
 
-![Screenshot 2025-07-01 213652](https://github.com/user-attachments/assets/b020d992-c28b-4a13-b9b5-77a0634815a9)
+<img width="606" height="600" alt="Screenshot 2025-07-12 210952" src="https://github.com/user-attachments/assets/63317b6c-b627-4025-817a-1ffa82f2155d" />
 
-![Screenshot 2025-07-01 213141](https://github.com/user-attachments/assets/f44b0edd-d3e4-4e3c-b40b-6e793f8f55fb)
+<img width="606" height="606" alt="Screenshot 2025-07-12 211024" src="https://github.com/user-attachments/assets/e34d270f-c6b1-44bd-b3b9-7904652ccde9" />
 
-![Screenshot 2025-06-13 110218](https://github.com/user-attachments/assets/85590501-f535-4468-b1ec-465500d440bc)
+<img width="705" height="504" alt="Screenshot 2025-07-12 211046" src="https://github.com/user-attachments/assets/fd0a5b7d-b081-4725-bbd0-1b661f36d06f" />
 
-![Screenshot 2025-06-13 110242](https://github.com/user-attachments/assets/c559ab35-1f32-4cd6-9d69-106eac367a58)
+<img width="506" height="562" alt="Screenshot 2025-07-12 211115" src="https://github.com/user-attachments/assets/24fe88e0-2ada-4f38-bb31-d4685893215c" />
 
-![Screenshot 2025-06-13 110316](https://github.com/user-attachments/assets/829bae5e-6f82-4c84-83f2-424760db7487)
-
-![Screenshot 2025-06-13 113206](https://github.com/user-attachments/assets/018e3a7a-092e-4799-a3c6-eeb960117660)
+<img width="705" height="606" alt="Screenshot 2025-07-12 211148" src="https://github.com/user-attachments/assets/31ba21fd-3acf-4e9f-bdc6-9dfe39108799" />
