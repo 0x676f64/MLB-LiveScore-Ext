@@ -1,13 +1,16 @@
 {
   "manifest_version": 3,
   "name": "MLB Scoreboard",
-  "version": "2.0",
+  "version": "2.0.3",
   "description": "View live scores, stats, and results for all things Baseball in real time.",
   "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["navigation.js"]
+      "js": [
+            "mlb-video-matcher.js",
+            "navigation.js"
+          ]
     }
   ],
   "host_permissions": ["https://statsapi.mlb.com/api/v1.1/game/*"],

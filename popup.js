@@ -415,6 +415,17 @@ toggleContainers(true);
     `;
     document.head.appendChild(styleElement);
 
+    // Initialize video matcher (add this near the top of your file)
+    let videoMatcher = null;
+
+    // Initialize when needed
+    function initializeVideoMatcher() {
+        if (!videoMatcher) {
+            videoMatcher = new MLBVideoMatcher();
+        }
+        return videoMatcher;
+    }
+
     // Extract gamePk from the URL
     const params = new URLSearchParams(window.location.search);
     const gamePk = params.get("gamePk");
@@ -2924,6 +2935,8 @@ function createScoringPlayItem(play, gameInfo, index) {
             </div>
         </div>
     `;
+
+    initializeVideoMatcher().addVideoButtonToPlay(playDiv, gamePk, play);
 
     return playDiv;
 }
