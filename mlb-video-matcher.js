@@ -8,6 +8,8 @@ class MLBVideoMatcher {
         this.gameContentCache = new Map();
         this.rateLimitDelay = 1000; // 1 second between API calls
         this.lastApiCall = 0;
+        this.activeVideoPlayers = new Set(); // Track active video players
+        this.contentWrapperState = null; // Store original content wrapper state
     }
 
     // Rate limiting helper
@@ -250,6 +252,67 @@ class MLBVideoMatcher {
         }
     }
 
+    // Hide content wrapper with smooth transition
+    hideContentWrapper() {
+        const contentWrapper = document.querySelector('.content-wrapper');
+        if (!contentWrapper) return;
+
+        // Store the original state if this is the first video being opened
+        if (this.activeVideoPlayers.size === 0) {
+            this.contentWrapperState = {
+                element: contentWrapper,
+                originalDisplay: contentWrapper.style.display || 'block',
+                originalVisibility: contentWrapper.style.visibility || 'visible',
+                originalOpacity: contentWrapper.style.opacity || '1',
+                originalTransition: contentWrapper.style.transition || ''
+            };
+
+            // Add smooth transition
+            contentWrapper.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Trigger the fade out
+            requestAnimationFrame(() => {
+                contentWrapper.style.opacity = '0';
+                contentWrapper.style.transform = 'translateY(-10px)';
+                
+                // Hide after animation completes
+                setTimeout(() => {
+                    contentWrapper.style.display = 'none';
+                }, 400);
+            });
+        }
+    }
+
+    // Show content wrapper with smooth transition
+    showContentWrapper() {
+        if (!this.contentWrapperState) return;
+
+        const { element, originalDisplay, originalVisibility, originalOpacity, originalTransition } = this.contentWrapperState;
+        
+        // Only show if no active video players remain
+        if (this.activeVideoPlayers.size === 0) {
+            // Reset display and prepare for fade in
+            element.style.display = originalDisplay;
+            element.style.opacity = '0';
+            element.style.transform = 'translateY(-10px)';
+            
+            // Trigger the fade in
+            requestAnimationFrame(() => {
+                element.style.opacity = originalOpacity;
+                element.style.transform = 'translateY(0)';
+                
+                // Restore original transition after animation completes
+                setTimeout(() => {
+                    element.style.transition = originalTransition;
+                    element.style.visibility = originalVisibility;
+                }, 400);
+            });
+
+            // Clear the stored state
+            this.contentWrapperState = null;
+        }
+    }
+
     // Create expandable video player element
     createVideoPlayer(video, playDiv, videoButton) {
         // Remove existing video player if present
@@ -258,28 +321,56 @@ class MLBVideoMatcher {
             existingPlayer.remove();
         }
 
+        // Hide content wrapper when opening video
+        this.hideContentWrapper();
+
+        // Track this video player
+        const playerId = Date.now() + Math.random();
+        this.activeVideoPlayers.add(playerId);
+
         // Hide the video button when player opens
         videoButton.style.opacity = '0';
         videoButton.style.pointerEvents = 'none';
 
         const playerContainer = document.createElement('div');
         playerContainer.className = 'mlb-video-player';
+        playerContainer.dataset.playerId = playerId;
         playerContainer.style.cssText = `
-            width: 100%;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: 90vw;
+            max-width: 800px;
             height: 0;
-            margin-top: 8px;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
             background: linear-gradient(152deg,rgba(4, 30, 65, 1) 44%, rgba(255, 255, 255, 1) 50%, rgba(191, 13, 61, 1) 55%);
             opacity: 0;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            z-index: 1000;
         `;
+
+        // Add backdrop
+        const backdrop = document.createElement('div');
+        backdrop.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        `;
+        backdrop.onclick = () => this.closeVideoPlayer(playerContainer, playDiv, videoButton, playerId);
 
         const videoElement = document.createElement('video');
         videoElement.style.cssText = `
             width: 100%;
-            height: 250px;
+            height: 450px;
             display: block;
         `;
         videoElement.controls = true;
@@ -288,39 +379,33 @@ class MLBVideoMatcher {
 
         // Video event handlers
         videoElement.onloadedmetadata = () => {
-            // Expand the player with smooth animation
-            playerContainer.style.height = '250px';
-            playerContainer.style.opacity = '1';
+            // Show backdrop first
+            backdrop.style.opacity = '1';
             
-            // Update play div styling for expanded state
-            playDiv.style.transform = 'scale(1.02)';
-            playDiv.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            playDiv.style.zIndex = '10';
-            
-            // Scroll to show the video
+            // Then expand the player with smooth animation
             setTimeout(() => {
-                playerContainer.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center',
-                    inline: 'nearest'
-                });
-            }, 200);
+                playerContainer.style.height = '450px';
+                playerContainer.style.opacity = '1';
+                playerContainer.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 100);
         };
 
         // Add error handling
         videoElement.onerror = () => {
             playerContainer.innerHTML = `
-                <div style="padding: 20px; text-align: center; color: #666; height: 100px; display: flex; flex-direction: column; justify-content: center;">
-                    <p style="margin: 0; font-weight: bold;">Unable to load video</p>
-                    <small style="margin-top: 5px; opacity: 0.7;">${video.title}</small>
+                <div style="padding: 40px; text-align: center; color: #fff; height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                    <p style="margin: 0; font-weight: bold; font-size: 18px;">Unable to load video</p>
+                    <small style="margin-top: 10px; opacity: 0.8; font-size: 14px;">${video.title}</small>
                 </div>
             `;
-            playerContainer.style.height = '100px';
+            playerContainer.style.height = '200px';
             playerContainer.style.opacity = '1';
+            playerContainer.style.transform = 'translate(-50%, -50%) scale(1)';
+            backdrop.style.opacity = '1';
             
-            // Auto-collapse after 3 seconds
+            // Auto-close after 3 seconds
             setTimeout(() => {
-                this.collapseVideoPlayer(playerContainer, playDiv, videoButton);
+                this.closeVideoPlayer(playerContainer, playDiv, videoButton, playerId);
             }, 3000);
         };
 
@@ -328,67 +413,118 @@ class MLBVideoMatcher {
         const closeButton = document.createElement('button');
         closeButton.style.cssText = `
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.8);
             color: white;
             border: none;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             z-index: 20;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.2s ease;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
         `;
         closeButton.textContent = '✕';
         closeButton.title = 'Close video';
-        closeButton.onmouseover = () => closeButton.style.backgroundColor = 'rgba(220, 53, 69, 0.9)';
-        closeButton.onmouseleave = () => closeButton.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        closeButton.onmouseover = () => {
+            closeButton.style.backgroundColor = 'rgba(220, 53, 69, 0.9)';
+            closeButton.style.transform = 'scale(1.1)';
+        };
+        closeButton.onmouseleave = () => {
+            closeButton.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            closeButton.style.transform = 'scale(1)';
+        };
         closeButton.onclick = (e) => {
             e.stopPropagation();
             videoElement.pause();
-            this.collapseVideoPlayer(playerContainer, playDiv, videoButton);
+            this.closeVideoPlayer(playerContainer, playDiv, videoButton, playerId);
         };
 
-        // Create wrapper for video and close button
+        // Add video title overlay
+        const titleOverlay = document.createElement('div');
+        titleOverlay.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10;
+        `;
+        titleOverlay.textContent = video.title;
+
+        // Create wrapper for video and overlays
         const videoWrapper = document.createElement('div');
         videoWrapper.style.cssText = 'position: relative; width: 100%; height: 100%;';
         videoWrapper.appendChild(videoElement);
         videoWrapper.appendChild(closeButton);
+        videoWrapper.appendChild(titleOverlay);
 
         playerContainer.appendChild(videoWrapper);
         
-        // Insert video container at the bottom of the play div
-        playDiv.appendChild(playerContainer);
+        // Add elements to document
+        document.body.appendChild(backdrop);
+        document.body.appendChild(playerContainer);
+
+        // Handle escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                videoElement.pause();
+                this.closeVideoPlayer(playerContainer, playDiv, videoButton, playerId);
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
 
         return videoElement;
     }
 
-    // Collapse video player back to icon
-    collapseVideoPlayer(playerContainer, playDiv, videoButton) {
+    // Close video player and restore content wrapper
+    closeVideoPlayer(playerContainer, playDiv, videoButton, playerId) {
+        // Remove from active players
+        this.activeVideoPlayers.delete(playerId);
+
+        const backdrop = document.querySelector('div[style*="position: fixed"][style*="background: rgba(0, 0, 0, 0.8)"]');
+        
         // Collapse the player with smooth animation
         playerContainer.style.height = '0';
         playerContainer.style.opacity = '0';
+        playerContainer.style.transform = 'translate(-50%, -50%) scale(0.8)';
         
-        // Reset play div styling
-        playDiv.style.transform = 'scale(1)';
-        playDiv.style.boxShadow = '';
-        playDiv.style.zIndex = '';
+        // Fade out backdrop
+        if (backdrop) {
+            backdrop.style.opacity = '0';
+        }
+        
+        // Show content wrapper if no more active videos
+        setTimeout(() => {
+            this.showContentWrapper();
+        }, 200);
         
         // Show the video button again
-        videoButton.style.opacity = '1';
-        videoButton.style.pointerEvents = 'auto';
+        setTimeout(() => {
+            videoButton.style.opacity = '1';
+            videoButton.style.pointerEvents = 'auto';
+        }, 300);
         
-        // Remove the player after animation completes
+        // Remove elements after animation completes
         setTimeout(() => {
             if (playerContainer && playerContainer.parentNode) {
                 playerContainer.remove();
             }
-        }, 400);
+            if (backdrop && backdrop.parentNode) {
+                backdrop.remove();
+            }
+        }, 500);
     }
 
     // Add video button to play item
@@ -477,10 +613,12 @@ class MLBVideoMatcher {
         playDiv.appendChild(videoButton);
     }
 
-    // Clear all caches
+    // Clear all caches and reset state
     clearCache() {
         this.videoCache.clear();
         this.gameContentCache.clear();
+        this.activeVideoPlayers.clear();
+        this.contentWrapperState = null;
     }
 }
 
