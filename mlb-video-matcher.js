@@ -19,7 +19,7 @@ class MLBVideoMatcher {
             'double': ['double', '2b', 'two-base hit', 'rbi double'],
             'single': ['single', '1b', 'rbi single', 'infield single', 'bloop single'],
             'sac_fly': ['sacrifice fly', 'sac fly', 'sf'],
-            'sac_bunt': ['sacrifice bunt', 'sac bunt', 'squeeze'],
+            'sac_bunt': ['sacrifice bunt', 'sac bunt', 'squeeze'],  
             'groundout': ['groundout', 'ground out', 'rbi groundout'],
             'flyout': ['flyout', 'fly out', 'popup', 'pop out'],
             'double_play': ['double play', 'dp', 'gidp', 'twin killing'],
@@ -30,6 +30,20 @@ class MLBVideoMatcher {
             'walk': ['walk', 'bb', 'base on balls', 'intentional walk', 'ibb'],
             'hit_by_pitch': ['hit by pitch', 'hbp']
         };
+
+        // Keywords that indicate animated/stats videos to avoid
+        this.avoidKeywords = [
+            'statcast', 'exit velocity', 'launch angle', 'expected', 'xba', 'xbh',
+            'spin rate', 'extension', 'metrics', 'analytics', 'breakdown', 'analysis',
+            'graphic', 'animation', 'overlay', 'stats', 'data', 'infographic',
+            'visualization', 'chart', 'graph', 'comparison', 'avg', 'era'
+        ];
+
+        // Keywords that indicate actual play videos
+        this.preferKeywords = [
+            'highlights', 'play', 'call', 'catch', 'hit', 'throw', 'field',
+            'swing', 'pitch', 'bat', 'ball', 'inning', 'run', 'score'
+        ];
     }
 
     async waitForRateLimit() {
@@ -85,7 +99,10 @@ class MLBVideoMatcher {
                         url: bestPlayback.url,
                         duration: highlight.duration || 0,
                         keywords: this.extractKeywords(highlight),
-                        playbackType: bestPlayback.name || 'unknown'
+                        playbackType: bestPlayback.name || 'unknown',
+                        // Add fields to help identify video type
+                        isAnimated: this.detectAnimatedVideo(highlight),
+                        contentType: this.detectContentType(highlight)
                     };
                     
                     videos.push(video);
@@ -98,6 +115,53 @@ class MLBVideoMatcher {
             console.error('❌ Error extracting highlight videos:', error);
             return [];
         }
+    }
+
+    // Detect if video is likely animated/stats based
+    detectAnimatedVideo(highlight) {
+        const textToCheck = [
+            highlight.title || '',
+            highlight.description || '',
+            highlight.slug || '',
+            ...(highlight.keywordsAll?.map(k => k.value) || []),
+            ...(highlight.keywords?.map(k => k.value) || [])
+        ].join(' ').toLowerCase();
+
+        // Check for avoid keywords
+        const hasAvoidKeywords = this.avoidKeywords.some(keyword => 
+            textToCheck.includes(keyword)
+        );
+
+        // Check duration - animated videos are often very short (< 10s) or very long (> 60s for breakdowns)
+        const duration = highlight.duration || 0;
+        const suspiciousDuration = duration > 0 && (duration < 10 || duration > 60);
+
+        return hasAvoidKeywords || suspiciousDuration;
+    }
+
+    // Detect content type based on video characteristics
+    detectContentType(highlight) {
+        const textToCheck = [
+            highlight.title || '',
+            highlight.description || '',
+            highlight.slug || ''
+        ].join(' ').toLowerCase();
+
+        if (this.avoidKeywords.some(keyword => textToCheck.includes(keyword))) {
+            return 'animated';
+        }
+        
+        if (this.preferKeywords.some(keyword => textToCheck.includes(keyword))) {
+            return 'play';
+        }
+
+        // Check if it looks like a standard play highlight
+        const playPatterns = Object.values(this.playTypePatterns).flat();
+        if (playPatterns.some(pattern => textToCheck.includes(pattern))) {
+            return 'play';
+        }
+
+        return 'unknown';
     }
 
     extractKeywords(highlight) {
@@ -116,39 +180,71 @@ class MLBVideoMatcher {
     selectBestPlayback(playbacks) {
         if (!playbacks || playbacks.length === 0) return null;
 
-        // Prioritize MP4 files
+        // ONLY select MP4 files - filter out everything else
         const mp4Playbacks = playbacks.filter(p => {
             const name = (p.name || '').toLowerCase();
             const url = (p.url || '').toLowerCase();
-            return name.includes('mp4') || url.includes('.mp4');
+            return (name.includes('mp4') || url.includes('.mp4')) && 
+                   !name.includes('m3u8') && !url.includes('.m3u8'); // Exclude HLS streams
         });
 
-        const targetPlaybacks = mp4Playbacks.length > 0 ? mp4Playbacks : playbacks;
+        if (mp4Playbacks.length === 0) {
+            console.log('⚠️ No MP4 playbacks found');
+            return null;
+        }
         
-        // Select highest quality
-        const preferredQualities = ['2500K', '1800K', '1200K', '800K', '600K'];
+        // Select highest quality MP4
+        const preferredQualities = ['2500K', '1800K', '1200K', '800K', '600K', '450K'];
         
         for (const quality of preferredQualities) {
-            const qualityPlayback = targetPlaybacks.find(p => 
+            const qualityPlayback = mp4Playbacks.find(p => 
                 p.name && p.name.includes(quality)
             );
             if (qualityPlayback) {
+                console.log(`✅ Selected ${quality} MP4 playback`);
                 return qualityPlayback;
             }
         }
 
-        return targetPlaybacks[0];
+        console.log('✅ Selected default MP4 playback');
+        return mp4Playbacks[0];
     }
 
-    // Simplified text normalization focused on key matching
+    // Enhanced text normalization for better matching
     normalizeText(text) {
         if (!text) return '';
         
         return text
             .toLowerCase()
+            // Remove parenthetical numbers like "(10)" from play descriptions
+            .replace(/\(\d+\)/g, '')
+            // Normalize punctuation and special characters
             .replace(/[^\w\s]/g, ' ')
+            // Handle common variations
+            .replace(/\bto\b/g, '')
+            .replace(/\bon\s+a\b/g, '')
+            .replace(/\bfly\s+ball\b/g, 'flyball')
+            .replace(/\bground\s+ball\b/g, 'groundball')
+            .replace(/\bhome\s+run\b/g, 'homer')
             .replace(/\s+/g, ' ')
             .trim();
+    }
+
+    // Create a slug from play description similar to video slug format
+    createPlaySlug(playDescription) {
+        if (!playDescription) return '';
+        
+        return playDescription
+            .toLowerCase()
+            // Remove parenthetical numbers
+            .replace(/\(\d+\)/g, '')
+            // Replace punctuation and spaces with hyphens
+            .replace(/[^\w\s]/g, '')
+            .replace(/\s+/g, '-')
+            // Remove leading/trailing hyphens
+            .replace(/^-+|-+$/g, '')
+            // Remove double hyphens
+            .replace(/-+/g, '-');
     }
 
     // Extract player names from play data
@@ -179,48 +275,113 @@ class MLBVideoMatcher {
         return event || 'unknown';
     }
 
-    // Calculate match score based on multiple factors
+    // Enhanced match score calculation with slug matching and video type filtering
     calculateMatchScore(play, video) {
+        // Immediately penalize animated/stats videos
+        if (video.isAnimated || video.contentType === 'animated') {
+            console.log(`⚠️ Skipping animated video: "${video.title}"`);
+            return { score: 0, factors: 'animated-video-penalty', playType: 'unknown', videoTitle: video.title };
+        }
+
         const playDescription = this.normalizeText(play.result?.description || '');
         const playEvent = this.normalizeText(play.result?.event || '');
         const videoTitle = this.normalizeText(video.title);
         const videoDescription = this.normalizeText(video.description);
         const videoKeywords = this.normalizeText(video.keywords);
+        const videoSlug = this.normalizeText(video.slug);
         
-        const videoContent = `${videoTitle} ${videoDescription} ${videoKeywords}`;
+        // Create a comparable slug from play description
+        const playSlug = this.createPlaySlug(play.result?.description || '');
+        const normalizedVideoSlug = video.slug ? video.slug.toLowerCase() : '';
+        
+        const videoContent = `${videoTitle} ${videoDescription} ${videoKeywords} ${videoSlug}`;
         const playContent = `${playDescription} ${playEvent}`;
         
         let score = 0;
         let factors = [];
         
-        // 1. Direct description similarity (40% weight)
+        // 1. Slug similarity (highest priority - 50% weight)
+        const slugSimilarity = this.calculateSlugSimilarity(playSlug, normalizedVideoSlug);
+        if (slugSimilarity > 0) {
+            score += slugSimilarity * 0.5;
+            factors.push(`slug:${slugSimilarity.toFixed(2)}`);
+        }
+        
+        // 2. Direct description similarity (30% weight)
         const descSimilarity = this.calculateTextSimilarity(playDescription, videoContent);
-        score += descSimilarity * 0.4;
+        score += descSimilarity * 0.3;
         factors.push(`desc:${descSimilarity.toFixed(2)}`);
         
-        // 2. Play type matching (30% weight)
+        // 3. Play type matching (15% weight)
         const playType = this.getPlayType(play);
         const playTypeScore = this.calculatePlayTypeMatch(playType, videoContent);
-        score += playTypeScore * 0.3;
+        score += playTypeScore * 0.15;
         factors.push(`type:${playTypeScore.toFixed(2)}`);
         
-        // 3. Player name matching (20% weight)
+        // 4. Player name matching (5% weight - reduced since names can be inconsistent)
         const playerNames = this.extractPlayerNames(play);
         const playerScore = this.calculatePlayerNameMatch(playerNames, videoContent);
-        score += playerScore * 0.2;
+        score += playerScore * 0.05;
         factors.push(`player:${playerScore.toFixed(2)}`);
         
-        // 4. Title similarity bonus (10% weight)
-        const titleSimilarity = this.calculateTextSimilarity(playContent, videoTitle);
-        score += titleSimilarity * 0.1;
-        factors.push(`title:${titleSimilarity.toFixed(2)}`);
+        // Bonus for preferred video type
+        if (video.contentType === 'play') {
+            score *= 1.1; // 10% bonus
+            factors.push('play-type-bonus');
+        }
         
+        // Penalty for very short or very long videos (likely not actual plays)
+        if (video.duration > 0) {
+            if (video.duration < 8 || video.duration > 45) {
+                score *= 0.8; // 20% penalty
+                factors.push('duration-penalty');
+            }
+        }
+
         return {
             score: Math.min(score, 1.0),
             factors: factors.join(', '),
             playType,
-            videoTitle: video.title
+            videoTitle: video.title,
+            slugMatch: slugSimilarity
         };
+    }
+
+    // Calculate slug similarity - this is key for matching play descriptions to video IDs
+    calculateSlugSimilarity(playSlug, videoSlug) {
+        if (!playSlug || !videoSlug) return 0;
+        
+        // Direct match check
+        if (playSlug === videoSlug) return 1.0;
+        
+        // Check if one contains the other
+        if (playSlug.includes(videoSlug) || videoSlug.includes(playSlug)) {
+            const longer = Math.max(playSlug.length, videoSlug.length);
+            const shorter = Math.min(playSlug.length, videoSlug.length);
+            return shorter / longer * 0.9;
+        }
+        
+        // Word-by-word matching
+        const playWords = playSlug.split('-').filter(w => w.length > 2);
+        const videoWords = videoSlug.split('-').filter(w => w.length > 2);
+        
+        if (playWords.length === 0 || videoWords.length === 0) return 0;
+        
+        let matches = 0;
+        let totalImportantWords = 0;
+        
+        playWords.forEach(word => {
+            // Give more weight to important words (names, play types)
+            const isImportant = word.length > 4 || 
+                               Object.values(this.playTypePatterns).flat().some(pattern => pattern.includes(word));
+            
+            if (videoWords.includes(word)) {
+                matches += isImportant ? 2 : 1;
+            }
+            totalImportantWords += isImportant ? 2 : 1;
+        });
+        
+        return totalImportantWords > 0 ? matches / totalImportantWords : 0;
     }
 
     // Calculate text similarity using word matching
@@ -283,8 +444,8 @@ class MLBVideoMatcher {
         return bestMatch;
     }
 
-    // Main function to find video for a play
-    async findVideoForPlay(gamePk, play, minScore = 0.4) {
+    // Main function to find video for a play with enhanced filtering
+    async findVideoForPlay(gamePk, play, minScore = 0.3) { // Lowered threshold due to slug matching
         const playKey = `${gamePk}_${play.about?.atBatIndex || 'unknown'}_${play.about?.playIndex || 'unknown'}`;
         
         // Check if we already found a video for this play
@@ -305,21 +466,36 @@ class MLBVideoMatcher {
                 return null;
             }
 
-            const videos = this.extractHighlightVideos(gameContent);
-            if (videos.length === 0) {
+            const allVideos = this.extractHighlightVideos(gameContent);
+            if (allVideos.length === 0) {
                 console.log('❌ No videos available');
                 this.videoCache.set(playKey, null);
                 return null;
             }
 
-            // Calculate scores for all available videos (not already used)
-            const availableVideos = videos.filter(video => !this.usedVideoIds.has(video.id));
-            console.log(`📊 Scoring ${availableVideos.length} available videos (${videos.length - availableVideos.length} already used)`);
+            // Filter out animated videos and non-MP4 videos early
+            const playVideos = allVideos.filter(video => 
+                !video.isAnimated && 
+                video.contentType !== 'animated' &&
+                video.url.toLowerCase().includes('.mp4')
+            );
+            
+            console.log(`📊 Filtered to ${playVideos.length} play videos (from ${allVideos.length} total)`);
+
+            if (playVideos.length === 0) {
+                console.log('❌ No suitable play videos found after filtering');
+                this.videoCache.set(playKey, null);
+                return null;
+            }
+
+            // Get available videos (not already used)
+            const availableVideos = playVideos.filter(video => !this.usedVideoIds.has(video.id));
+            console.log(`📊 Scoring ${availableVideos.length} available videos (${playVideos.length - availableVideos.length} already used)`);
             
             if (availableVideos.length === 0) {
-                console.log('⚠️ All videos have been used, allowing reuse for this play');
+                console.log('⚠️ All suitable videos have been used, allowing reuse for this play');
                 // If all videos are used, allow reuse but with penalty
-                availableVideos.push(...videos);
+                availableVideos.push(...playVideos);
             }
 
             const scoredVideos = availableVideos.map(video => ({
@@ -334,6 +510,9 @@ class MLBVideoMatcher {
             console.log('🏆 Top matches:');
             scoredVideos.slice(0, 3).forEach((match, index) => {
                 console.log(`  ${index + 1}. "${match.videoTitle}" - Score: ${match.score.toFixed(3)} (${match.factors})`);
+                if (match.slugMatch > 0) {
+                    console.log(`     Slug match: ${match.slugMatch.toFixed(3)}`);
+                }
             });
 
             const bestMatch = scoredVideos[0];
@@ -346,12 +525,16 @@ class MLBVideoMatcher {
                     ...bestMatch.video,
                     matchScore: bestMatch.score,
                     matchFactors: bestMatch.factors,
-                    playType: bestMatch.playType
+                    playType: bestMatch.playType,
+                    slugMatch: bestMatch.slugMatch
                 };
                 
                 this.videoCache.set(playKey, result);
                 
                 console.log(`✅ Found match: "${bestMatch.videoTitle}" (score: ${bestMatch.score.toFixed(3)})`);
+                if (bestMatch.slugMatch > 0) {
+                    console.log(`🎯 Strong slug match: ${bestMatch.slugMatch.toFixed(3)}`);
+                }
                 console.log(`🔗 URL: ${result.url}`);
                 
                 return result;
@@ -493,10 +676,10 @@ class MLBVideoMatcher {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: linear-gradient(135deg, #f8f9fa, #d9e6f3ff);
             backdrop-filter: blur(3px);
             z-index: 999;
-            opacity: 0;
+            opacity: 50%;
             transition: opacity 0.4s ease;
         `;
         backdrop.onclick = () => this.closeVideoPlayer(playerContainer, playDiv, videoButton, playerId);
@@ -506,7 +689,7 @@ class MLBVideoMatcher {
             width: 100%;
             height: 500px;
             display: block;
-            background: #000;
+            background: linear-gradient(152deg, rgb(4, 30, 65) 44%, rgb(255, 255, 255) 60%, rgb(191, 13, 61) 55%);
             border-radius: 12px;
             position: relative;
             z-index: 1;
@@ -653,32 +836,35 @@ class MLBVideoMatcher {
             this.closeVideoPlayer(playerContainer, playDiv, videoButton, playerId);
         };
 
-        // Add non-intrusive video title above the player (outside video area)
+        // Add enhanced video title with match confidence
         const titleHeader = document.createElement('div');
         titleHeader.style.cssText = `
             position: absolute;
-            top: -50px;
+            top: -80px;
             left: 0;
             right: 0;
             color: white;
-            padding: 10px 20px;
+            padding: 15px 20px;
             text-align: center;
             background: rgba(0,0,0,0.8);
-            border-radius: 8px 8px 0 0;
+            border-radius: 8px;
             backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
         `;
         
         const confidence = video.matchScore ? ` (${Math.round(video.matchScore * 100)}% match)` : '';
+        const slugInfo = video.slugMatch > 0 ? ` • Slug: ${Math.round(video.slugMatch * 100)}%` : '';
         const duration = video.duration ? ` • ${Math.round(video.duration)}s` : '';
         
         titleHeader.innerHTML = `
             <div style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">${video.title}</div>
             <div style="font-size: 12px; opacity: 0.8;">
-                ${video.playbackType}${duration}${confidence}
+                ${video.playbackType}${duration}${confidence}${slugInfo}
             </div>
+            ${video.contentType === 'play' ? '<div style="font-size: 10px; color: #4ade80; margin-top: 4px;">✓ Verified Play Video</div>' : ''}
         `;
 
-        // Move quality indicator to top-right corner, outside video area
+        // Quality and type indicators
         const qualityBadge = document.createElement('div');
         qualityBadge.style.cssText = `
             position: absolute;
@@ -693,7 +879,8 @@ class MLBVideoMatcher {
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255,255,255,0.2);
         `;
-        qualityBadge.textContent = video.quality ? `${video.quality}p` : 'HD';
+        qualityBadge.textContent = video.playbackType.includes('2500') ? 'HD+' : 
+                                  video.playbackType.includes('1800') ? 'HD' : 'SD';
 
         // Create wrapper that doesn't interfere with video controls
         const videoWrapper = document.createElement('div');
@@ -758,7 +945,6 @@ class MLBVideoMatcher {
 
         return videoElement;
     }
-
 
     // Enhanced close video player with better cleanup and button reset
     closeVideoPlayer(playerContainer, playDiv, videoButton, playerId) {
@@ -890,7 +1076,7 @@ class MLBVideoMatcher {
             const originalContent = videoButton.innerHTML;
             videoButton.innerHTML = `
                 <div style="width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.3); border-top: 2px solid rgba(0,0,0,0.8); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <span style="font-size: 11px;">LOADING</span>
+                <span style="font-size: 11px;">SEARCHING</span>
             `;
             videoButton.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,248,255,0.9))';
 
@@ -898,10 +1084,13 @@ class MLBVideoMatcher {
                 const video = await this.findVideoForPlay(gamePk, play);
                 
                 if (video) {
-                    // Success feedback
+                    // Success feedback with match info
+                    const matchInfo = video.slugMatch > 0.7 ? 'PERFECT' : 
+                                     video.matchScore > 0.7 ? 'STRONG' : 'GOOD';
+                    
                     videoButton.innerHTML = `
                         <span style="color: green;">✓</span>
-                        <span style="font-size: 11px;">FOUND</span>
+                        <span style="font-size: 11px;">${matchInfo} MATCH</span>
                     `;
                     videoButton.style.background = 'linear-gradient(135deg, rgba(220,252,231,0.9), rgba(187,247,208,0.9))';
                     
@@ -913,7 +1102,7 @@ class MLBVideoMatcher {
                     // Not found feedback
                     videoButton.innerHTML = `
                         <span style="color: #dc3545;">✕</span>
-                        <span style="font-size: 11px;">NO VIDEO</span>
+                        <span style="font-size: 11px;">NO MATCH</span>
                     `;
                     videoButton.style.background = 'linear-gradient(135deg, rgba(254,226,226,0.9), rgba(252,165,165,0.9))';
                     
@@ -980,6 +1169,202 @@ class MLBVideoMatcher {
         console.log(`🧹 Cache cleanup: ${this.videoCache.size} video entries, ${this.gameContentCache.size} game entries`);
     }
 
+    // Debug method to analyze video matching for troubleshooting
+    async debugVideoMatching(gamePk, play) {
+        console.log('🔍 DEBUG: Video Matching Analysis');
+        console.log('Play Description:', play.result?.description);
+        
+        const playSlug = this.createPlaySlug(play.result?.description || '');
+        console.log('Generated Play Slug:', playSlug);
+        
+        const normalizedDescription = this.normalizeText(play.result?.description || '');
+        console.log('Normalized Description:', normalizedDescription);
+        
+        const playType = this.getPlayType(play);
+        console.log('Detected Play Type:', playType);
+        
+        const playerNames = this.extractPlayerNames(play);
+        console.log('Player Names:', playerNames);
+
+        // Fetch and analyze available videos
+        try {
+            const gameContent = await this.fetchGameContent(gamePk);
+            if (gameContent) {
+                const allVideos = this.extractHighlightVideos(gameContent);
+                console.log(`Total videos: ${allVideos.length}`);
+                
+                const playVideos = allVideos.filter(video => 
+                    !video.isAnimated && 
+                    video.contentType !== 'animated' &&
+                    video.url.toLowerCase().includes('.mp4')
+                );
+                console.log(`Filtered play videos: ${playVideos.length}`);
+
+                // Show top 5 candidates with scores
+                const scoredVideos = playVideos.map(video => ({
+                    video,
+                    ...this.calculateMatchScore(play, video)
+                })).sort((a, b) => b.score - a.score);
+
+                console.log('Top 5 Video Candidates:');
+                scoredVideos.slice(0, 5).forEach((match, index) => {
+                    console.log(`${index + 1}. "${match.videoTitle}"`);
+                    console.log(`   Score: ${match.score.toFixed(3)} | Slug: ${match.video.slug}`);
+                    console.log(`   Factors: ${match.factors}`);
+                    console.log(`   Content Type: ${match.video.contentType} | Animated: ${match.video.isAnimated}`);
+                    console.log('   ---');
+                });
+            }
+        } catch (error) {
+            console.error('Debug analysis failed:', error);
+        }
+    }
+
+    // Method to get detailed match information for a specific video
+    getVideoMatchDetails(play, video) {
+        const matchResult = this.calculateMatchScore(play, video);
+        const playSlug = this.createPlaySlug(play.result?.description || '');
+        
+        return {
+            playDescription: play.result?.description,
+            playSlug: playSlug,
+            videoTitle: video.title,
+            videoSlug: video.slug,
+            matchScore: matchResult.score,
+            slugSimilarity: this.calculateSlugSimilarity(playSlug, video.slug?.toLowerCase() || ''),
+            factors: matchResult.factors,
+            isAnimated: video.isAnimated,
+            contentType: video.contentType,
+            duration: video.duration,
+            playbackType: video.playbackType
+        };
+    }
+
+    // Method to force refresh video cache for a game (useful for testing)
+    refreshGameCache(gamePk) {
+        // Clear all cached data for this game
+        for (const [key] of this.videoCache.entries()) {
+            if (key.startsWith(`${gamePk}_`)) {
+                this.videoCache.delete(key);
+            }
+        }
+        
+        this.gameContentCache.delete(gamePk);
+        this.usedVideoIds.clear();
+        
+        console.log(`🔄 Forced refresh of cache for game ${gamePk}`);
+    }
+
+    // Method to get cache statistics
+    getCacheStats() {
+        return {
+            videoCacheSize: this.videoCache.size,
+            gameContentCacheSize: this.gameContentCache.size,
+            usedVideoIds: this.usedVideoIds.size,
+            activeVideoPlayers: this.activeVideoPlayers.size
+        };
+    }
+
+    // Method to analyze all videos in a game (for debugging)
+    async analyzeGameVideos(gamePk) {
+        try {
+            const gameContent = await this.fetchGameContent(gamePk);
+            if (!gameContent) {
+                console.log('No game content available');
+                return;
+            }
+
+            const allVideos = this.extractHighlightVideos(gameContent);
+            console.log(`\n📊 Game ${gamePk} Video Analysis:`);
+            console.log(`Total videos found: ${allVideos.length}`);
+            
+            const byType = {
+                play: allVideos.filter(v => v.contentType === 'play').length,
+                animated: allVideos.filter(v => v.contentType === 'animated' || v.isAnimated).length,
+                unknown: allVideos.filter(v => v.contentType === 'unknown').length
+            };
+            
+            const mp4Videos = allVideos.filter(v => v.url.toLowerCase().includes('.mp4')).length;
+            const shortVideos = allVideos.filter(v => v.duration > 0 && v.duration < 10).length;
+            const longVideos = allVideos.filter(v => v.duration > 45).length;
+            
+            console.log('Content Types:');
+            console.log(`  Play videos: ${byType.play}`);
+            console.log(`  Animated/Stats videos: ${byType.animated}`);
+            console.log(`  Unknown type: ${byType.unknown}`);
+            console.log(`MP4 videos: ${mp4Videos}`);
+            console.log(`Short videos (<10s): ${shortVideos}`);
+            console.log(`Long videos (>45s): ${longVideos}`);
+            
+            // Show sample of each type
+            console.log('\nSample Play Videos:');
+            allVideos.filter(v => v.contentType === 'play')
+                     .slice(0, 3)
+                     .forEach((v, i) => console.log(`  ${i+1}. ${v.title} (${v.duration}s)`));
+            
+            console.log('\nSample Animated Videos:');
+            allVideos.filter(v => v.contentType === 'animated' || v.isAnimated)
+                     .slice(0, 3)
+                     .forEach((v, i) => console.log(`  ${i+1}. ${v.title} (${v.duration}s)`));
+            
+            return {
+                total: allVideos.length,
+                byType,
+                mp4Count: mp4Videos,
+                videos: allVideos
+            };
+
+        } catch (error) {
+            console.error('Failed to analyze game videos:', error);
+            return null;
+        }
+    }
+
+    // Method to test matching for multiple plays at once
+    async testMatchingForPlays(gamePk, plays, minScore = 0.3) {
+        console.log(`\n🧪 Testing video matching for ${plays.length} plays in game ${gamePk}`);
+        
+        const results = [];
+        for (const play of plays) {
+            try {
+                const video = await this.findVideoForPlay(gamePk, play, minScore);
+                results.push({
+                    playDescription: play.result?.description,
+                    found: !!video,
+                    videoTitle: video?.title || 'No match found',
+                    matchScore: video?.matchScore || 0,
+                    slugMatch: video?.slugMatch || 0
+                });
+            } catch (error) {
+                results.push({
+                    playDescription: play.result?.description,
+                    found: false,
+                    error: error.message
+                });
+            }
+        }
+
+        // Print summary
+        const found = results.filter(r => r.found).length;
+        const avgScore = results.filter(r => r.found).reduce((sum, r) => sum + r.matchScore, 0) / found || 0;
+        
+        console.log(`\n📋 Matching Results Summary:`);
+        console.log(`  Matches found: ${found}/${plays.length} (${Math.round(found/plays.length*100)}%)`);
+        console.log(`  Average match score: ${avgScore.toFixed(3)}`);
+        
+        console.log(`\nDetailed Results:`);
+        results.forEach((result, index) => {
+            const status = result.found ? '✅' : '❌';
+            const score = result.found ? ` (${result.matchScore.toFixed(3)})` : '';
+            console.log(`  ${index+1}. ${status} ${result.playDescription}`);
+            if (result.found) {
+                console.log(`     → ${result.videoTitle}${score}`);
+            }
+        });
+
+        return results;
+    }
+
     // Cleanup all active video players and reset state
     cleanup() {
         // Close all active players
@@ -998,6 +1383,7 @@ class MLBVideoMatcher {
         // Reset state
         this.activeVideoPlayers.clear();
         this.contentWrapperState = null;
+        this.usedVideoIds.clear();
         
         console.log('🧹 MLBVideoMatcher cleanup completed');
     }
@@ -1007,6 +1393,7 @@ class MLBVideoMatcher {
 try {
     window.MLBVideoMatcher = MLBVideoMatcher;
     console.log('✅ MLBVideoMatcher loaded successfully');
+    console.log('🎯 Enhanced with slug matching and animated video filtering');
 } catch (error) {
     console.error('💥 Failed to load MLBVideoMatcher:', error);
 }
