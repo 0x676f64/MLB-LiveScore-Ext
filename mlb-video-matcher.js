@@ -1,5 +1,5 @@
-// mlb-video-matcher.js - Enhanced and Fixed Version
-// Addresses productive outs matching and duplicate method issues
+// Enhanced MLB Video Matcher - Better RBI Singles & Scoring Play Matching
+// Addresses the "in-play-run-s" video ID format issue
 
 class MLBVideoMatcher {
     constructor() {
@@ -30,7 +30,7 @@ class MLBVideoMatcher {
             'hit_by_pitch': ['hit by pitch', 'hbp']
         };
 
-        // Enhanced productive outs patterns - key for your issues
+        // Enhanced productive outs patterns
         this.productiveOutPatterns = {
             'rbi_groundout': ['rbi groundout', 'rbi ground out', 'grounds out', 'groundout rbi'],
             'rbi_flyout': ['rbi flyout', 'rbi fly out', 'flies out', 'flyout rbi'],
@@ -40,15 +40,13 @@ class MLBVideoMatcher {
             'fielders_choice_rbi': ['fielders choice', 'fielder choice', 'fc']
         };
 
-        // Video ID patterns for complex plays
-        this.complexPlayPatterns = {
-            'force_out': ['force-out', 'forceout', 'force', 'grounds-into', 'grounds-out'],
-            'fielders_choice': ['fielders-choice', 'fielder-choice', 'fc'],
-            'error': ['error', 'reaches-on-error', 'on-error'],
-            'groundout_rbi': ['rbi-groundout', 'groundout-rbi', 'rbi-ground'],
-            'double_play': ['double-play', 'dp', 'gidp', 'twin-killing'],
-            'sac_fly': ['sacrifice-fly', 'sac-fly', 'sf'],
-            'sac_bunt': ['sacrifice-bunt', 'sac-bunt', 'squeeze']
+        // NEW: MLB's standardized video ID patterns
+        this.standardVideoIdPatterns = {
+            'scoring_play': /^([a-z\-]+)-(in-play-run-s?)-to-([a-z\-]+)$/,
+            'non_scoring_play': /^([a-z\-]+)-(in-play-no-out|in-play-out-s?)-to-([a-z\-]+)$/,
+            'home_run': /^([a-z\-]+)-(homers?|home-run|hr)-/,
+            'strikeout': /^([a-z\-]+)-(strikes?-out|so)-/,
+            'walk': /^([a-z\-]+)-(walks?|bb)-/
         };
 
         this.avoidKeywords = [
@@ -64,14 +62,12 @@ class MLBVideoMatcher {
         ];
     }
 
-    // FIXED: Single, comprehensive normalization method
+    // Enhanced normalization with better name handling
     normalizeText(text) {
         if (!text) return '';
         return text
             .toLowerCase()
-            // Remove parenthetical numbers like "(2)"
             .replace(/\(\d+\)/g, '')
-            // Enhanced productive outs normalization
             .replace(/grounds into a force out/g, 'force out')
             .replace(/grounds into force out/g, 'force out')
             .replace(/reaches on a fielder's choice/g, 'fielders choice')
@@ -79,27 +75,353 @@ class MLBVideoMatcher {
             .replace(/reaches on error/g, 'error')
             .replace(/sacrifice fly/g, 'sac fly')
             .replace(/sacrifice bunt/g, 'sac bunt')
-            // Handle RBI descriptions better
-            .replace(/,\s*([^,]+)\s+scores?/g, ' rbi') // "John Doe scores" -> "rbi"
+            .replace(/,\s*([^,]+)\s+scores?/g, ' rbi')
             .replace(/\bscores?\b/g, 'rbi')
-            // Remove verbose descriptions that clutter matching
             .replace(/\bto\s+(1st|2nd|3rd|first|second|third)(\s+base)?\b/g, '')
             .replace(/\bout at\s+(1st|2nd|3rd|first|second|third)\b/g, '')
             .replace(/\b(first|second|third)\s+baseman\b/g, '')
             .replace(/\b(left|center|right)\s+fielder?\b/g, '')
             .replace(/\b(shortstop|catcher|pitcher)\b/g, '')
-            // Clean up articles and prepositions
             .replace(/\b(on|a|an|the|to|for|in|at|by|with|into)\b/g, ' ')
             .replace(/[^\w\s]/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
     }
 
-    // Enhanced method to detect productive outs - KEY FIX for your issue
+    // NEW: Extract names and convert to video ID format
+    normalizeNameForVideoId(name) {
+        if (!name) return '';
+        return name
+            .toLowerCase()
+            .replace(/[^\w\s]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/jr$|sr$|ii$|iii$|iv$/, '')
+            .replace(/-+$/, '');
+    }
+
+    // NEW: Parse standardized MLB video IDs
+    parseStandardVideoId(videoId) {
+        const result = {
+            pitcher: null,
+            batter: null,
+            playType: null,
+            isScoring: false
+        };
+
+        for (const [type, pattern] of Object.entries(this.standardVideoIdPatterns)) {
+            const match = videoId.match(pattern);
+            if (match) {
+                result.playType = type;
+                result.pitcher = match[1];
+                
+                if (type === 'scoring_play' || type === 'non_scoring_play') {
+                    result.batter = match[3];
+                    result.isScoring = type === 'scoring_play';
+                } else if (type === 'home_run') {
+                    // For home runs, the batter name is usually after "to"
+                    const homeRunMatch = videoId.match(/^([a-z\-]+)-(homers?|home-run|hr).*?-to-([a-z\-]+)$/);
+                    if (homeRunMatch) {
+                        result.batter = homeRunMatch[3];
+                    }
+                }
+                
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    // NEW: Enhanced player extraction with better name matching
+    extractPlayersFromDescription(description) {
+        const players = {
+            batter: null,
+            pitcher: null,
+            scoringRunners: [],
+            fieldingPlayers: []
+        };
+
+        if (!description) return players;
+
+        // Primary batter (first name in sentence)
+        const batterMatch = description.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?(?:\s+[IVX]+)?)/);
+        if (batterMatch) {
+            players.batter = batterMatch[1].trim();
+        }
+
+        // Scoring runners - look for "X scores" pattern
+        const scoringMatches = description.matchAll(/([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)(?:\s+scores?)/g);
+        for (const match of scoringMatches) {
+            players.scoringRunners.push(match[1].trim());
+        }
+
+        // Fielding players - look for "to X" patterns
+        const fieldingMatches = description.matchAll(/(?:to|by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)/g);
+        for (const match of fieldingMatches) {
+            players.fieldingPlayers.push(match[1].trim());
+        }
+
+        return players;
+    }
+
+    // NEW: Check if play description indicates scoring
+    isPlayWithRuns(description) {
+        if (!description) return false;
+        
+        const scoringIndicators = [
+            'scores', 'score', 'run', 'runs', 'rbi', 'home run', 'homers', 
+            'grand slam', 'sacrifice fly', 'sac fly'
+        ];
+        
+        const normalizedDesc = description.toLowerCase();
+        return scoringIndicators.some(indicator => normalizedDesc.includes(indicator));
+    }
+
+    // ENHANCED: Hybrid ID matching - handles both direct matches AND standardized formats
+    calculateIdMatch(playDescription, videoId) {
+        if (!playDescription || !videoId) return 0;
+
+        // Try multiple matching strategies and use the best score
+        const strategies = [
+            this.calculateDirectIdMatch(playDescription, videoId),
+            this.calculateStandardizedIdMatch(playDescription, videoId)
+        ];
+
+        // Use the highest score from any strategy
+        const bestScore = Math.max(...strategies.map(s => s.score));
+        const bestStrategy = strategies.find(s => s.score === bestScore);
+
+        // Debug logging
+        console.log(`🎯 ID Match Analysis for: ${playDescription.substring(0, 50)}...`);
+        console.log(`   Video ID: ${videoId}`);
+        console.log(`   Direct Match: ${strategies[0].score.toFixed(3)} (${strategies[0].factors.join(', ')})`);
+        console.log(`   Standardized Match: ${strategies[1].score.toFixed(3)} (${strategies[1].factors.join(', ')})`);
+        console.log(`   Best Score: ${bestScore.toFixed(3)} via ${bestStrategy.type}`);
+
+        return bestScore;
+    }
+
+    // Strategy 1: Direct matching (for IDs that closely mirror the description)
+    calculateDirectIdMatch(playDescription, videoId) {
+        // Use less aggressive normalization for direct matching
+        const normalizedPlay = this.normalizeForDirectMatch(playDescription);
+        const normalizedVideoId = videoId.replace(/-/g, ' ').toLowerCase();
+        
+        const videoWords = normalizedVideoId.split(' ').filter(w => w.length > 1); // Allow shorter words like "on"
+        const playWords = normalizedPlay.split(' ').filter(w => w.length > 1);
+        
+        if (playWords.length === 0 || videoWords.length === 0) {
+            return { score: 0, factors: ['no-words'], type: 'direct' };
+        }
+
+        let score = 0;
+        let totalWeight = 0;
+        let matchedWords = [];
+
+        // Enhanced scoring with better weights
+        playWords.forEach(playWord => {
+            let wordWeight = 1;
+            
+            // Higher weight for player names (longer words)
+            if (playWord.length > 4) wordWeight = 2;
+            
+            // Highest weight for key action words and numbers
+            if (['groundout', 'flyout', 'single', 'double', 'triple', 'homer', 'homers'].includes(playWord)) {
+                wordWeight = 3;
+            }
+
+            // Numbers (like home run count) get good weight
+            if (/^\d+$/.test(playWord)) wordWeight = 2.5;
+
+            // Field locations get decent weight
+            if (['left', 'right', 'center', 'field'].includes(playWord)) wordWeight = 1.5;
+
+            totalWeight += wordWeight;
+
+            // Exact match
+            if (videoWords.includes(playWord)) {
+                score += wordWeight;
+                matchedWords.push(playWord);
+            } 
+            // Partial match for names/complex terms
+            else {
+                const partialMatch = videoWords.some(videoWord => {
+                    // More flexible partial matching
+                    return (playWord.includes(videoWord) && videoWord.length > 2) ||
+                           (videoWord.includes(playWord) && playWord.length > 2) ||
+                           // Handle plurals and verb forms
+                           (playWord + 's' === videoWord) ||
+                           (playWord === videoWord + 's');
+                });
+                
+                if (partialMatch) {
+                    score += wordWeight * 0.8; // Higher partial match score
+                    matchedWords.push(`${playWord}~`);
+                }
+            }
+        });
+
+        const baseScore = totalWeight > 0 ? score / totalWeight : 0;
+        
+        // Bonus for high word coverage
+        const wordCoverage = matchedWords.length / Math.min(playWords.length, 12); // Cap to avoid penalty for very long descriptions
+        let finalScore = baseScore;
+        
+        // More generous coverage bonuses for direct matches
+        if (wordCoverage > 0.6) {
+            finalScore += 0.25; // High coverage bonus
+        } else if (wordCoverage > 0.4) {
+            finalScore += 0.15; // Medium coverage bonus  
+        } else if (wordCoverage > 0.2) {
+            finalScore += 0.05; // Low coverage bonus
+        }
+
+        // Bonus if player name appears in video ID
+        const playerNameMatch = this.checkPlayerNameInVideoId(playDescription, normalizedVideoId);
+        if (playerNameMatch > 0) {
+            finalScore += playerNameMatch * 0.2;
+            matchedWords.push('player-name');
+        }
+
+        return {
+            score: Math.min(finalScore, 1.0),
+            factors: [`coverage:${wordCoverage.toFixed(2)}`, `base:${baseScore.toFixed(2)}`, `matches:${matchedWords.length}`],
+            type: 'direct'
+        };
+    }
+
+    // Helper to check if player name appears in video ID
+    checkPlayerNameInVideoId(playDescription, normalizedVideoId) {
+        const players = this.extractPlayersFromDescription(playDescription);
+        if (!players.batter) return 0;
+
+        const batterWords = players.batter.toLowerCase().split(' ');
+        let nameScore = 0;
+        
+        batterWords.forEach(nameWord => {
+            if (nameWord.length > 2 && normalizedVideoId.includes(nameWord)) {
+                nameScore += 0.5;
+            }
+        });
+
+        return Math.min(nameScore, 1.0);
+    }
+
+    // Enhanced normalization that preserves more detail for direct matching
+    normalizeForDirectMatch(text) {
+        if (!text) return '';
+        return text
+            .toLowerCase()
+            .replace(/\(\d+\)/g, ' $1 ') // Keep numbers but separate them with spaces
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    // Strategy 2: Standardized format matching (for "in-play-run-s" type IDs)
+    calculateStandardizedIdMatch(playDescription, videoId) {
+        const videoIdInfo = this.parseStandardVideoId(videoId);
+        
+        // If it's not a standardized format, return low score
+        if (!videoIdInfo.playType) {
+            return { score: 0, factors: ['not-standardized'], type: 'standardized' };
+        }
+
+        const playPlayers = this.extractPlayersFromDescription(playDescription);
+        const playHasRuns = this.isPlayWithRuns(playDescription);
+
+        let score = 0;
+        let matchFactors = [];
+
+        // 1. Scoring play type matching
+        if (playHasRuns && videoIdInfo.isScoring) {
+            score += 0.4;
+            matchFactors.push('scoring-match');
+        } else if (!playHasRuns && !videoIdInfo.isScoring) {
+            score += 0.2;
+            matchFactors.push('non-scoring-match');
+        } else if (playHasRuns && !videoIdInfo.isScoring) {
+            score -= 0.2; // Penalty but not too harsh
+            matchFactors.push('scoring-mismatch');
+        }
+
+        // 2. Batter name matching
+        if (playPlayers.batter && videoIdInfo.batter) {
+            const playBatterNorm = this.normalizeNameForVideoId(playPlayers.batter);
+            const videoBatterNorm = videoIdInfo.batter;
+            
+            if (playBatterNorm === videoBatterNorm) {
+                score += 0.5;
+                matchFactors.push('perfect-batter');
+            } else {
+                // Partial name matching
+                const playNameParts = playBatterNorm.split('-');
+                const videoNameParts = videoBatterNorm.split('-');
+                
+                let nameMatchScore = 0;
+                playNameParts.forEach(playPart => {
+                    if (videoNameParts.includes(playPart) && playPart.length > 2) {
+                        nameMatchScore += 0.15;
+                    }
+                });
+                
+                if (nameMatchScore > 0) {
+                    score += nameMatchScore;
+                    matchFactors.push(`partial-batter:${nameMatchScore.toFixed(2)}`);
+                }
+            }
+        }
+
+        // 3. Play type bonuses
+        const playType = this.getBasicPlayType(playDescription);
+        if (playType === 'single' && videoIdInfo.isScoring && playHasRuns) {
+            score += 0.1;
+            matchFactors.push('rbi-single');
+        }
+        
+        if (playType === 'home_run' && videoIdInfo.playType === 'home_run') {
+            score += 0.15;
+            matchFactors.push('home-run');
+        }
+
+        return {
+            score: Math.min(Math.max(score, 0), 1.0),
+            factors: matchFactors,
+            type: 'standardized'
+        };
+    }
+
+    // Enhanced normalization that preserves more detail for direct matching
+    normalizeForDirectMatch(text) {
+        if (!text) return '';
+        return text
+            .toLowerCase()
+            .replace(/\(\d+\)/g, ' $1 ') // Keep numbers but separate them with spaces
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    // Helper to get basic play type from description
+    getBasicPlayType(description) {
+        const normalized = this.normalizeText(description);
+        
+        if (normalized.includes('single')) return 'single';
+        if (normalized.includes('double')) return 'double';  
+        if (normalized.includes('triple')) return 'triple';
+        if (normalized.includes('homer') || normalized.includes('home run')) return 'home_run';
+        if (normalized.includes('walk')) return 'walk';
+        if (normalized.includes('sacrifice fly') || normalized.includes('sac fly')) return 'sac_fly';
+        if (normalized.includes('groundout') || normalized.includes('ground out')) return 'groundout';
+        if (normalized.includes('flyout') || normalized.includes('fly out')) return 'flyout';
+        
+        return 'unknown';
+    }
+
+    // Enhanced method to detect productive outs
     isProductiveOut(playDescription) {
         const normalized = this.normalizeText(playDescription);
         
-        // Check if it's an out that produced runs
         const hasOut = /\b(out|groundout|flyout|grounds out|flies out)\b/.test(normalized);
         const hasRBI = /\b(rbi|scores?|run|home)\b/.test(normalized) || playDescription.includes('scores');
         const isSacrifice = /\b(sacrifice|sac)\b/.test(normalized);
@@ -117,7 +439,6 @@ class MLBVideoMatcher {
             }
         }
         
-        // Fallback detection
         if (normalized.includes('ground') && normalized.includes('rbi')) return 'rbi_groundout';
         if (normalized.includes('fly') && normalized.includes('rbi')) return 'rbi_flyout';
         if (normalized.includes('sacrifice fly')) return 'sac_fly';
@@ -126,139 +447,8 @@ class MLBVideoMatcher {
         return null;
     }
 
-    // FIXED: Enhanced ID matching with better productive outs handling
-    calculateIdMatch(playDescription, videoId) {
-        if (!playDescription || !videoId) return 0;
-
-        const normalized = this.normalizeText(playDescription);
-        const videoWords = videoId.replace(/-/g, ' ').toLowerCase().split(' ').filter(w => w.length > 2);
-        const playWords = normalized.split(' ').filter(w => w.length > 2 && w !== 'rbi');
-        
-        if (playWords.length === 0 || videoWords.length === 0) return 0;
-
-        let score = 0;
-        let totalWeight = 0;
-
-        // Enhanced scoring for productive outs
-        const isProductive = this.isProductiveOut(playDescription);
-        const productiveType = this.getProductiveOutType(playDescription);
-
-        playWords.forEach(playWord => {
-            let wordWeight = 1;
-            
-            // Higher weight for player names (longer words)
-            if (playWord.length > 4) wordWeight = 2;
-            
-            // Highest weight for key action words
-            if (['groundout', 'flyout', 'single', 'double', 'triple', 'homer'].includes(playWord)) {
-                wordWeight = 3;
-            }
-
-            // Special weight for productive out indicators
-            if (isProductive && ['grounds', 'flies', 'sacrifice', 'sac'].includes(playWord)) {
-                wordWeight = 2.5;
-            }
-
-            totalWeight += wordWeight;
-
-            // Exact match
-            if (videoWords.includes(playWord)) {
-                score += wordWeight;
-            } 
-            // Partial match for names/complex terms
-            else {
-                const partialMatch = videoWords.some(videoWord => {
-                    return (playWord.includes(videoWord) && videoWord.length > 3) ||
-                           (videoWord.includes(playWord) && playWord.length > 3);
-                });
-                
-                if (partialMatch) {
-                    score += wordWeight * 0.7;
-                }
-            }
-        });
-
-        let baseScore = totalWeight > 0 ? score / totalWeight : 0;
-
-        // ENHANCED: Productive out bonuses
-        if (isProductive && productiveType) {
-            const videoIdLower = videoId.toLowerCase();
-            const complexPatterns = this.complexPlayPatterns[productiveType.replace('_rbi', '')] || [];
-            
-            // Bonus for matching productive out patterns
-            complexPatterns.forEach(pattern => {
-                if (videoIdLower.includes(pattern)) {
-                    baseScore += 0.25; // Significant bonus
-                }
-            });
-
-            // RBI context bonus
-            if (playDescription.includes('scores') || playDescription.includes('RBI')) {
-                if (videoIdLower.includes('rbi') || videoIdLower.includes('scores')) {
-                    baseScore += 0.2;
-                }
-            }
-
-            // Sacrifice play bonuses
-            if (productiveType.startsWith('sac_')) {
-                if (videoIdLower.includes('sacrifice') || videoIdLower.includes('sac')) {
-                    baseScore += 0.3;
-                }
-            }
-        }
-
-        return Math.min(baseScore, 1.0);
-    }
-
-    // Enhanced player extraction with better name handling
-    extractKeyPlayersFromPlay(description) {
-        if (!description) return [];
-        
-        const players = [];
-        
-        // Primary batter (usually first name mentioned)
-        const batterMatch = description.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?(?:\s+[IVX]+)?)/);
-        if (batterMatch) {
-            players.push({
-                name: batterMatch[1].trim(),
-                role: 'batter',
-                weight: 3
-            });
-        }
-        
-        // Defensive players (after "to" or mentioned with positions)
-        const defensiveMatches = description.matchAll(/(?:to|by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)/g);
-        for (const match of defensiveMatches) {
-            players.push({
-                name: match[1].trim(),
-                role: 'fielder',
-                weight: 2
-            });
-        }
-        
-        // Players who score - ENHANCED for productive outs
-        const scoringPatterns = [
-            /([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)(?:\s+scores)/g,
-            /,\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)(?:\s+score)/g
-        ];
-        
-        scoringPatterns.forEach(pattern => {
-            const matches = description.matchAll(pattern);
-            for (const match of matches) {
-                players.push({
-                    name: match[1].trim(),
-                    role: 'runner',
-                    weight: 2.5 // Higher weight for scoring players
-                });
-            }
-        });
-        
-        return players;
-    }
-
-    // FIXED: Single comprehensive match score calculation
+    // ENHANCED: Comprehensive match score calculation
     calculateMatchScore(play, video) {
-        // Skip animated videos immediately
         if (video.isAnimated || video.contentType === 'animated') {
             return { score: 0, factors: 'animated-video-penalty', playType: 'unknown', videoTitle: video.title };
         }
@@ -266,71 +456,68 @@ class MLBVideoMatcher {
         const playDescription = play.result?.description || '';
         const playEvent = play.result?.event || '';
         
-        // Detect if this is a productive out
         const isProductive = this.isProductiveOut(playDescription);
         const productiveType = this.getProductiveOutType(playDescription);
         
         let score = 0;
         let factors = [];
         
-        // 1. Enhanced ID matching (primary factor)
+        // 1. PRIMARY: Enhanced ID matching (higher weight for scoring plays)
         const idMatchScore = this.calculateIdMatch(playDescription, video.id);
-        const idWeight = isProductive ? 0.65 : 0.7; // Slightly higher weight for productive outs
+        const isScoring = this.isPlayWithRuns(playDescription);
+        const idWeight = isScoring ? 0.8 : 0.7; // Higher weight for scoring plays
         score += idMatchScore * idWeight;
-        factors.push(`id:${idMatchScore.toFixed(2)}`);
+        factors.push(`id:${idMatchScore.toFixed(3)}`);
         
-        // 2. Player matching
+        // 2. Player matching (reduced weight since it's covered in ID matching now)
         const playerMatchScore = this.calculatePlayerMatch(playDescription, video.id, video.title);
-        const playerWeight = 0.2;
+        const playerWeight = 0.15;
         score += playerMatchScore * playerWeight;
         factors.push(`player:${playerMatchScore.toFixed(2)}`);
         
         // 3. Title matching
         const titleMatchScore = this.calculateTextSimilarity(playDescription, video.title);
-        score += titleMatchScore * 0.1;
+        score += titleMatchScore * 0.05;
         factors.push(`title:${titleMatchScore.toFixed(2)}`);
         
         // 4. Enhanced productive out bonuses
         if (isProductive) {
             factors.push(`productive:${productiveType || 'generic'}`);
             
-            // Specific bonuses for productive out types
             const videoContent = `${video.id} ${video.title}`.toLowerCase();
             
             if (productiveType === 'rbi_groundout' && videoContent.includes('rbi') && videoContent.includes('ground')) {
-                score += 0.15;
+                score += 0.1;
                 factors.push('rbi-ground-bonus');
             }
             
             if (productiveType === 'sac_fly' && (videoContent.includes('sacrifice') || videoContent.includes('sac'))) {
-                score += 0.15;
+                score += 0.1;
                 factors.push('sac-fly-bonus');
-            }
-            
-            if (productiveType === 'force_out_rbi' && videoContent.includes('force')) {
-                score += 0.12;
-                factors.push('force-rbi-bonus');
             }
         }
         
-        // 5. Play type verification
-        const playType = this.getPlayType(play);
-        const playTypeScore = this.calculatePlayTypeMatch(playType, video.id + ' ' + video.title);
-        score += playTypeScore * 0.05;
-        factors.push(`type:${playTypeScore.toFixed(2)}`);
+        // 5. Scoring play bonus
+        if (isScoring) {
+            const videoIdInfo = this.parseStandardVideoId(video.id);
+            if (videoIdInfo.isScoring) {
+                factors.push('scoring-play-confirmed');
+            }
+        }
 
         return {
             score: Math.min(score, 1.0),
             factors: factors.join(', '),
-            playType: productiveType || playType,
+            playType: productiveType || this.getBasicPlayType(playDescription),
             videoTitle: video.title,
             idMatch: idMatchScore,
             playerMatch: playerMatchScore,
-            isProductiveOut: isProductive
+            isProductiveOut: isProductive,
+            isScoring: isScoring
         };
     }
 
-    // Helper methods (keeping your existing implementation)
+    // Keep all your existing helper methods
     calculateTextSimilarity(text1, text2) {
         const normalize = (text) => this.normalizeText(text).split(' ').filter(w => w.length > 2);
         const words1 = normalize(text1);
@@ -377,6 +564,48 @@ class MLBVideoMatcher {
         return totalWeight > 0 ? Math.min(matchWeight / totalWeight, 1.0) : 0;
     }
 
+    extractKeyPlayersFromPlay(description) {
+        if (!description) return [];
+        
+        const players = [];
+        
+        const batterMatch = description.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?(?:\s+[IVX]+)?)/);
+        if (batterMatch) {
+            players.push({
+                name: batterMatch[1].trim(),
+                role: 'batter',
+                weight: 3
+            });
+        }
+        
+        const defensiveMatches = description.matchAll(/(?:to|by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)/g);
+        for (const match of defensiveMatches) {
+            players.push({
+                name: match[1].trim(),
+                role: 'fielder',
+                weight: 2
+            });
+        }
+        
+        const scoringPatterns = [
+            /([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)(?:\s+scores)/g,
+            /,\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)(?:\s+score)/g
+        ];
+        
+        scoringPatterns.forEach(pattern => {
+            const matches = description.matchAll(pattern);
+            for (const match of matches) {
+                players.push({
+                    name: match[1].trim(),
+                    role: 'runner',
+                    weight: 2.5
+                });
+            }
+        });
+        
+        return players;
+    }
+
     getPlayType(play) {
         const event = this.normalizeText(play.result?.event || '');
         
@@ -409,9 +638,42 @@ class MLBVideoMatcher {
         return bestMatch;
     }
 
-    // Keep all your existing methods for video handling, API calls, etc.
-    // [Rest of your existing implementation remains the same]
-    
+    // Keep all your existing methods for API calls, UI, etc.
+    // ... (rest of your implementation remains the same)
+
+    // NEW: Debug method specifically for RBI singles and scoring plays
+    async debugScoringPlayMatching(gamePk, play) {
+        console.log('🎯 SCORING PLAY DEBUG ANALYSIS');
+        console.log('Play Description:', play.result?.description);
+        
+        const isScoring = this.isPlayWithRuns(play.result?.description);
+        const playType = this.getBasicPlayType(play.result?.description);
+        const players = this.extractPlayersFromDescription(play.result?.description);
+        
+        console.log('Is Scoring Play:', isScoring);
+        console.log('Play Type:', playType);
+        console.log('Extracted Players:', players);
+        
+        const gameContent = await this.fetchGameContent(gamePk);
+        if (gameContent) {
+            const videos = this.extractHighlightVideos(gameContent);
+            console.log('Available Videos:');
+            
+            videos.forEach(video => {
+                const videoIdInfo = this.parseStandardVideoId(video.id);
+                const matchScore = this.calculateIdMatch(play.result?.description, video.id);
+                
+                console.log(`  ${video.id}:`, {
+                    title: video.title,
+                    parsedId: videoIdInfo,
+                    matchScore: matchScore.toFixed(3),
+                    isScoring: videoIdInfo.isScoring
+                });
+            });
+        }
+    }
+
+    // Keep all your existing implementation methods
     async waitForRateLimit() {
         const now = Date.now();
         const timeSinceLastCall = now - this.lastApiCall;
