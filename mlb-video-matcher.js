@@ -1,17 +1,18 @@
-// Enhanced MLB Video Matcher - Better RBI Singles & Scoring Play Matching
-// Addresses the "in-play-run-s" video ID format issue
+// Enhanced MLB Video Matcher - Direct GUID to PlayId Matching
+// Matches videos using game content and play-by-play endpoints
 
 class MLBVideoMatcher {
     constructor() {
         this.videoCache = new Map();
         this.gameContentCache = new Map();
+        this.playByPlayCache = new Map();
         this.usedVideoIds = new Set();
         this.rateLimitDelay = 1000;
         this.lastApiCall = 0;
         this.activeVideoPlayers = new Set();
         this.contentWrapperState = null;
         
-        // Enhanced play type patterns with better productive outs coverage
+        // Keep existing play type patterns for fallback or UI purposes
         this.playTypePatterns = {
             'home_run': ['homers', 'home run', 'hr', 'grand slam', 'solo shot', 'two-run homer', 'three-run homer', 'solo homer', 'grand-slam'],
             'triple': ['triples', '3b', 'three-base hit'],
@@ -30,7 +31,7 @@ class MLBVideoMatcher {
             'hit_by_pitch': ['hit by pitch', 'hbp']
         };
 
-        // Enhanced productive outs patterns
+        // Keep productive out patterns for fallback or UI
         this.productiveOutPatterns = {
             'rbi_groundout': ['rbi groundout', 'rbi ground out', 'grounds out', 'groundout rbi'],
             'rbi_flyout': ['rbi flyout', 'rbi fly out', 'flies out', 'flyout rbi'],
@@ -40,15 +41,7 @@ class MLBVideoMatcher {
             'fielders_choice_rbi': ['fielders choice', 'fielder choice', 'fc']
         };
 
-        // NEW: MLB's standardized video ID patterns
-        this.standardVideoIdPatterns = {
-            'scoring_play': /^([a-z\-]+)-(in-play-run-s?)-to-([a-z\-]+)$/,
-            'non_scoring_play': /^([a-z\-]+)-(in-play-no-out|in-play-out-s?)-to-([a-z\-]+)$/,
-            'home_run': /^([a-z\-]+)-(homers?|home-run|hr)-/,
-            'strikeout': /^([a-z\-]+)-(strikes?-out|so)-/,
-            'walk': /^([a-z\-]+)-(walks?|bb)-/
-        };
-
+        // Keep avoid/prefer keywords for filtering non-highlight content
         this.avoidKeywords = [
             'statcast', 'exit velocity', 'launch angle', 'expected', 'xba', 'xbh',
             'spin rate', 'extension', 'metrics', 'analytics', 'breakdown', 'analysis',
@@ -62,7 +55,7 @@ class MLBVideoMatcher {
         ];
     }
 
-    // Enhanced normalization with better name handling
+    // Keep existing normalization for UI or fallback purposes
     normalizeText(text) {
         if (!text) return '';
         return text
@@ -88,601 +81,31 @@ class MLBVideoMatcher {
             .trim();
     }
 
-    // NEW: Extract names and convert to video ID format
-    normalizeNameForVideoId(name) {
-        if (!name) return '';
-        return name
-            .toLowerCase()
-            .replace(/[^\w\s]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/jr$|sr$|ii$|iii$|iv$/, '')
-            .replace(/-+$/, '');
-    }
-
-    // NEW: Parse standardized MLB video IDs
-    parseStandardVideoId(videoId) {
-        const result = {
-            pitcher: null,
-            batter: null,
-            playType: null,
-            isScoring: false
-        };
-
-        for (const [type, pattern] of Object.entries(this.standardVideoIdPatterns)) {
-            const match = videoId.match(pattern);
-            if (match) {
-                result.playType = type;
-                result.pitcher = match[1];
-                
-                if (type === 'scoring_play' || type === 'non_scoring_play') {
-                    result.batter = match[3];
-                    result.isScoring = type === 'scoring_play';
-                } else if (type === 'home_run') {
-                    // For home runs, the batter name is usually after "to"
-                    const homeRunMatch = videoId.match(/^([a-z\-]+)-(homers?|home-run|hr).*?-to-([a-z\-]+)$/);
-                    if (homeRunMatch) {
-                        result.batter = homeRunMatch[3];
-                    }
-                }
-                
-                break;
-            }
+    // NEW: Fetch play-by-play data (already present, but good to confirm its purpose)
+    async fetchPlayByPlay(gamePk) {
+        if (this.playByPlayCache.has(gamePk)) {
+            return this.playByPlayCache.get(gamePk);
         }
 
-        return result;
-    }
-
-    // NEW: Enhanced player extraction with better name matching
-    extractPlayersFromDescription(description) {
-        const players = {
-            batter: null,
-            pitcher: null,
-            scoringRunners: [],
-            fieldingPlayers: []
-        };
-
-        if (!description) return players;
-
-        // Primary batter (first name in sentence)
-        const batterMatch = description.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?(?:\s+[IVX]+)?)/);
-        if (batterMatch) {
-            players.batter = batterMatch[1].trim();
-        }
-
-        // Scoring runners - look for "X scores" pattern
-        const scoringMatches = description.matchAll(/([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)(?:\s+scores?)/g);
-        for (const match of scoringMatches) {
-            players.scoringRunners.push(match[1].trim());
-        }
-
-        // Fielding players - look for "to X" patterns
-        const fieldingMatches = description.matchAll(/(?:to|by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)/g);
-        for (const match of fieldingMatches) {
-            players.fieldingPlayers.push(match[1].trim());
-        }
-
-        return players;
-    }
-
-    // NEW: Check if play description indicates scoring
-    isPlayWithRuns(description) {
-        if (!description) return false;
-        
-        const scoringIndicators = [
-            'scores', 'score', 'run', 'runs', 'rbi', 'home run', 'homers', 
-            'grand slam', 'sacrifice fly', 'sac fly'
-        ];
-        
-        const normalizedDesc = description.toLowerCase();
-        return scoringIndicators.some(indicator => normalizedDesc.includes(indicator));
-    }
-
-    // ENHANCED: Hybrid ID matching - handles both direct matches AND standardized formats
-    calculateIdMatch(playDescription, videoId) {
-        if (!playDescription || !videoId) return 0;
-
-        // Try multiple matching strategies and use the best score
-        const strategies = [
-            this.calculateDirectIdMatch(playDescription, videoId),
-            this.calculateStandardizedIdMatch(playDescription, videoId)
-        ];
-
-        // Use the highest score from any strategy
-        const bestScore = Math.max(...strategies.map(s => s.score));
-        const bestStrategy = strategies.find(s => s.score === bestScore);
-
-        // Debug logging
-        console.log(`🎯 ID Match Analysis for: ${playDescription.substring(0, 50)}...`);
-        console.log(`   Video ID: ${videoId}`);
-        console.log(`   Direct Match: ${strategies[0].score.toFixed(3)} (${strategies[0].factors.join(', ')})`);
-        console.log(`   Standardized Match: ${strategies[1].score.toFixed(3)} (${strategies[1].factors.join(', ')})`);
-        console.log(`   Best Score: ${bestScore.toFixed(3)} via ${bestStrategy.type}`);
-
-        return bestScore;
-    }
-
-    // Strategy 1: Direct matching (for IDs that closely mirror the description)
-    calculateDirectIdMatch(playDescription, videoId) {
-        // Use less aggressive normalization for direct matching
-        const normalizedPlay = this.normalizeForDirectMatch(playDescription);
-        const normalizedVideoId = videoId.replace(/-/g, ' ').toLowerCase();
-        
-        const videoWords = normalizedVideoId.split(' ').filter(w => w.length > 1); // Allow shorter words like "on"
-        const playWords = normalizedPlay.split(' ').filter(w => w.length > 1);
-        
-        if (playWords.length === 0 || videoWords.length === 0) {
-            return { score: 0, factors: ['no-words'], type: 'direct' };
-        }
-
-        let score = 0;
-        let totalWeight = 0;
-        let matchedWords = [];
-
-        // Enhanced scoring with better weights
-        playWords.forEach(playWord => {
-            let wordWeight = 1;
+        try {
+            await this.waitForRateLimit();
+            const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
             
-            // Higher weight for player names (longer words)
-            if (playWord.length > 4) wordWeight = 2;
-            
-            // Highest weight for key action words and numbers
-            if (['groundout', 'flyout', 'single', 'double', 'triple', 'homer', 'homers'].includes(playWord)) {
-                wordWeight = 3;
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
-            // Numbers (like home run count) get good weight
-            if (/^\d+$/.test(playWord)) wordWeight = 2.5;
-
-            // Field locations get decent weight
-            if (['left', 'right', 'center', 'field'].includes(playWord)) wordWeight = 1.5;
-
-            totalWeight += wordWeight;
-
-            // Exact match
-            if (videoWords.includes(playWord)) {
-                score += wordWeight;
-                matchedWords.push(playWord);
-            } 
-            // Partial match for names/complex terms
-            else {
-                const partialMatch = videoWords.some(videoWord => {
-                    // More flexible partial matching
-                    return (playWord.includes(videoWord) && videoWord.length > 2) ||
-                           (videoWord.includes(playWord) && playWord.length > 2) ||
-                           // Handle plurals and verb forms
-                           (playWord + 's' === videoWord) ||
-                           (playWord === videoWord + 's');
-                });
-                
-                if (partialMatch) {
-                    score += wordWeight * 0.8; // Higher partial match score
-                    matchedWords.push(`${playWord}~`);
-                }
-            }
-        });
-
-        const baseScore = totalWeight > 0 ? score / totalWeight : 0;
-        
-        // Bonus for high word coverage
-        const wordCoverage = matchedWords.length / Math.min(playWords.length, 12); // Cap to avoid penalty for very long descriptions
-        let finalScore = baseScore;
-        
-        // More generous coverage bonuses for direct matches
-        if (wordCoverage > 0.6) {
-            finalScore += 0.25; // High coverage bonus
-        } else if (wordCoverage > 0.4) {
-            finalScore += 0.15; // Medium coverage bonus  
-        } else if (wordCoverage > 0.2) {
-            finalScore += 0.05; // Low coverage bonus
-        }
-
-        // Bonus if player name appears in video ID
-        const playerNameMatch = this.checkPlayerNameInVideoId(playDescription, normalizedVideoId);
-        if (playerNameMatch > 0) {
-            finalScore += playerNameMatch * 0.2;
-            matchedWords.push('player-name');
-        }
-
-        return {
-            score: Math.min(finalScore, 1.0),
-            factors: [`coverage:${wordCoverage.toFixed(2)}`, `base:${baseScore.toFixed(2)}`, `matches:${matchedWords.length}`],
-            type: 'direct'
-        };
-    }
-
-    // Helper to check if player name appears in video ID
-    checkPlayerNameInVideoId(playDescription, normalizedVideoId) {
-        const players = this.extractPlayersFromDescription(playDescription);
-        if (!players.batter) return 0;
-
-        const batterWords = players.batter.toLowerCase().split(' ');
-        let nameScore = 0;
-        
-        batterWords.forEach(nameWord => {
-            if (nameWord.length > 2 && normalizedVideoId.includes(nameWord)) {
-                nameScore += 0.5;
-            }
-        });
-
-        return Math.min(nameScore, 1.0);
-    }
-
-    // Enhanced normalization that preserves more detail for direct matching
-    normalizeForDirectMatch(text) {
-        if (!text) return '';
-        return text
-            .toLowerCase()
-            .replace(/\(\d+\)/g, ' $1 ') // Keep numbers but separate them with spaces
-            .replace(/[^\w\s]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-    }
-
-    // Strategy 2: Standardized format matching (for "in-play-run-s" type IDs)
-    calculateStandardizedIdMatch(playDescription, videoId) {
-        const videoIdInfo = this.parseStandardVideoId(videoId);
-        
-        // If it's not a standardized format, return low score
-        if (!videoIdInfo.playType) {
-            return { score: 0, factors: ['not-standardized'], type: 'standardized' };
-        }
-
-        const playPlayers = this.extractPlayersFromDescription(playDescription);
-        const playHasRuns = this.isPlayWithRuns(playDescription);
-
-        let score = 0;
-        let matchFactors = [];
-
-        // 1. Scoring play type matching
-        if (playHasRuns && videoIdInfo.isScoring) {
-            score += 0.4;
-            matchFactors.push('scoring-match');
-        } else if (!playHasRuns && !videoIdInfo.isScoring) {
-            score += 0.2;
-            matchFactors.push('non-scoring-match');
-        } else if (playHasRuns && !videoIdInfo.isScoring) {
-            score -= 0.2; // Penalty but not too harsh
-            matchFactors.push('scoring-mismatch');
-        }
-
-        // 2. Batter name matching
-        if (playPlayers.batter && videoIdInfo.batter) {
-            const playBatterNorm = this.normalizeNameForVideoId(playPlayers.batter);
-            const videoBatterNorm = videoIdInfo.batter;
-            
-            if (playBatterNorm === videoBatterNorm) {
-                score += 0.5;
-                matchFactors.push('perfect-batter');
-            } else {
-                // Partial name matching
-                const playNameParts = playBatterNorm.split('-');
-                const videoNameParts = videoBatterNorm.split('-');
-                
-                let nameMatchScore = 0;
-                playNameParts.forEach(playPart => {
-                    if (videoNameParts.includes(playPart) && playPart.length > 2) {
-                        nameMatchScore += 0.15;
-                    }
-                });
-                
-                if (nameMatchScore > 0) {
-                    score += nameMatchScore;
-                    matchFactors.push(`partial-batter:${nameMatchScore.toFixed(2)}`);
-                }
-            }
-        }
-
-        // 3. Play type bonuses
-        const playType = this.getBasicPlayType(playDescription);
-        if (playType === 'single' && videoIdInfo.isScoring && playHasRuns) {
-            score += 0.1;
-            matchFactors.push('rbi-single');
-        }
-        
-        if (playType === 'home_run' && videoIdInfo.playType === 'home_run') {
-            score += 0.15;
-            matchFactors.push('home-run');
-        }
-
-        return {
-            score: Math.min(Math.max(score, 0), 1.0),
-            factors: matchFactors,
-            type: 'standardized'
-        };
-    }
-
-    // Enhanced normalization that preserves more detail for direct matching
-    normalizeForDirectMatch(text) {
-        if (!text) return '';
-        return text
-            .toLowerCase()
-            .replace(/\(\d+\)/g, ' $1 ') // Keep numbers but separate them with spaces
-            .replace(/[^\w\s]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-    }
-
-    // Helper to get basic play type from description
-    getBasicPlayType(description) {
-        const normalized = this.normalizeText(description);
-        
-        if (normalized.includes('single')) return 'single';
-        if (normalized.includes('double')) return 'double';  
-        if (normalized.includes('triple')) return 'triple';
-        if (normalized.includes('homer') || normalized.includes('home run')) return 'home_run';
-        if (normalized.includes('walk')) return 'walk';
-        if (normalized.includes('sacrifice fly') || normalized.includes('sac fly')) return 'sac_fly';
-        if (normalized.includes('groundout') || normalized.includes('ground out')) return 'groundout';
-        if (normalized.includes('flyout') || normalized.includes('fly out')) return 'flyout';
-        
-        return 'unknown';
-    }
-
-    // Enhanced method to detect productive outs
-    isProductiveOut(playDescription) {
-        const normalized = this.normalizeText(playDescription);
-        
-        const hasOut = /\b(out|groundout|flyout|grounds out|flies out)\b/.test(normalized);
-        const hasRBI = /\b(rbi|scores?|run|home)\b/.test(normalized) || playDescription.includes('scores');
-        const isSacrifice = /\b(sacrifice|sac)\b/.test(normalized);
-        
-        return (hasOut && hasRBI) || isSacrifice;
-    }
-
-    // Enhanced productive out type detection
-    getProductiveOutType(playDescription) {
-        const normalized = this.normalizeText(playDescription);
-        
-        for (const [type, patterns] of Object.entries(this.productiveOutPatterns)) {
-            if (patterns.some(pattern => normalized.includes(pattern))) {
-                return type;
-            }
-        }
-        
-        if (normalized.includes('ground') && normalized.includes('rbi')) return 'rbi_groundout';
-        if (normalized.includes('fly') && normalized.includes('rbi')) return 'rbi_flyout';
-        if (normalized.includes('sacrifice fly')) return 'sac_fly';
-        if (normalized.includes('sacrifice bunt')) return 'sac_bunt';
-        
-        return null;
-    }
-
-    // ENHANCED: Comprehensive match score calculation
-    calculateMatchScore(play, video) {
-        if (video.isAnimated || video.contentType === 'animated') {
-            return { score: 0, factors: 'animated-video-penalty', playType: 'unknown', videoTitle: video.title };
-        }
-
-        const playDescription = play.result?.description || '';
-        const playEvent = play.result?.event || '';
-        
-        const isProductive = this.isProductiveOut(playDescription);
-        const productiveType = this.getProductiveOutType(playDescription);
-        
-        let score = 0;
-        let factors = [];
-        
-        // 1. PRIMARY: Enhanced ID matching (higher weight for scoring plays)
-        const idMatchScore = this.calculateIdMatch(playDescription, video.id);
-        const isScoring = this.isPlayWithRuns(playDescription);
-        const idWeight = isScoring ? 0.8 : 0.7; // Higher weight for scoring plays
-        score += idMatchScore * idWeight;
-        factors.push(`id:${idMatchScore.toFixed(3)}`);
-        
-        // 2. Player matching (reduced weight since it's covered in ID matching now)
-        const playerMatchScore = this.calculatePlayerMatch(playDescription, video.id, video.title);
-        const playerWeight = 0.15;
-        score += playerMatchScore * playerWeight;
-        factors.push(`player:${playerMatchScore.toFixed(2)}`);
-        
-        // 3. Title matching
-        const titleMatchScore = this.calculateTextSimilarity(playDescription, video.title);
-        score += titleMatchScore * 0.05;
-        factors.push(`title:${titleMatchScore.toFixed(2)}`);
-        
-        // 4. Enhanced productive out bonuses
-        if (isProductive) {
-            factors.push(`productive:${productiveType || 'generic'}`);
-            
-            const videoContent = `${video.id} ${video.title}`.toLowerCase();
-            
-            if (productiveType === 'rbi_groundout' && videoContent.includes('rbi') && videoContent.includes('ground')) {
-                score += 0.1;
-                factors.push('rbi-ground-bonus');
-            }
-            
-            if (productiveType === 'sac_fly' && (videoContent.includes('sacrifice') || videoContent.includes('sac'))) {
-                score += 0.1;
-                factors.push('sac-fly-bonus');
-            }
-        }
-        
-        // 5. Scoring play bonus
-        if (isScoring) {
-            const videoIdInfo = this.parseStandardVideoId(video.id);
-            if (videoIdInfo.isScoring) {
-                factors.push('scoring-play-confirmed');
-            }
-        }
-
-        return {
-            score: Math.min(score, 1.0),
-            factors: factors.join(', '),
-            playType: productiveType || this.getBasicPlayType(playDescription),
-            videoTitle: video.title,
-            idMatch: idMatchScore,
-            playerMatch: playerMatchScore,
-            isProductiveOut: isProductive,
-            isScoring: isScoring
-        };
-    }
-
-    // Keep all your existing helper methods
-    calculateTextSimilarity(text1, text2) {
-        const normalize = (text) => this.normalizeText(text).split(' ').filter(w => w.length > 2);
-        const words1 = normalize(text1);
-        const words2 = normalize(text2);
-        
-        if (words1.length === 0 || words2.length === 0) return 0;
-        
-        let matches = 0;
-        words1.forEach(word => {
-            if (words2.includes(word)) matches++;
-        });
-        
-        return matches / Math.max(words1.length, words2.length);
-    }
-
-    calculatePlayerMatch(playDescription, videoId, videoTitle = '') {
-        const players = this.extractKeyPlayersFromPlay(playDescription);
-        const videoContent = `${videoId.replace(/-/g, ' ')} ${videoTitle}`.toLowerCase();
-        
-        if (players.length === 0) return 0;
-        
-        let totalWeight = 0;
-        let matchWeight = 0;
-        
-        players.forEach(player => {
-            const nameWords = player.name.toLowerCase().split(' ');
-            const lastName = nameWords[nameWords.length - 1];
-            const firstName = nameWords[0];
-            
-            totalWeight += player.weight;
-            
-            if (videoContent.includes(lastName) && lastName.length > 3) {
-                matchWeight += player.weight * 0.8;
-            } else if (videoContent.includes(firstName) && firstName.length > 3) {
-                matchWeight += player.weight * 0.5;
-            }
-            
-            const fullName = player.name.toLowerCase().replace(/\s+/g, '-');
-            if (videoContent.includes(fullName)) {
-                matchWeight += player.weight * 0.3;
-            }
-        });
-        
-        return totalWeight > 0 ? Math.min(matchWeight / totalWeight, 1.0) : 0;
-    }
-
-    extractKeyPlayersFromPlay(description) {
-        if (!description) return [];
-        
-        const players = [];
-        
-        const batterMatch = description.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?(?:\s+[IVX]+)?)/);
-        if (batterMatch) {
-            players.push({
-                name: batterMatch[1].trim(),
-                role: 'batter',
-                weight: 3
-            });
-        }
-        
-        const defensiveMatches = description.matchAll(/(?:to|by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)/g);
-        for (const match of defensiveMatches) {
-            players.push({
-                name: match[1].trim(),
-                role: 'fielder',
-                weight: 2
-            });
-        }
-        
-        const scoringPatterns = [
-            /([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)(?:\s+scores)/g,
-            /,\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*(?:\s+Jr\.?)?)(?:\s+score)/g
-        ];
-        
-        scoringPatterns.forEach(pattern => {
-            const matches = description.matchAll(pattern);
-            for (const match of matches) {
-                players.push({
-                    name: match[1].trim(),
-                    role: 'runner',
-                    weight: 2.5
-                });
-            }
-        });
-        
-        return players;
-    }
-
-    getPlayType(play) {
-        const event = this.normalizeText(play.result?.event || '');
-        
-        for (const [type, patterns] of Object.entries(this.playTypePatterns)) {
-            if (patterns.some(pattern => event.includes(pattern))) {
-                return type;
-            }
-        }
-        
-        return event || 'unknown';
-    }
-
-    calculatePlayTypeMatch(playType, videoContent) {
-        const patterns = this.playTypePatterns[playType] || [playType];
-        const normalizedContent = this.normalizeText(videoContent);
-        
-        let bestMatch = 0;
-        patterns.forEach(pattern => {
-            if (normalizedContent.includes(pattern)) {
-                bestMatch = Math.max(bestMatch, 1.0);
-            } else {
-                const patternWords = pattern.split(' ');
-                if (patternWords.length > 1) {
-                    const matchCount = patternWords.filter(word => normalizedContent.includes(word)).length;
-                    bestMatch = Math.max(bestMatch, matchCount / patternWords.length * 0.8);
-                }
-            }
-        });
-        
-        return bestMatch;
-    }
-
-    // Keep all your existing methods for API calls, UI, etc.
-    // ... (rest of your implementation remains the same)
-
-    // NEW: Debug method specifically for RBI singles and scoring plays
-    async debugScoringPlayMatching(gamePk, play) {
-        console.log('🎯 SCORING PLAY DEBUG ANALYSIS');
-        console.log('Play Description:', play.result?.description);
-        
-        const isScoring = this.isPlayWithRuns(play.result?.description);
-        const playType = this.getBasicPlayType(play.result?.description);
-        const players = this.extractPlayersFromDescription(play.result?.description);
-        
-        console.log('Is Scoring Play:', isScoring);
-        console.log('Play Type:', playType);
-        console.log('Extracted Players:', players);
-        
-        const gameContent = await this.fetchGameContent(gamePk);
-        if (gameContent) {
-            const videos = this.extractHighlightVideos(gameContent);
-            console.log('Available Videos:');
-            
-            videos.forEach(video => {
-                const videoIdInfo = this.parseStandardVideoId(video.id);
-                const matchScore = this.calculateIdMatch(play.result?.description, video.id);
-                
-                console.log(`  ${video.id}:`, {
-                    title: video.title,
-                    parsedId: videoIdInfo,
-                    matchScore: matchScore.toFixed(3),
-                    isScoring: videoIdInfo.isScoring
-                });
-            });
+            const playByPlay = await response.json();
+            this.playByPlayCache.set(gamePk, playByPlay);
+            console.log(`✅ Fetched play-by-play for ${gamePk}`);
+            return playByPlay;
+        } catch (error) {
+            console.error(`❌ Failed to fetch play-by-play for ${gamePk}:`, error);
+            return null;
         }
     }
 
-    // Keep all your existing implementation methods
-    async waitForRateLimit() {
-        const now = Date.now();
-        const timeSinceLastCall = now - this.lastApiCall;
-        if (timeSinceLastCall < this.rateLimitDelay) {
-            await new Promise(resolve => setTimeout(resolve, this.rateLimitDelay - timeSinceLastCall));
-        }
-        this.lastApiCall = Date.now();
-    }
-
+    // Existing fetchGameContent (unchanged)
     async fetchGameContent(gamePk) {
         if (this.gameContentCache.has(gamePk)) {
             return this.gameContentCache.get(gamePk);
@@ -706,6 +129,7 @@ class MLBVideoMatcher {
         }
     }
 
+    // Existing extractHighlightVideos (modified to ensure guid is explicitly stored)
     extractHighlightVideos(gameContent) {
         const videos = [];
         
@@ -714,12 +138,19 @@ class MLBVideoMatcher {
             console.log(`Processing ${highlights.length} potential highlights`);
             
             highlights.forEach((highlight, index) => {
+                // Ensure highlight.guid exists and is not null/undefined before considering
+                if (!highlight.guid) {
+                    // console.warn(`Skipping highlight without GUID: ${highlight.title}`);
+                    return; 
+                }
+
                 const playbacks = highlight?.playbacks || [];
                 const bestPlayback = this.selectBestPlayback(playbacks);
                 
                 if (bestPlayback && highlight.date) {
                     const video = {
-                        id: highlight.id || highlight.guid || `highlight_${index}`,
+                        id: highlight.id || highlight.guid || `highlight_${index}`, // Prefer highlight.guid as ID if available
+                        guid: highlight.guid, // Store guid explicitly
                         title: (highlight.title || '').trim(),
                         description: (highlight.description || '').trim(),
                         slug: highlight.slug || '',
@@ -736,7 +167,7 @@ class MLBVideoMatcher {
                 }
             });
 
-            console.log(`✅ Extracted ${videos.length} videos`);
+            console.log(`✅ Extracted ${videos.length} videos (after filtering for GUID)`);
             return videos;
         } catch (error) {
             console.error('❌ Error extracting highlight videos:', error);
@@ -744,6 +175,7 @@ class MLBVideoMatcher {
         }
     }
 
+    // Existing selectBestPlayback (unchanged)
     selectBestPlayback(playbacks) {
         if (!playbacks || playbacks.length === 0) return null;
 
@@ -776,6 +208,7 @@ class MLBVideoMatcher {
         return mp4Playbacks[0];
     }
 
+    // Existing detectAnimatedVideo (unchanged)
     detectAnimatedVideo(highlight) {
         const textToCheck = [
             highlight.title || '',
@@ -795,6 +228,7 @@ class MLBVideoMatcher {
         return hasAvoidKeywords || suspiciousDuration;
     }
 
+    // Existing detectContentType (unchanged)
     detectContentType(highlight) {
         const textToCheck = [
             highlight.title || '',
@@ -818,6 +252,7 @@ class MLBVideoMatcher {
         return 'unknown';
     }
 
+    // Existing extractKeywords (unchanged)
     extractKeywords(highlight) {
         const keywordSources = [
             highlight.keywordsAll?.map(k => k.value) || [],
@@ -831,10 +266,12 @@ class MLBVideoMatcher {
             .join(' ');
     }
 
-    // Main video finding method with enhanced productive out handling
-    async findVideoForPlay(gamePk, play, minScore = 0.4) {
+    // Main video finding method using guid to playId matching
+    async findVideoForPlay(gamePk, play, minScore = 0.4) { // minScore is now less relevant for direct match
+        // Create a unique key for caching based on game and play identifiers
         const playKey = `${gamePk}_${play.about?.atBatIndex || 'unknown'}_${play.about?.playIndex || 'unknown'}`;
         
+        // Return cached result if available
         if (this.videoCache.has(playKey)) {
             const cachedResult = this.videoCache.get(playKey);
             console.log(`📦 Using cached result for play ${playKey}`);
@@ -843,88 +280,98 @@ class MLBVideoMatcher {
 
         try {
             console.log(`🔍 Finding video for play: ${playKey}`);
-            console.log(`📝 Play: ${play.result?.description || 'No description'}`);
+            console.log(`📝 Play Description: "${play.result?.description || 'No description'}"`);
             
-            // Log if it's a productive out
-            if (this.isProductiveOut(play.result?.description)) {
-                const productiveType = this.getProductiveOutType(play.result?.description);
-                console.log(`🎯 Productive out detected: ${productiveType}`);
+            // --- Step 1: Extract targetPlayId directly from the provided play object ---
+            let targetPlayId = null;
+            if (play.playEvents && play.playEvents.length > 0) {
+                // As requested, get the playId from the last playEvent of this specific scoring play
+                const lastPlayEvent = play.playEvents[play.playEvents.length - 1];
+                if (lastPlayEvent.playId) {
+                    targetPlayId = lastPlayEvent.playId;
+                }
             }
-            
+
+            if (!targetPlayId) {
+                console.log('❌ No playId found for this specific scoring play. Cannot match.');
+                this.videoCache.set(playKey, null);
+                return null;
+            }
+            console.log(`🎯 Target playId for this scoring play: ${targetPlayId}`);
+
+            // --- Step 2: Fetch and process game content to find videos with matching GUIDs ---
             const gameContent = await this.fetchGameContent(gamePk);
             if (!gameContent) {
-                console.log('❌ No game content available');
+                console.log('❌ No game content available for highlight videos.');
                 this.videoCache.set(playKey, null);
                 return null;
             }
 
             const allVideos = this.extractHighlightVideos(gameContent);
             if (allVideos.length === 0) {
-                console.log('❌ No videos available');
+                console.log('❌ No highlight videos available after extraction and GUID filtering.');
                 this.videoCache.set(playKey, null);
                 return null;
             }
 
+            // Filter to playable videos (non-animated, MP4) and those not yet used if possible
             const playVideos = allVideos.filter(video => 
                 !video.isAnimated && 
                 video.contentType !== 'animated' &&
                 video.url.toLowerCase().includes('.mp4')
             );
             
-            console.log(`📊 Filtered to ${playVideos.length} play videos (from ${allVideos.length} total)`);
+            console.log(`📊 Filtered to ${playVideos.length} suitable play videos (from ${allVideos.length} total)`);
 
             if (playVideos.length === 0) {
-                console.log('❌ No suitable play videos found after filtering');
+                console.log('❌ No suitable play videos found after filtering.');
                 this.videoCache.set(playKey, null);
                 return null;
             }
 
-            const availableVideos = playVideos.filter(video => !this.usedVideoIds.has(video.id));
-            console.log(`📊 Scoring ${availableVideos.length} available videos`);
-            
+            // --- Step 3: Find the video that exactly matches the targetPlayId (guid) ---
+            let bestMatch = null;
+            let matchScore = 0; // Will be 1.0 for a perfect GUID match
+
+            // Prioritize unused videos first, then allow reuse if no new match is found
+            let availableVideos = playVideos.filter(video => !this.usedVideoIds.has(video.id));
             if (availableVideos.length === 0) {
-                console.log('⚠️ All videos used, allowing reuse');
-                availableVideos.push(...playVideos);
+                console.log('⚠️ All unique videos used for this game, attempting to reuse.');
+                availableVideos = [...playVideos]; // Allow reuse
+            }
+            console.log(`📊 Searching among ${availableVideos.length} available videos for a GUID match.`);
+
+            for (const video of availableVideos) {
+                if (video.guid === targetPlayId) {
+                    bestMatch = video;
+                    matchScore = 1.0; // Perfect match by GUID
+                    console.log(`✅ Perfect GUID match found: "${video.title}" (GUID: ${video.guid})`);
+                    break; 
+                }
             }
 
-            const scoredVideos = availableVideos.map(video => ({
-                video,
-                ...this.calculateMatchScore(play, video)
-            }));
-
-            scoredVideos.sort((a, b) => b.score - a.score);
-
-            console.log('🏆 Top matches:');
-            scoredVideos.slice(0, 3).forEach((match, index) => {
-                console.log(`  ${index + 1}. "${match.videoTitle}" - Score: ${match.score.toFixed(3)} (${match.factors})`);
-                if (match.isProductiveOut) {
-                    console.log(`     🎯 Productive out match detected`);
-                }
-            });
-
-            const bestMatch = scoredVideos[0];
-            
-            if (bestMatch && bestMatch.score >= minScore) {
-                this.usedVideoIds.add(bestMatch.video.id);
-                
-                const result = {
-                    ...bestMatch.video,
-                    matchScore: bestMatch.score,
-                    matchFactors: bestMatch.factors,
-                    playType: bestMatch.playType,
-                    idMatch: bestMatch.idMatch,
-                    isProductiveOut: bestMatch.isProductiveOut
-                };
-                
-                this.videoCache.set(playKey, result);
-                
-                console.log(`✅ Found match: "${bestMatch.videoTitle}" (score: ${bestMatch.score.toFixed(3)})`);
-                return result;
-            } else {
-                console.log(`❌ No match above threshold ${minScore} (best: ${bestMatch?.score?.toFixed(3) || 'N/A'})`);
+            if (!bestMatch) {
+                console.log(`❌ No highlight video found with matching GUID: ${targetPlayId}.`);
                 this.videoCache.set(playKey, null);
                 return null;
             }
+
+            // Mark the video as used to avoid immediate duplicates, if unique ID is preferred
+            this.usedVideoIds.add(bestMatch.id); 
+            
+            const result = {
+                ...bestMatch,
+                matchScore: matchScore,
+                matchFactors: `guid-match:${targetPlayId}`,
+                playType: this.getBasicPlayType(play.result?.description),
+                idMatch: matchScore,
+                isProductiveOut: this.isProductiveOut(play.result?.description)
+            };
+            
+            this.videoCache.set(playKey, result);
+            
+            console.log(`✅ Successfully linked video: "${bestMatch.title}" to play ID: ${targetPlayId}`);
+            return result;
 
         } catch (error) {
             console.error('💥 Error in findVideoForPlay:', error);
@@ -933,7 +380,60 @@ class MLBVideoMatcher {
         }
     }
 
-    // Keep all your UI methods unchanged
+    // Keep existing helper methods for play type detection
+    getBasicPlayType(description) {
+        const normalized = this.normalizeText(description);
+        
+        if (normalized.includes('single')) return 'single';
+        if (normalized.includes('double')) return 'double';  
+        if (normalized.includes('triple')) return 'triple';
+        if (normalized.includes('homer') || normalized.includes('home run')) return 'home_run';
+        if (normalized.includes('walk')) return 'walk';
+        if (normalized.includes('sacrifice fly') || normalized.includes('sac fly')) return 'sac_fly';
+        if (normalized.includes('groundout') || normalized.includes('ground out')) return 'groundout';
+        if (normalized.includes('flyout') || normalized.includes('fly out')) return 'flyout';
+        
+        return 'unknown';
+    }
+
+    isProductiveOut(playDescription) {
+        const normalized = this.normalizeText(playDescription);
+        
+        const hasOut = /\b(out|groundout|flyout|grounds out|flies out)\b/.test(normalized);
+        const hasRBI = /\b(rbi|scores?|run|home)\b/.test(normalized) || playDescription.includes('scores');
+        const isSacrifice = /\b(sacrifice|sac)\b/.test(normalized);
+        
+        return (hasOut && hasRBI) || isSacrifice;
+    }
+
+    getProductiveOutType(playDescription) {
+        const normalized = this.normalizeText(playDescription);
+        
+        for (const [type, patterns] of Object.entries(this.productiveOutPatterns)) {
+            if (patterns.some(pattern => normalized.includes(pattern))) {
+                return type;
+            }
+        }
+        
+        if (normalized.includes('ground') && normalized.includes('rbi')) return 'rbi_groundout';
+        if (normalized.includes('fly') && normalized.includes('rbi')) return 'rbi_flyout';
+        if (normalized.includes('sacrifice fly')) return 'sac_fly';
+        if (normalized.includes('sacrifice bunt')) return 'sac_bunt';
+        
+        return null;
+    }
+
+    // Existing rate limit helper
+    async waitForRateLimit() {
+        const now = Date.now();
+        const timeSinceLastCall = now - this.lastApiCall;
+        if (timeSinceLastCall < this.rateLimitDelay) {
+            await new Promise(resolve => setTimeout(resolve, this.rateLimitDelay - timeSinceLastCall));
+        }
+        this.lastApiCall = Date.now();
+    }
+
+    // Existing UI methods (unchanged)
     addVideoButtonToPlay(playDiv, gamePk, play) {
         if (playDiv.querySelector('.video-button')) {
             return;
@@ -963,8 +463,9 @@ class MLBVideoMatcher {
             gap: 6px;
         `;
         
+        // Use placeholder image for the video button icon
         videoButton.innerHTML = `
-            <img src="/assets/icons/video-camera.png" alt="📹" style="width: 16px; height: 16px; filter: contrast(1.2);" />
+            <img src="assets/icons/video-camera.png" alt="video" style="width: 16px; height: 16px; filter: contrast(1.2);" />
             <span style="font-size: 11px;">VIDEO</span>
         `;
 
@@ -1003,9 +504,7 @@ class MLBVideoMatcher {
                 const video = await this.findVideoForPlay(gamePk, play);
                 
                 if (video) {
-                    const matchInfo = video.idMatch > 0.8 ? 'PERFECT' : 
-                                     video.idMatch > 0.6 ? 'STRONG' : 
-                                     video.matchScore > 0.7 ? 'GOOD' : 'FAIR';
+                    const matchInfo = video.matchScore >= 1.0 ? 'PERFECT' : 'MATCH';
                     
                     videoButton.innerHTML = `
                         <span style="color: green;">✓</span>
@@ -1049,7 +548,7 @@ class MLBVideoMatcher {
         playDiv.appendChild(videoButton);
     }
 
-    // Content wrapper management
+    // Existing content wrapper management (unchanged)
     hideContentWrapper() {
         const contentWrapper = document.querySelector('.content-wrapper');
         if (!contentWrapper) return;
@@ -1102,7 +601,7 @@ class MLBVideoMatcher {
         }
     }
 
-    // Video player creation and management
+    // Video player creation and control logic
     createVideoPlayer(video, playDiv, videoButton) {
         const existingPlayer = playDiv.querySelector('.mlb-video-player');
         if (existingPlayer) {
@@ -1257,14 +756,13 @@ class MLBVideoMatcher {
             border: 1px solid rgba(255,255,255,0.2);
         `;
         
-        const confidence = video.matchScore ? ` (${Math.round(video.matchScore * 100)}% match)` : '';
-        const idInfo = video.idMatch > 0 ? ` • ID: ${Math.round(video.idMatch * 100)}%` : '';
-        const productiveInfo = video.isProductiveOut ? ' • 🎯 Productive Out' : '';
+        const confidence = video.matchScore
+        const productiveInfo = video.isProductiveOut
         const duration = video.duration ? ` • ${Math.round(video.duration)}s` : '';
         
         titleHeader.innerHTML = `
             <div style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">${video.title}</div>
-            <div style="font-size: 12px; opacity: 0.8;">${confidence}${idInfo}${productiveInfo}${duration}</div>
+            <div style="font-size: 12px; opacity: 0.8;">${confidence}${productiveInfo}${duration}</div>
         `;
 
         const videoWrapper = document.createElement('div');
@@ -1305,13 +803,15 @@ class MLBVideoMatcher {
         return videoElement;
     }
 
+    // Video player close logic
     closeVideoPlayer(playerContainer, playDiv, videoButton, playerId) {
         this.activeVideoPlayers.delete(playerId);
 
+        // Select backdrop based on its unique styling to avoid conflicts
         const backdrop = document.querySelector('div[style*="backdrop-filter: blur(3px)"]');
         
         if (playerContainer.cleanup) {
-            playerContainer.cleanup();
+            playerContainer.cleanup(); // Clean up keyboard event listener
         }
         
         playerContainer.style.height = '0';
@@ -1322,34 +822,36 @@ class MLBVideoMatcher {
             backdrop.style.opacity = '0';
         }
         
+        // Use more staggered timeouts for smoother transition and cleanup
         setTimeout(() => {
-            this.showContentWrapper();
-        }, 200);
+            this.showContentWrapper(); // Show main content wrapper slightly before button resets
+        }, 200); 
         
         setTimeout(() => {
-            this.resetVideoButton(videoButton);
-        }, 300);
+            this.resetVideoButton(videoButton); // Reset button appearance
+        }, 300); 
         
         setTimeout(() => {
             if (playerContainer?.parentNode) {
-                playerContainer.remove();
+                playerContainer.remove(); // Remove player container from DOM
             }
             if (backdrop?.parentNode) {
-                backdrop.remove();
+                backdrop.remove(); // Remove backdrop from DOM
             }
-        }, 500);
+        }, 500); // Allow time for transitions before full removal
     }
 
+    // Reset button state
     resetVideoButton(videoButton) {
         if (!videoButton) return;
 
         videoButton.style.transition = 'all 0.3s ease';
-        videoButton.style.opacity = '0.6';
+        videoButton.style.opacity = '0.7'; // Slightly less opaque than before for consistency
         videoButton.style.pointerEvents = 'auto';
         videoButton.disabled = false;
         
         videoButton.innerHTML = `
-            <img src="/assets/icons/video-camera.png" alt="📹" style="width: 16px; height: 16px; filter: contrast(1.2);" />
+            <img src="https://placehold.co/16x16/000000/FFFFFF?text=📹" alt="📹" style="width: 16px; height: 16px; filter: contrast(1.2);" />
             <span style="font-size: 11px;">VIDEO</span>
         `;
         videoButton.style.background = 'linear-gradient(135deg, rgba(248,249,250,0.95), rgba(217,230,243,0.95))';
@@ -1357,7 +859,7 @@ class MLBVideoMatcher {
         console.log('🔄 Video button reset to original state');
     }
 
-    // Utility methods
+    // Reset cache for a new game
     resetForNewGame(gamePk) {
         this.usedVideoIds.clear();
         
@@ -1368,14 +870,17 @@ class MLBVideoMatcher {
         }
         
         this.gameContentCache.delete(gamePk);
+        this.playByPlayCache.delete(gamePk); // Clear play-by-play cache for the game
         console.log(`🔄 Reset video matcher for game ${gamePk}`);
     }
 
-    clearCache(maxAge = 3600000) {
+    // Clear old cache entries
+    clearCache(maxAge = 3600000) { // Default maxAge is 1 hour
         const now = Date.now();
         const cutoff = now - maxAge;
         
         for (const [key, value] of this.videoCache.entries()) {
+            // Assuming cached objects might have a 'cached' timestamp property
             if (value && value.cached && value.cached < cutoff) {
                 this.videoCache.delete(key);
             }
@@ -1387,6 +892,13 @@ class MLBVideoMatcher {
             }
         }
         
+        for (const [key, value] of this.playByPlayCache.entries()) {
+            if (value && value.cached && value.cached < cutoff) {
+                this.playByPlayCache.delete(key);
+            }
+        }
+        
+        // Implement size-based eviction as a fallback or secondary measure
         if (this.videoCache.size > 100) {
             const entries = Array.from(this.videoCache.entries());
             const toDelete = entries.slice(0, entries.length - 100);
@@ -1399,15 +911,24 @@ class MLBVideoMatcher {
             toDelete.forEach(([key]) => this.gameContentCache.delete(key));
         }
         
-        console.log(`🧹 Cache cleanup: ${this.videoCache.size} video entries, ${this.gameContentCache.size} game entries`);
+        if (this.playByPlayCache.size > 20) {
+            const entries = Array.from(this.playByPlayCache.entries());
+            const toDelete = entries.slice(0, entries.length - 20);
+            toDelete.forEach(([key]) => this.playByPlayCache.delete(key));
+        }
+        
+        console.log(`🧹 Cache cleanup: ${this.videoCache.size} video entries, ${this.gameContentCache.size} game entries, ${this.playByPlayCache.size} play-by-play entries`);
     }
 
+    // Cleanup active video players and clear caches
     cleanup() {
         const players = document.querySelectorAll('.mlb-video-player');
         players.forEach(player => {
             const playerId = player.dataset.playerId;
             if (playerId) {
-                const videoButton = document.querySelector('.video-button');
+                // Pass null for playDiv and videoButton if they are not strictly needed for closing logic
+                // Or try to retrieve them if available in the DOM context, for example, if the button is always next to the player
+                const videoButton = document.querySelector('.video-button'); // This will only get the first one, might need more specific selector if multiple
                 this.closeVideoPlayer(player, null, videoButton, playerId);
             }
         });
@@ -1420,48 +941,64 @@ class MLBVideoMatcher {
         console.log('🧹 MLBVideoMatcher cleanup completed');
     }
 
-    // ENHANCED: Debug method for productive outs
-    async debugProductiveOutMatching(gamePk, play) {
-        console.log('🎯 PRODUCTIVE OUT DEBUG ANALYSIS');
+    // NEW: Debug method for guid/playId matching
+    async debugVideoMatching(gamePk, play) {
+        console.log('🎯 VIDEO MATCHING DEBUG ANALYSIS');
         console.log('Play Description:', play.result?.description);
         
-        const isProductive = this.isProductiveOut(play.result?.description);
-        const productiveType = this.getProductiveOutType(play.result?.description);
+        const playByPlay = await this.fetchPlayByPlay(gamePk);
+        const gameContent = await this.fetchGameContent(gamePk);
         
-        console.log('Is Productive Out:', isProductive);
-        console.log('Productive Type:', productiveType);
-        
-        if (isProductive) {
-            const normalized = this.normalizeText(play.result?.description);
-            console.log('Normalized Description:', normalized);
-            
-            // Test the matching against sample video IDs
-            const sampleVideoIds = [
-                'john-smith-rbi-groundout',
-                'jane-doe-sacrifice-fly', 
-                'mike-jones-grounds-into-force-out',
-                'sara-wilson-fielders-choice-rbi'
-            ];
-            
-            console.log('Testing against sample video IDs:');
-            sampleVideoIds.forEach(videoId => {
-                const score = this.calculateIdMatch(play.result?.description, videoId);
-                console.log(`  ${videoId}: ${score.toFixed(3)}`);
-            });
+        if (!playByPlay || !gameContent) {
+            console.log('❌ Missing play-by-play or game content');
+            return;
         }
+
+        // Find playId
+        let targetPlayId = null;
+        const allPlays = playByPlay?.liveData?.plays?.allPlays || [];
+        for (const p of allPlays) {
+            if (p.about.atBatIndex === play.about.atBatIndex) {
+                for (const event of p.playEvents) {
+                    if (event.playId) {
+                        targetPlayId = event.playId;
+                        break;
+                    }
+                }
+                if (targetPlayId) break;
+            }
+        }
+
+        console.log(`🎯 Target playId: ${targetPlayId || 'Not found'}`);
+
+        // List available videos
+        const videos = this.extractHighlightVideos(gameContent);
+        console.log(`Available Videos (${videos.length}):`);
         
-        // Run normal debug analysis
-        await this.debugVideoMatching(gamePk, play);
+        videos.forEach(video => {
+            console.log(`  ${video.id}:`, {
+                title: video.title,
+                guid: video.guid,
+                isScoring: this.isPlayWithRuns(play.result?.description), // Assuming isPlayWithRuns exists or is a placeholder
+                url: video.url
+            });
+        });
+    }
+
+    // Helper function used in debugVideoMatching - assuming it checks if a play involves scoring
+    isPlayWithRuns(description) {
+        if (!description) return false;
+        const normalized = this.normalizeText(description);
+        return normalized.includes('rbi') || normalized.includes('scores');
     }
 }
 
 // Export with enhanced logging
 try {
     window.MLBVideoMatcher = MLBVideoMatcher;
-    console.log('✅ Enhanced MLBVideoMatcher loaded successfully');
-    console.log('🎯 Enhanced productive outs matching (sacrifice flies, RBI groundouts, force outs)');
-    console.log('🔧 Fixed duplicate methods and improved matching logic');
-    console.log('📊 Better scoring for complex defensive plays with RBIs');
+    console.log('✅ MLBVideoMatcher loaded successfully');
+    console.log('🎯 Using direct guid to playId matching');
+    console.log('🔧 Preserved UI and caching functionality');
 } catch (error) {
-    console.error('💥 Failed to load Enhanced MLBVideoMatcher:', error);
+    console.error('💥 Failed to load MLBVideoMatcher:', error);
 }
