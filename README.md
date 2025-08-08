@@ -4,6 +4,8 @@ https://chromewebstore.google.com/detail/mlb-scoreboard/agpdhoieggfkoamgpgnldkgd
 
 <img width="615" height="482" alt="Screenshot 2025-07-12 210804" src="https://github.com/user-attachments/assets/d12b2195-adf7-4041-aa9c-567da884ce5a" />
 
+<img width="605" height="604" alt="Screenshot 2025-08-07 092457" src="https://github.com/user-attachments/assets/e6b26fa6-5ae0-413c-af2d-8e250fb7d001" />
+
 <img width="608" height="548" alt="Screenshot 2025-07-12 210856" src="https://github.com/user-attachments/assets/03052f04-7525-4b4d-99a8-cef02ec4e42b" />
 
 <img width="605" height="602" alt="Screenshot 2025-07-12 210923" src="https://github.com/user-attachments/assets/ce8eff05-456f-459c-b7dc-9304547d31a4" />
