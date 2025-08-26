@@ -178,6 +178,7 @@ function reapplyTabVisibility() {
 function toggleContainers(showDynamic, isBoxscoreTab = false, isScoringPlaysTab = false, isAllPlaysTab = false) {
     const gameInfoContainer = document.getElementById('game-info');
     const gameplayInfoContainer = document.getElementById('gameplay-info-container');
+    const videoButtonsSection = document.getElementById('video-buttons');
     const topPerformer = document.getElementById('top-performers');
     const pitchDataSection = document.getElementById('pitch-data-section');
     const boxScoreContainer = document.getElementById('boxscore-content');
@@ -186,18 +187,20 @@ function toggleContainers(showDynamic, isBoxscoreTab = false, isScoringPlaysTab 
     
 
     // Store original display values if not already stored
-    ['game-info', 'gameplay-info-container', 'top-performers', 'pitch-data-section'].forEach(storeOriginalDisplay);
+    ['game-info', 'gameplay-info-container', 'video-buttons', 'top-performers', 'pitch-data-section'].forEach(storeOriginalDisplay);
 
     if (showDynamic) {
         // Show dynamic containers
         if (gameInfoContainer) gameInfoContainer.style.display = originalDisplayValues['game-info'] || '';
         if (gameplayInfoContainer) gameplayInfoContainer.style.display = originalDisplayValues['gameplay-info-container'] || '';
+        if (videoButtonsSection) videoButtonsSection.style.display = originalDisplayValues['video-buttons'] || '';
         if (topPerformer) topPerformer.style.display = originalDisplayValues['top-performers'] || '';
         if (pitchDataSection) pitchDataSection.style.display = originalDisplayValues['pitch-data-section'] || '';
     } else {
         // Hide dynamic containers
         if (gameInfoContainer) gameInfoContainer.style.display = originalDisplayValues['game-info'] || '';
         if (gameplayInfoContainer) gameplayInfoContainer.style.display = 'none';
+        if (videoButtonsSection) videoButtonsSection.style.display = 'none';
         if (topPerformer) topPerformer.style.display = 'none';
         if (pitchDataSection) pitchDataSection.style.display = 'none';
     }
@@ -640,7 +643,7 @@ toggleContainers(true);
 
    // ** When the Game is Over **    
    
-        if (gameState === "Final" || gameState === "Game Over") {
+if (gameState === "Final" || gameState === "Game Over") {
     awayPlayerStats.innerHTML = `<p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>` || "N/A" ;
     homePlayerStats.innerHTML = `<p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>` || "N/A" ;
     document.getElementById("scorebug-wrapper").style.display = "none";
@@ -650,10 +653,260 @@ toggleContainers(true);
         document.getElementById("homePlayerStats").style.display = "none";
     }
     
-
     // **Find the gameplay-info-container**
     const gameplayContainer = document.getElementById("gameplay-info-container");
     if (!gameplayContainer) return; // Prevents errors if it doesn't exist
+
+    // 🚨 Safeguard: hide/remove video buttons for Spring Training games
+    if (data?.gameData?.game?.type === "S" || data?.gameData?.game?.type === "E") {
+        const existingVideoButtons = document.getElementById("video-buttons");
+        if (existingVideoButtons) {
+            existingVideoButtons.style.display = "none";
+        }
+        return; // Do not build video buttons
+    }
+
+    // **Add Video Buttons Section**
+    let videoButtonsContainer = document.getElementById("video-buttons");
+    if (!videoButtonsContainer) {
+        videoButtonsContainer = document.createElement("div");
+        videoButtonsContainer.id = "video-buttons";
+        videoButtonsContainer.classList.add("video-buttons-section");
+
+        // **Get MLB Video Matcher instance**
+        const getVideoMatcher = () => {
+            if (window.MLBVideoMatcher && window.videoMatcher) {
+                return window.videoMatcher;
+            } else if (window.MLBVideoMatcher) {
+                window.videoMatcher = new window.MLBVideoMatcher();
+                return window.videoMatcher;
+            }
+            return null;
+        };
+
+        // **Extract best MP4 video URL from playbacks**
+        const extractVideoUrl = (highlight) => {
+            if (!highlight || !highlight.playbacks || highlight.playbacks.length === 0) {
+                return null;
+            }
+
+            // Filter for MP4 playbacks only
+            const mp4Playbacks = highlight.playbacks.filter(playback => {
+                const url = (playback.url || '').toLowerCase();
+                const name = (playback.name || '').toLowerCase();
+                
+                // Must end in .mp4 and preferably be MP4AVC format
+                return url.endsWith('.mp4') && (name.includes('mp4avc') || url.includes('.mp4'));
+            });
+
+            if (mp4Playbacks.length === 0) {
+                console.log('No MP4 playbacks found for highlight');
+                return null;
+            }
+
+            // Prefer higher quality MP4 videos
+            const preferredQualities = ['2500K', '1800K', '1200K', '800K', '600K', '450K'];
+            
+            for (const quality of preferredQualities) {
+                const qualityPlayback = mp4Playbacks.find(p => 
+                    p.name && p.name.includes(quality)
+                );
+                if (qualityPlayback) {
+                    return qualityPlayback.url;
+                }
+            }
+
+            // Return first available MP4 if no preferred quality found
+            return mp4Playbacks[0].url;
+        };
+
+        // **Fetch video content from MLB API**
+        const fetchVideoContent = async (gamePk) => {
+            try {
+                const response = await fetch(`https://statsapi.mlb.com/api/v1/game/${gamePk}/content`);
+                const contentData = await response.json();
+                
+                // Get highlight items - note the correct path is highlights.highlights.items
+                const highlights = contentData?.highlights?.highlights?.items || [];
+                const gameRecap = highlights[0]; // First item for Game Recap
+                const condensedGame = highlights[1]; // Second item for Condensed Game
+                
+                // Extract MP4 URLs
+                const gameRecapUrl = gameRecap ? extractVideoUrl(gameRecap) : null;
+                const condensedGameUrl = condensedGame ? extractVideoUrl(condensedGame) : null;
+                
+                return { 
+                    gameRecap: gameRecap ? { ...gameRecap, videoUrl: gameRecapUrl } : null,
+                    condensedGame: condensedGame ? { ...condensedGame, videoUrl: condensedGameUrl } : null
+                };
+            } catch (error) {
+                console.error("Error fetching video content:", error);
+                return { gameRecap: null, condensedGame: null };
+            }
+        };
+
+        // **Create video buttons with click handlers**
+        const createVideoButtons = async () => {
+            const gamePk = data.gamePk; // Adjust this based on your data structure
+            const videoContent = await fetchVideoContent(gamePk);
+            const videoMatcher = getVideoMatcher();
+
+            const gameRecapHandler = (e) => {
+                e.stopPropagation();
+                
+                if (videoContent.gameRecap && videoContent.gameRecap.videoUrl) {
+                    if (videoMatcher) {
+                        // Use MLBVideoMatcher's video player system
+                        const videoData = {
+                            title: videoContent.gameRecap.title || 'Game Recap',
+                            description: videoContent.gameRecap.description || '',
+                            url: videoContent.gameRecap.videoUrl,
+                            duration: videoContent.gameRecap.duration || 0,
+                            id: videoContent.gameRecap.id || 'game-recap',
+                            guid: videoContent.gameRecap.guid || 'game-recap'
+                        };
+                        
+                        // Create a temporary container for the video player
+                        const tempDiv = document.createElement('div');
+                        tempDiv.style.position = 'relative';
+                        document.body.appendChild(tempDiv);
+                        
+                        videoMatcher.createVideoPlayer(videoData, tempDiv, e.target);
+                        
+                        // Clean up temp div after video player is created
+                        setTimeout(() => {
+                            if (tempDiv.parentNode) {
+                                tempDiv.remove();
+                            }
+                        }, 1000);
+                    } else {
+                        // Fallback to opening in new tab
+                        window.open(videoContent.gameRecap.videoUrl, '_blank');
+                    }
+                } else {
+                    alert('Game Recap video not available');
+                }
+            };
+
+            const condensedGameHandler = (e) => {
+                e.stopPropagation();
+                
+                if (videoContent.condensedGame && videoContent.condensedGame.videoUrl) {
+                    if (videoMatcher) {
+                        // Use MLBVideoMatcher's video player system
+                        const videoData = {
+                            title: videoContent.condensedGame.title || 'Condensed Game',
+                            description: videoContent.condensedGame.description || '',
+                            url: videoContent.condensedGame.videoUrl,
+                            duration: videoContent.condensedGame.duration || 0,
+                            id: videoContent.condensedGame.id || 'condensed-game',
+                            guid: videoContent.condensedGame.guid || 'condensed-game'
+                        };
+                        
+                        // Create a temporary container for the video player
+                        const tempDiv = document.createElement('div');
+                        tempDiv.style.position = 'relative';
+                        document.body.appendChild(tempDiv);
+                        
+                        videoMatcher.createVideoPlayer(videoData, tempDiv, e.target);
+                        
+                        // Clean up temp div after video player is created
+                        setTimeout(() => {
+                            if (tempDiv.parentNode) {
+                                tempDiv.remove();
+                            }
+                        }, 1000);
+                    } else {
+                        // Fallback to opening in new tab
+                        window.open(videoContent.condensedGame.videoUrl, '_blank');
+                    }
+                } else {
+                    alert('Condensed Game video not available');
+                }
+            };
+
+            return { gameRecapHandler, condensedGameHandler };
+        };
+
+        // **Create the HTML structure for video buttons with MLB styling**
+        videoButtonsContainer.innerHTML = `
+            <div class="video-buttons-row" style="display: flex; justify-content: center; gap: 15px; padding: 15px 0;">
+                <button id="game-recap-btn" class="video-button game-recap-button" style="
+                    background: linear-gradient(135deg, rgba(248,249,250,0.95), rgba(217,230,243,0.95));
+                    border: 1px solid rgba(255,255,255,0.3);
+                    padding: 10px 18px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    backdrop-filter: blur(8px);
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                ">
+                    <img src="assets/icons/video-camera.png" alt="video" style="width: 16px; height: 16px; filter: contrast(1.2);" onerror="this.style.display='none';" />
+                    Game Recap
+                </button>
+                <button id="condensed-game-btn" class="video-button condensed-game-button" style="
+                    background: linear-gradient(135deg, rgba(248,249,250,0.95), rgba(217,230,243,0.95));
+                    border: 1px solid rgba(255,255,255,0.3);
+                    padding: 10px 18px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    backdrop-filter: blur(8px);
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                ">
+                    <img src="assets/icons/video-camera.png" alt="video" style="width: 16px; height: 16px; filter: contrast(1.2);" onerror="this.style.display='none';" />
+                    Condensed Game
+                </button>
+            </div>
+        `;
+
+        // **Insert video buttons container after gameplay-info-container**
+        gameplayContainer.parentNode.insertBefore(videoButtonsContainer, gameplayContainer.nextSibling);
+
+        // **Add event listeners to buttons after they're inserted into DOM**
+        createVideoButtons().then(({ gameRecapHandler, condensedGameHandler }) => {
+            const gameRecapBtn = document.getElementById("game-recap-btn");
+            const condensedGameBtn = document.getElementById("condensed-game-btn");
+            
+            // Add hover effects matching MLBVideoMatcher style
+            const addHoverEffects = (button) => {
+                button.addEventListener('mouseover', () => {
+                    if (!button.disabled) {
+                        button.style.transform = 'scale(1.08) translateY(-1px)';
+                        button.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+                        button.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(217,230,243,0.98))';
+                    }
+                });
+                
+                button.addEventListener('mouseleave', () => {
+                    if (!button.disabled) {
+                        button.style.transform = 'scale(1) translateY(0)';
+                        button.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                        button.style.background = 'linear-gradient(135deg, rgba(248,249,250,0.95), rgba(217,230,243,0.95))';
+                    }
+                });
+            };
+            
+            if (gameRecapBtn) {
+                addHoverEffects(gameRecapBtn);
+                gameRecapBtn.addEventListener('click', gameRecapHandler);
+            }
+            if (condensedGameBtn) {
+                addHoverEffects(condensedGameBtn);
+                condensedGameBtn.addEventListener('click', condensedGameHandler);
+            }
+        });
+    }
 
     // **Check if Top Performers already exist**
     let topPerformersContainer = document.getElementById("top-performers");
@@ -725,14 +978,18 @@ toggleContainers(true);
         </div>
     `;
 
-        // **Insert it AFTER gameplay-info-container**
-        gameplayContainer.parentNode.insertBefore(topPerformersContainer, gameplayContainer.nextSibling);
+        // **Insert top performers AFTER video buttons container**
+        const videoButtons = document.getElementById("video-buttons");
+        if (videoButtons) {
+            videoButtons.parentNode.insertBefore(topPerformersContainer, videoButtons.nextSibling);
+        } else {
+            // Fallback: insert after gameplay-info-container if video buttons don't exist
+            gameplayContainer.parentNode.insertBefore(topPerformersContainer, gameplayContainer.nextSibling);
+        }
     }
 
     return;
 }
-        
-        
         
         if (gameState === "Pre-Game" || gameState === "Scheduled" || gameState === "Warmup") {
             document.getElementById("scorebug-wrapper").style.display = "none";

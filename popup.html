@@ -381,7 +381,6 @@ body.dark-mode #popup-container {
 
 #top-performers {
     text-align: center;
-    margin-top: 10px;
     color: #041e41;
 }
 
@@ -457,8 +456,8 @@ body.dark-mode #popup-container {
 }
 
 .performer-image {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     border: 3px solid #D7827E;
     object-fit: cover;
@@ -764,6 +763,17 @@ h4 {
 .field-display {
     flex-shrink: 0;
 }
+
+.video-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.video-button:hover {
+  transform: scale(1.08) translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(217,230,243,0.98));
+}
+
     </style>
     </div>
 </head>

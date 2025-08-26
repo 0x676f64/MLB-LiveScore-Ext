@@ -362,21 +362,11 @@ class MLBVideoMatcher {
 
             videoButton.disabled = true;
             const originalContent = videoButton.innerHTML;
-            videoButton.innerHTML = `
-                <div style="width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.3); border-top: 2px solid rgba(0,0,0,0.8); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <span style="font-size: 11px;">SEARCHING</span>
-            `;
-            videoButton.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,248,255,0.9))';
 
             try {
                 const video = await this.findVideoForPlay(gamePk, play);
                 
                 if (video) {
-                    videoButton.innerHTML = `
-                        <span style="color: green;">✓</span>
-                        <span style="font-size: 11px;">PERFECT MATCH</span>
-                    `;
-                    videoButton.style.background = 'linear-gradient(135deg, rgba(220,252,231,0.9), rgba(187,247,208,0.9))';
                     
                     setTimeout(() => {
                         this.createVideoPlayer(video, playDiv, videoButton);
@@ -705,21 +695,14 @@ class MLBVideoMatcher {
 
     // Reset button state
     resetVideoButton(videoButton) {
-        if (!videoButton) return;
+    if (!videoButton) return;
 
-        videoButton.style.transition = 'all 0.3s ease';
-        videoButton.style.opacity = '0.7';
-        videoButton.style.pointerEvents = 'auto';
-        videoButton.disabled = false;
-        
-        videoButton.innerHTML = `
-            <img src="assets/icons/video-camera.png" alt="video" style="width: 16px; height: 16px; filter: contrast(1.2);" />
-            <span style="font-size: 11px;">VIDEO</span>
-        `;
-        videoButton.style.background = 'linear-gradient(135deg, rgba(248,249,250,0.95), rgba(217,230,243,0.95))';
-        
-        console.log('🔄 Video button reset to original state');
-    }
+    videoButton.style.transition = 'all 0.3s ease';
+    videoButton.style.opacity = '0.7';
+    videoButton.style.pointerEvents = 'auto';
+    videoButton.disabled = false;
+
+}
 
     // Cache management
     resetForNewGame(gamePk) {
