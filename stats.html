@@ -53,8 +53,8 @@
 
     /* Team logos only */
     .team-logo {
-    width: 70px;
-    height: 70px;
+    width: 67px;
+    height: 67px;
     cursor: pointer;
     transition: transform 0.3s ease;
     }
@@ -62,6 +62,32 @@
     .team-logo:hover {
     transform: scale(1.2);
     }
+
+  #leaderboard-btn {
+    display: block;
+    margin: 1px auto; /* centers horizontally */
+    background: #041e41ec;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #f7fafc;
+    padding: 5px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: rgba(4, 26, 124, 0.295) 0px 6px 20px;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 40%;
+}
+
+a {
+  text-decoration: none;
+}
+
+#leaderboard-btn:hover {
+  transform: scale(1.1); 
+  color: #fc1153;
+}
+
 
    /* --- Navigation Container --- */
 .nav-container {
@@ -110,6 +136,10 @@
         <img src="assets/teams-darkmode/1.svg" alt="MLB Icon" class="header-logo">
     </div>
     <h1>Select a Team to View Stats</h1>
+    <a href="leaderboard.html">
+      <button id="leaderboard-btn">Leaderboards</button>
+    </a>
+
 
     <section id="team-grid">
         <a href="stats-dashboard.html?teamName=Yankees&logo=https://a.espncdn.com/i/teamlogos/mlb/500/nyy.png">

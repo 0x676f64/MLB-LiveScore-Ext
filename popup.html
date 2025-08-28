@@ -174,6 +174,12 @@ body.dark-mode #popup-container {
     color: #bf0d3d;
 }
 
+.prob-stats {
+    font-size: 12px;
+    color: #bf0d3d;
+    font-weight: 400;
+}
+
 .player-stat {
     margin: 2px 0;
     font-size: 0.9em;
@@ -772,6 +778,233 @@ h4 {
   transform: scale(1.08) translateY(-1px);
   box-shadow: 0 6px 20px rgba(0,0,0,0.25);
   background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(217,230,243,0.98));
+}
+
+/* Lineup Container Styles */
+.lineup-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 8px;
+}
+
+.lineup-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 18px;
+    font-size: 11px;
+}
+
+/* Away Team Lineup - Numbers on Outside (Left) */
+.away-lineup {
+    display: flex;
+    align-items: center;
+    flex: 0 0 120px;
+    gap: 4px;
+}
+
+.away-lineup .lineup-num {
+    flex: 0 0 12px;
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+}
+
+.away-lineup .hand {
+    flex: 0 0 12px;
+    font-size: 9px;
+    text-align: center;
+}
+
+.away-lineup .player-name-short {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Home Team Lineup - Numbers on Outside (Right) */
+.home-lineup {
+    display: flex;
+    align-items: center;
+    flex: 0 0 120px;
+    gap: 4px;
+    flex-direction: row-reverse;
+}
+
+.home-lineup .lineup-num {
+    flex: 0 0 12px;
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+}
+
+.home-lineup .field {
+    flex: 0 0 16px;
+    font-size: 9px;
+    text-align: center;
+    color: #888;
+}
+
+.home-lineup .hand {
+    flex: 0 0 12px;
+    font-size: 9px;
+    text-align: center;
+}
+
+.home-lineup .player-name-short {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* Progress Bar Container - Center */
+.avg-progress-container {
+    flex: 0 0 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 8px;
+}
+
+.avg-progress-bar {
+    position: relative;
+    width: 50px;
+    height: 12px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.avg-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444 0%, #ffaa00 50%, #00aa44 100%);
+    transition: width 0.3s ease;
+    border-radius: 5px;
+}
+
+.avg-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    font-weight: bold;
+    color: #000;
+    text-shadow: 0 0 2px white;
+    z-index: 2;
+}
+
+/* Responsive adjustments for tight spaces */
+@media (max-width: 400px) {
+    .lineup-row {
+        font-size: 10px;
+    }
+    
+    .away-lineup, .home-lineup {
+        flex: 0 0 100px;
+    }
+    
+    .avg-progress-container {
+        flex: 0 0 45px;
+        margin: 0 4px;
+    }
+    
+    .avg-progress-bar {
+        width: 40px;
+        height: 10px;
+    }
+    
+    .avg-text {
+        font-size: 7px;
+    }
+}
+
+#lineups-container {
+    position: relative;
+    padding-left: 140px;   /* Make room for away lineup */
+    padding-right: 140px;  /* Make room for home lineup */
+}
+
+.lineup-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    height: 24px;
+}
+
+.away-row {
+    justify-content: flex-start;
+}
+
+.home-row {
+    justify-content: flex-end;
+}
+
+.away-lineup,
+.home-lineup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.away-lineup .lineup-num,
+.home-lineup .lineup-num {
+    font-weight: bold;
+    min-width: 16px;
+}
+
+.hand {
+    font-size: 0.9em;
+    color: #bf0d3d;
+}
+
+.field {
+    font-size: 0.85em;
+    color: #bf0d3d;
+}
+
+.avg-progress-container {
+    margin: 0 8px;
+    width: 80px;
+    justify-content: center;
+}
+
+.avg-progress-bar {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 0 2px rgb(231, 194, 194);
+}
+
+.avg-fill {
+    height: 100%;
+    background: #aaa; /* Muted gray */
+    width: 0;
+    transition: width 0.4s ease;
+}
+
+.avg-text {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #4dff07;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.avg-progress-bar:hover .avg-text {
+    opacity: 1;
 }
 
     </style>

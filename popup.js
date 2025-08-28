@@ -990,7 +990,8 @@ if (gameState === "Final" || gameState === "Game Over") {
 
     return;
 }
-        
+       
+// ** When game has not started yet - Pre Game Data and Info **
         if (gameState === "Pre-Game" || gameState === "Scheduled" || gameState === "Warmup") {
             document.getElementById("scorebug-wrapper").style.display = "none";
             document.getElementById("tabs-container").style.display = "none";
@@ -999,12 +1000,19 @@ if (gameState === "Final" || gameState === "Game Over") {
             if (data.gameData.probablePitchers) {
                 const awayPitcher = data.gameData.probablePitchers.away;
                 const homePitcher = data.gameData.probablePitchers.home;
+            // Get Probable Pitchers IDs
+                const awayId = awayPitcher.id;
+                const homeId = homePitcher.id;
+            // Pull season stats from the IDs that were previously pulled 
+                const awaySeasonStats = awayId ? data.liveData.boxscore.teams.away.players[`ID${awayId}`]?.seasonStats.pitching : null;
+                const homeSeasonStats = homeId ? data.liveData.boxscore.teams.home.players[`ID${homeId}`]?.seasonStats.pitching : null;
 
                 
                 if (awayPitcher) {
                     awayPlayerStats.innerHTML = `
-                        <p class="player-name">${awayPitcher.fullName}</p>
                         <p class="player-position">Probable Pitcher</p>
+                        <p class="player-name">${awayPitcher.fullName}</p>
+                        <p class="prob-stats">${awaySeasonStats?.era || '---'} | ${awaySeasonStats?.inningsPitched || '0'} | ${awaySeasonStats?.strikeOuts || '0'}</p>
                         <p class="lineup">1. <span class="hand">${awayHandOne}</span> ${playerOne} <span class="field">${awayFieldOne}</span></p>
                         <p class="lineup">2. <span class="hand">${awayHandTwo}</span> ${playerTwo} <span class="field">${awayFieldTwo}</span></p>
                         <p class="lineup">3. <span class="hand">${awayHandThree}</span> ${playerThree} <span class="field">${awayFieldThree}</span></p>
@@ -1019,8 +1027,9 @@ if (gameState === "Final" || gameState === "Game Over") {
                 
                 if (homePitcher) {
                     homePlayerStats.innerHTML = `
-                        <p class="player-name">${homePitcher.fullName}</p>
                         <p class="player-position">Probable Pitcher</p>
+                        <p class="player-name">${homePitcher.fullName}</p>
+                        <p class="prob-stats">${homeSeasonStats?.era || '---'} | ${homeSeasonStats?.inningsPitched || '0'} | ${homeSeasonStats?.strikeOuts || '0'}</p>
                         <p class="lineup">1. <span class="hand">${homeHandOne}</span> ${homeOne} <span class="field">${homeFieldOne}</span></p>
                         <p class="lineup">2. <span class="hand">${homeHandTwo}</span> ${homeTwo} <span class="field">${homeFieldTwo}</span></p>
                         <p class="lineup">3. <span class="hand">${homeHandThree}</span> ${homeThree} <span class="field">${homeFieldThree}</span></p>
@@ -1106,12 +1115,6 @@ if (gameState === "Final" || gameState === "Game Over") {
                 }
             }
         }
-
-        var newContent = `
-            <div>
-                <p>HELP ME I SUCK!</p>
-            </div>
-        `
     }
 
     async function fetchGameData(gamePk) {
