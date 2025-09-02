@@ -3261,4 +3261,4 @@ if (!document.querySelector('#scoring-plays-styles')) {
     `;
     document.head.appendChild(style);
 }
-});                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+});
