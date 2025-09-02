@@ -200,9 +200,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         // Set min and max dates for the datepicker
         const minDate = new Date();
-        minDate.setDate(minDate.getDate() - 30); // Allow 30 days back
+        minDate.setDate(minDate.getDate() - 15000); // Allow 41 years back
         const maxDate = new Date();
-        maxDate.setDate(maxDate.getDate() + 30); // Allow 30 days forward
+        maxDate.setDate(maxDate.getDate() + 15000); // Allow 41 years forward
         
         dateInput.min = formatDateForAPI(minDate);
         dateInput.max = formatDateForAPI(maxDate);

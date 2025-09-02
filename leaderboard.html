@@ -16,16 +16,20 @@
         box-sizing: border-box;
     }
 
+    :root {
+        --bottom-nav-height: 60px; /* Set your actual nav bar height here */
+    }
+
     html {
         width: 100%;
-        max-width: 427px;
+        max-width: 700px;
         scrollbar-width: none;
         height: auto;
     }
 
     body {
         font-family: "Rubik", sans-serif;
-        width: 427px;
+        width: 700px;
         background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
         color: #2d3748;
         font-size: 10px;
@@ -55,7 +59,6 @@
         background: white;
         border-radius: 12px;
         padding: 16px;
-        margin-bottom: 20px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         border: 1px solid #e2e8f0;
     }
@@ -214,7 +217,7 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         backdrop-filter: blur(10px);
         background-color: transparent;
-        opacity: 0.2;
+        opacity: 0.4;
     }
 
     .scroll-btn:hover {
@@ -324,6 +327,10 @@
         background: #f8fafc;
     }
 
+    th, td, .rank, .player-name, .team {
+        position: sticky;
+    }
+
     .rank {
         font-weight: 600;
         color: #3b82f6;
@@ -361,23 +368,72 @@
         margin: 20px 0;
     }
 
+    #tableHeader tr,
+    #tableHeader th {
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 20; /* Higher than column z-index */
+    }
+
+    /* Set specific widths for sticky columns */
+    th:nth-child(1), td:nth-child(1) { /* Rank */
+        position: sticky;
+        left: 0;
+        background-color: white;
+        z-index: 12;
+    }
+
+    th:nth-child(2), td:nth-child(2) { /* Player Name */
+        position: sticky;
+        left: 25px; /* Exactly the width of rank column */
+        background-color: white;
+        z-index: 11;
+    }
+
+    th:nth-child(3), td:nth-child(3) { /* Team */
+        position: sticky;
+        left: 100px; /* 50px (rank) + 150px (player) = 200px */
+        width: 90px; /* Width for team logo/abbr */
+        min-width: 90px;
+        background-color: white;
+        z-index: 10;
+        border-right: 2px solid #ddd;
+    }
+
+    /* Prevent text overflow in player name column */
+    .player-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Center align rank and team columns */
+    .rank, .team {
+        text-align: center;
+    }
+
     /* Pagination Controls */
     .pagination-controls {
-        position: relative;
-        bottom: 0;
+        position: sticky;
+        bottom: calc(var(--bottom-nav-height) + 350px); /* Nav height + some margin */
+        left: 0;
+        right: 0;
+        width: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 10px 16px;
+        padding: 5px 10px;
         background: rgba(248, 250, 252, 0.98);
         backdrop-filter: blur(10px);
         border-top: 1px solid #e2e8f0;
-        z-index: 6;
+        z-index: 30;
         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
         flex-shrink: 0;
     }
+        
     .pagination-info {
-        font-size: 12px;
+        font-size: 8px;
         color: #4a5568;
         font-weight: 500;
     }
@@ -391,9 +447,9 @@
         background: #3b82f6;
         color: white;
         border: none;
-        padding: 6px 12px;
+        padding: 2px 8px;
         border-radius: 6px;
-        font-size: 12px;
+        font-size: 9px;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -492,6 +548,7 @@
         margin-top: 10px;
         margin-bottom: 0px;
         transition: background-color 0.3s ease;
+        z-index: 100;
     }
 
     .nav-container button {
@@ -526,7 +583,6 @@
                     <div class="stat-buttons">
                         <button class="stat-btn active" data-category="hitting">Batting</button>
                         <button class="stat-btn" data-category="pitching">Pitching</button>
-                        <button class="stat-btn" data-category="fielding">Fielding</button>
                     </div>
                 </div>
             </div>
@@ -572,6 +628,22 @@
                 Failed to load data. Please try again.
             </div>
 
+            <div class="pagination-controls" id="paginationControls">
+                    <div class="pagination-info">
+                        Showing <span id="currentRange">1-50</span> of <span id="totalPlayers">0</span> players
+                    </div>
+                    <div class="pagination-buttons">
+                        <button class="pagination-btn" id="prevBtn" disabled>
+                            <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                            Previous
+                        </button>
+                        <button class="pagination-btn" id="nextBtn">
+                            Next
+                            <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
             <div class="table-container" id="tableContainer" style="display: none;">
                  <!-- Horizontal scroll controls -->
                 <button class="scroll-btn scroll-btn-left" id="scrollLeft">
@@ -598,22 +670,6 @@
                         <!-- Dynamic rows will be inserted here -->
                     </tbody>
                 </table>
-                
-                <div class="pagination-controls" id="paginationControls">
-                    <div class="pagination-info">
-                        Showing <span id="currentRange">1-50</span> of <span id="totalPlayers">0</span> players
-                    </div>
-                    <div class="pagination-buttons">
-                        <button class="pagination-btn" id="prevBtn" disabled>
-                            <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-                            Previous
-                        </button>
-                        <button class="pagination-btn" id="nextBtn">
-                            Next
-                            <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

@@ -62,14 +62,6 @@ class MLBLeaderboard {
                 { key: 'strikeoutsPer9Inn', label: 'K9', format: 'decimal', decimals: 1, sortKey: 'strikeoutsPer9Inn' },
                 { key: 'walksPer9Inn', label: 'BB9', format: 'decimal', decimals: 1, reverse: true, sortKey: 'walksPer9Inn' },
             ]
-        },
-        fielding: {
-            columns: [
-                { key: 'assists', label: 'A', format: 'number', sortKey: 'assists' },
-                { key: 'putOuts', label: 'PO', format: 'number', sortKey: 'putOuts' },
-                { key: 'errors', label: 'E', format: 'number', reverse: true, sortKey: 'errors' },
-                { key: 'doublePlays', label: 'DP', format: 'number', sortKey: 'doublePlays' }
-            ]
         }
     };
         this.initializeEventListeners();
@@ -207,25 +199,6 @@ class MLBLeaderboard {
     async fetchPitchingStats() {
         const teamParam = this.currentTeam ? `&teamId=${this.currentTeam}` : '';
         const url = `https://statsapi.mlb.com/api/v1/stats?stats=season&season=${this.currentYear}&sportId=1&group=pitching&limit=200${teamParam}`;
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const data = await response.json();
-        
-        if (data.stats && data.stats.length > 0 && data.stats[0].splits) {
-            return data.stats[0].splits.map(split => ({
-                person: split.player,
-                team: split.team,
-                stats: split.stat
-            }));
-        }
-        return [];
-    }
-
-    async fetchFieldingStats() {
-        const teamParam = this.currentTeam ? `&teamId=${this.currentTeam}` : '';
-        const url = `https://statsapi.mlb.com/api/v1/stats?stats=season&season=${this.currentYear}&sportId=1&group=fielding&limit=200${teamParam}`;
         
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
