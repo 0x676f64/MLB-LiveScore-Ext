@@ -37,8 +37,10 @@ class MLBLeaderboard {
                 { key: 'caughtSteling', label: 'CS', format: 'number', sortKey: 'caughtStealing' },
                 { key: 'strikeOuts', label: 'SO', format: 'number', sortKey: 'strikeOuts' },
                 { key: 'totalBases', label: 'TB', formnat: 'number', sortKey: 'totalBases' },
+                { key: 'babip', label: 'BABIP', format: 'decimal', decimals: 3, sortKey: 'babip' },
                 { key: 'hitByPitch', label: 'HBP', format: 'number', sortKey: 'hitByPitch' },
-                { key: 'sacFlies', label: 'SF', formnat: 'number', sortKey: 'sacFlies' }
+                { key: 'sacFlies', label: 'SF', formnat: 'number', sortKey: 'sacFlies' },
+                { key: 'intentionalWalks', label: 'IBB', format: 'number', sortKey: 'intentionalWalks' },
             ]
         },
         pitching: {
