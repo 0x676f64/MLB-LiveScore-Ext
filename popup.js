@@ -992,58 +992,80 @@ if (gameState === "Final" || gameState === "Game Over") {
 }
        
 // ** When game has not started yet - Pre Game Data and Info **
-        if (gameState === "Pre-Game" || gameState === "Scheduled" || gameState === "Warmup") {
-            document.getElementById("scorebug-wrapper").style.display = "none";
-            document.getElementById("tabs-container").style.display = "none";
+if (gameState === "Pre-Game" || gameState === "Scheduled" || gameState === "Warmup") {
+    document.getElementById("scorebug-wrapper").style.display = "none";
+    document.getElementById("tabs-container").style.display = "none";
 
-            // Display probable pitchers
-            if (data.gameData.probablePitchers) {
-                const awayPitcher = data.gameData.probablePitchers.away;
-                const homePitcher = data.gameData.probablePitchers.home;
-            // Get Probable Pitchers IDs
-                const awayId = awayPitcher.id;
-                const homeId = homePitcher.id;
-            // Pull season stats from the IDs that were previously pulled 
-                const awaySeasonStats = awayId ? data.liveData.boxscore.teams.away.players[`ID${awayId}`]?.seasonStats.pitching : null;
-                const homeSeasonStats = homeId ? data.liveData.boxscore.teams.home.players[`ID${homeId}`]?.seasonStats.pitching : null;
+    // Display probable pitchers
+    if (data.gameData.probablePitchers) {
+        const awayPitcher = data.gameData.probablePitchers.away;
+        const homePitcher = data.gameData.probablePitchers.home;
+        // Get Probable Pitchers IDs
+        const awayId = awayPitcher.id;
+        const homeId = homePitcher.id;
+        // Pull season stats from the IDs that were previously pulled 
+        const awaySeasonStats = awayId ? data.liveData.boxscore.teams.away.players[`ID${awayId}`]?.seasonStats.pitching : null;
+        const homeSeasonStats = homeId ? data.liveData.boxscore.teams.home.players[`ID${homeId}`]?.seasonStats.pitching : null;
+        // Get the starting pitchers throwing hand 
+        const startingHomehand = homePitcher ? data.gameData.players[`ID${homePitcher.id}`]?.pitchHand?.code : '';
+        const startingAwayhand = awayPitcher ? data.gameData.players[`ID${awayPitcher.id}`]?.pitchHand?.code : '';
+        
+        // Get away team players with all their data
+        const awayPlayers = Array.from({length: 9}, (_, i) => {
+            const playerId = awayBattingOrder[i];
+            if (!playerId) return { name: '', hand: '', field: '', avg: '' };
+            
+            const player = data.gameData.players[`ID${playerId}`];
+            const playerStats = data.liveData.boxscore.teams.away.players[`ID${playerId}`];
+            
+            return {
+                name: player?.boxscoreName || '',
+                hand: player?.batSide?.code || '',
+                field: player?.primaryPosition?.abbreviation || '',
+                avg: playerStats?.seasonStats?.batting?.avg || '---'
+            };
+        });
 
-                
-                if (awayPitcher) {
-                    awayPlayerStats.innerHTML = `
-                        <p class="player-position">Probable Pitcher</p>
-                        <p class="player-name">${awayPitcher.fullName}</p>
-                        <p class="prob-stats">${awaySeasonStats?.era || '---'} | ${awaySeasonStats?.inningsPitched || '0'} | ${awaySeasonStats?.strikeOuts || '0'}</p>
-                        <p class="lineup">1. <span class="hand">${awayHandOne}</span> ${playerOne} <span class="field">${awayFieldOne}</span></p>
-                        <p class="lineup">2. <span class="hand">${awayHandTwo}</span> ${playerTwo} <span class="field">${awayFieldTwo}</span></p>
-                        <p class="lineup">3. <span class="hand">${awayHandThree}</span> ${playerThree} <span class="field">${awayFieldThree}</span></p>
-                        <p class="lineup">4. <span class="hand">${awayHandFour}</span> ${playerFour} <span class="field">${awayFieldFour}</span></p>
-                        <p class="lineup">5. <span class="hand">${awayHandFive}</span> ${playerFive} <span class="field">${awayFieldFive}</span></p>
-                        <p class="lineup">6. <span class="hand">${awayHandSix}</span> ${playerSix} <span class="field">${awayFieldSix}</span></p>
-                        <p class="lineup">7. <span class="hand">${awayHandSeven}</span> ${playerSeven} <span class="field">${awayFieldSeven}</span></p>
-                        <p class="lineup">8. <span class="hand">${awayHandEight}</span> ${playerEight} <span class="field">${awayFieldEight}</span></p>
-                        <p class="lineup">9. <span class="hand">${awayHandNine}</span> ${playerNine} <span class="field">${awayFieldNine}</span></p>
-                    `;
-                }
-                
-                if (homePitcher) {
-                    homePlayerStats.innerHTML = `
-                        <p class="player-position">Probable Pitcher</p>
-                        <p class="player-name">${homePitcher.fullName}</p>
-                        <p class="prob-stats">${homeSeasonStats?.era || '---'} | ${homeSeasonStats?.inningsPitched || '0'} | ${homeSeasonStats?.strikeOuts || '0'}</p>
-                        <p class="lineup">1. <span class="hand">${homeHandOne}</span> ${homeOne} <span class="field">${homeFieldOne}</span></p>
-                        <p class="lineup">2. <span class="hand">${homeHandTwo}</span> ${homeTwo} <span class="field">${homeFieldTwo}</span></p>
-                        <p class="lineup">3. <span class="hand">${homeHandThree}</span> ${homeThree} <span class="field">${homeFieldThree}</span></p>
-                        <p class="lineup">4. <span class="hand">${homeHandFour}</span> ${homeFour} <span class="field">${homeFieldFour}</span></p>
-                        <p class="lineup">5. <span class="hand">${homeHandFive}</span> ${homeFive} <span class="field">${homeFieldFive}</span></p>
-                        <p class="lineup">6. <span class="hand">${homeHandSix}</span> ${homeSix} <span class="field">${homeFieldSix}</span></p>
-                        <p class="lineup">7. <span class="hand">${homeHandSeven}</span> ${homeSeven} <span class="field">${homeFieldSeven}</span></p>
-                        <p class="lineup">8. <span class="hand">${homeHandEight}</span> ${homeEight} <span class="field">${homeFieldEight}</span></p>
-                        <p class="lineup">9. <span class="hand">${homeHandNine}</span> ${homeNine} <span class="field">${homeFieldNine}</span></p>
-                    `;
-                }
-            }
-            return;
+        // Get home team players with all their data
+        const homePlayers = Array.from({length: 9}, (_, i) => {
+            const playerId = homeBattingOrder[i];
+            if (!playerId) return { name: '', hand: '', field: '', avg: '' };
+            
+            const player = data.gameData.players[`ID${playerId}`];
+            const playerStats = data.liveData.boxscore.teams.home.players[`ID${playerId}`];
+            
+            return {
+                name: player?.boxscoreName || '',
+                hand: player?.batSide?.code || '',
+                field: player?.primaryPosition?.abbreviation || '',
+                avg: playerStats?.seasonStats?.batting?.avg || '---'
+            };
+        });
+        
+        if (awayPitcher) {
+            awayPlayerStats.innerHTML = `
+                <p class="player-position">Probable Pitcher</p>
+                <p class="player-name">${awayPitcher.fullName} &#8226; <span class="starter-hand">${startingAwayhand}</span></p>
+                <p class="prob-stats">${awaySeasonStats?.era || '---'} | ${awaySeasonStats?.inningsPitched || '0'} IP | ${awaySeasonStats?.strikeOuts || '0'} K</p>
+                ${awayPlayers.map((player, i) => `
+                    <p class="lineup">${i + 1}. <span class="hand">${player.hand}</span> ${player.name} <span class="field">${player.field}</span> &#8226; <span class="avg">${player.avg}</span></p>
+                `).join('')}
+            `;
         }
+        
+        if (homePitcher) {
+            homePlayerStats.innerHTML = `
+                <p class="player-position">Probable Pitcher</p>
+                <p class="player-name">${homePitcher.fullName} &#8226; <span class="starter-hand">${startingHomehand}</span></p>
+                <p class="prob-stats">${homeSeasonStats?.era || '---'} | ${homeSeasonStats?.inningsPitched || '0'} IP | ${homeSeasonStats?.strikeOuts || '0'} K</p>
+                ${homePlayers.map((player, i) => `
+                    <p class="lineup">${i + 1}. <span class="hand">${player.hand}</span> ${player.name} <span class="field">${player.field}</span> &#8226; <span class="avg">${player.avg}</span></p>
+                `).join('')}
+            `;
+        }
+    }
+    return;
+}
 
         // For in-progress games
         if (currentPlay) {
