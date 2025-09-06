@@ -54,6 +54,6 @@ Want to contribute or run it locally?
 
 1. Clone the repo:  
    ```bash
-   git clone https://github.com/your-username/mlb-scoreboard.git
+   git clone https://github.com/0x676f64/MLB-Scoreboard-Chrome-Addon.git
    cd mlb-scoreboard
    
