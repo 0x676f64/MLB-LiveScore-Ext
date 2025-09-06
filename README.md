@@ -25,6 +25,8 @@ Stay productive while keeping up with live games, scores, stats, highlights, and
 
 <img width="615" height="482" alt="Screenshot" src="https://github.com/user-attachments/assets/d12b2195-adf7-4041-aa9c-567da884ce5a" />
 
+<img width="610" height="549" alt="Screenshot 2025-09-06 023804" src="https://github.com/user-attachments/assets/7f95302c-71a9-402a-b79d-707249d6002f" />
+
 <img width="608" height="548" alt="Screenshot" src="https://github.com/user-attachments/assets/03052f04-7525-4b4d-99a8-cef02ec4e42b" />
 
 <img width="605" height="602" alt="Screenshot" src="https://github.com/user-attachments/assets/ce8eff05-456f-459c-b7dc-9304547d31a4" />
@@ -38,6 +40,8 @@ Stay productive while keeping up with live games, scores, stats, highlights, and
 <img width="506" height="562" alt="Screenshot" src="https://github.com/user-attachments/assets/24fe88e0-2ada-4f38-bb31-d4685893215c" />
 
 <img width="705" height="606" alt="Screenshot" src="https://github.com/user-attachments/assets/31ba21fd-3acf-4e9f-bdc6-9dfe39108799" />
+
+<img width="705" height="603" alt="Screenshot 2025-09-06 023645" src="https://github.com/user-attachments/assets/cfe4e11a-1279-4947-b4c0-1430054dc423" />
 
 ---
 
