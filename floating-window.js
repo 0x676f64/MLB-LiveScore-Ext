@@ -1,6 +1,174 @@
-// Updated default.js - Main page with dark mode toggle
+// Updated floating-window
+// floating-window.js - Enhanced floating window management
 
-// Dark mode functionality using the shared utility
+class FloatingWindowManager {
+    constructor() {
+        this.windowId = null;
+        this.isOpen = false;
+        this.defaultWidth = 710;   // Changed from 1000 to 710
+        this.defaultHeight = 500;  // Changed from 700 to 500
+        this.minWidth = 710;
+        this.minHeight = 500;
+    }
+
+    async openFloatingWindow() {
+        try {
+            if (this.windowId) {
+                // If window exists, focus it
+                await chrome.windows.update(this.windowId, { focused: true });
+                return;
+            }
+
+            // Get current screen dimensions
+            const displays = await chrome.system.display.getInfo();
+            const primaryDisplay = displays[0];
+            
+            // Calculate center position
+            const left = Math.round(
+                primaryDisplay.bounds.left + 
+                (primaryDisplay.bounds.width - this.defaultWidth) / 2
+            );
+            const top = Math.round(
+                primaryDisplay.bounds.top + 
+                (primaryDisplay.bounds.height - this.defaultHeight) / 2
+            );
+
+            const windowOptions = {
+                url: 'floating-window.html', // Your HTML file
+                type: 'popup',
+                width: this.defaultWidth,
+                height: this.defaultHeight,
+                left: left,
+                top: top,
+                focused: true,
+                alwaysOnTop: false, // Set to true if you want it always on top
+            };
+
+            const window = await chrome.windows.create(windowOptions);
+            this.windowId = window.id;
+            this.isOpen = true;
+
+            // Listen for window close
+            chrome.windows.onRemoved.addListener((closedWindowId) => {
+                if (closedWindowId === this.windowId) {
+                    this.windowId = null;
+                    this.isOpen = false;
+                }
+            });
+
+        } catch (error) {
+            console.error('Error opening floating window:', error);
+        }
+    }
+
+    async closeFloatingWindow() {
+        if (this.windowId) {
+            try {
+                await chrome.windows.remove(this.windowId);
+                this.windowId = null;
+                this.isOpen = false;
+            } catch (error) {
+                console.error('Error closing floating window:', error);
+            }
+        }
+    }
+
+    async toggleFloatingWindow() {
+        if (this.isOpen) {
+            await this.closeFloatingWindow();
+        } else {
+            await this.openFloatingWindow();
+        }
+    }
+
+    async resizeWindow(width, height) {
+        if (this.windowId) {
+            try {
+                const updateInfo = {
+                    width: Math.max(width, this.minWidth),
+                    height: Math.max(height, this.minHeight)
+                };
+                await chrome.windows.update(this.windowId, updateInfo);
+            } catch (error) {
+                console.error('Error resizing window:', error);
+            }
+        }
+    }
+
+    async centerWindow() {
+        if (this.windowId) {
+            try {
+                const displays = await chrome.system.display.getInfo();
+                const primaryDisplay = displays[0];
+                const window = await chrome.windows.get(this.windowId);
+                
+                const left = Math.round(
+                    primaryDisplay.bounds.left + 
+                    (primaryDisplay.bounds.width - window.width) / 2
+                );
+                const top = Math.round(
+                    primaryDisplay.bounds.top + 
+                    (primaryDisplay.bounds.height - window.height) / 2
+                );
+
+                await chrome.windows.update(this.windowId, { left, top });
+            } catch (error) {
+                console.error('Error centering window:', error);
+            }
+        }
+    }
+}
+
+// Create global instance
+const floatingWindowManager = new FloatingWindowManager();
+
+// Message listener for communication with popup/content scripts
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    switch (request.action) {
+        case 'openFloatingWindow':
+            floatingWindowManager.openFloatingWindow();
+            sendResponse({ success: true });
+            break;
+            
+        case 'closeFloatingWindow':
+            floatingWindowManager.closeFloatingWindow();
+            sendResponse({ success: true });
+            break;
+            
+        case 'toggleFloatingWindow':
+            floatingWindowManager.toggleFloatingWindow();
+            sendResponse({ success: true });
+            break;
+            
+        case 'resizeFloatingWindow':
+            floatingWindowManager.resizeWindow(request.width, request.height);
+            sendResponse({ success: true });
+            break;
+            
+        case 'centerFloatingWindow':
+            floatingWindowManager.centerWindow();
+            sendResponse({ success: true });
+            break;
+            
+        case 'getFloatingWindowStatus':
+            sendResponse({ 
+                isOpen: floatingWindowManager.isOpen,
+                windowId: floatingWindowManager.windowId 
+            });
+            break;
+            
+        default:
+            sendResponse({ success: false, error: 'Unknown action' });
+    }
+    
+    return true; // Keep message channel open for async response
+});
+
+// Export for use in other files
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FloatingWindowManager;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const darkModeToggle = document.getElementById('darkModeToggle');
     

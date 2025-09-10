@@ -11,26 +11,16 @@
     <style>
          html {
             scrollbar-width: thin;
+            max-width: 710px;
         }
         
         body {
-            width: 610px;
+            width: 710px;
+            height: auto;
             font-family: "Rubik", sans-serif;
             transition: background-color 0.3s ease, color 0.3s ease;
             color: #4a5568;
             background-color: #f7fafc;
-        }
-
-        /* Forces dynamic height */
-        body, html {
-        height: 0 !important;
-        min-height: 0 !important;
-        }
-
-        /* Dark mode styles */
-        body.dark-mode {
-            background-color: #101012;
-            color: #ffffff;
         }
 
         .header-container {
@@ -198,40 +188,6 @@
             width: 28px;
             fill: #6b7280;
             transition: fill 0.2s; 
-        }
-
-        body.dark-mode .nav-container svg {
-            fill: #b0b0b0;
-        }
-
-        .nav-container svg:hover {
-            fill: #3b82f6;
-            background-color: transparent;
-        }
-
-        body.dark-mode .nav-container svg:hover {
-            fill: #D7827E;
-            background-color: transparent;
-        }
-
-        body.dark-mode .game-box {
-            background-color: #131415;
-            border-color: #ff6a6d31;
-        }
-
-        body.dark-mode .team-abbr {
-            color: #b9b9bb;
-        }
-
-        body.dark-mode .team-score {
-            color: #b9b9bb;
-        }
-
-        body.dark-mode .game-box:active, body.dark-mode .game-box:hover, body.dark-mode .game-box:focus,
-        body.dark-mode .game-box:focus-within {
-            transform: scale(1.03);
-            box-shadow: #ff6a6c 0px 0px 10px 1px;
-            transition: transform .2s;
         }
 
         /* Datepicker Styles */
