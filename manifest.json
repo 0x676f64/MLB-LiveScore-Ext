@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "MLB Scoreboard",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "View live scores, stats, and results for all things Baseball in real time.",
-  "permissions": ["storage"],
+  "permissions": ["storage", "windows", "tabs"],
   "content_scripts": [
     {
       "matches": ["*://*/*"],
@@ -13,7 +13,7 @@
           ]
     }
   ],
-  "host_permissions": ["https://statsapi.mlb.com/api/v1.1/game/*"],
+  "host_permissions": ["https://statsapi.mlb.com/api/v1.1/game/*", "https://statsapi.mlb.com/api/v1/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -24,5 +24,11 @@
       "48": "assets/52a8244e0b.png",
       "128": "assets/MLB-EXT.png"
     }
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["floating-window.html", "floating-window.js", "style.css", "assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
