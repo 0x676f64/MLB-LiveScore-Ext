@@ -5,10 +5,10 @@ class FloatingWindowManager {
     constructor() {
         this.windowId = null;
         this.isOpen = false;
-        this.defaultWidth = 710;   // Changed from 1000 to 710
-        this.defaultHeight = 500;  // Changed from 700 to 500
-        this.minWidth = 710;
-        this.minHeight = 500;
+        this.defaultWidth = 610;
+        this.defaultHeight = 600; 
+        this.minWidth = 610;       
+        this.minHeight = 500;     
     }
 
     async openFloatingWindow() {
@@ -41,7 +41,7 @@ class FloatingWindowManager {
                 left: left,
                 top: top,
                 focused: true,
-                alwaysOnTop: false, // Set to true if you want it always on top
+                alwaysOnTop: true, // Set to true if you want it always on top
             };
 
             const window = await chrome.windows.create(windowOptions);

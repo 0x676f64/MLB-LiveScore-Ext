@@ -11,50 +11,59 @@
     <style>
          html {
             scrollbar-width: thin;
-            max-width: 710px;
+            height: 100%;
         }
         
         body {
-            width: 710px;
-            height: auto;
+            min-width: 610px; /* Changed from fixed width to min-width */
+            width: 100%; /* Allow full width usage */
+            height: 100vh; /* Use full viewport height */
+            margin: 0;
+            padding: 20px 0;
             font-family: "Rubik", sans-serif;
             transition: background-color 0.3s ease, color 0.3s ease;
             color: #4a5568;
             background-color: #f7fafc;
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            overflow-x: auto; /* Allow horizontal scroll if needed */
+        }
+
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #101012;
+            color: #ffffff;
         }
 
         .header-container {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center; /* Center the header content */
             padding: 15px 10px;
             position: relative;
-            margin-left: 100px;
+            flex-shrink: 0; /* Prevent shrinking */
         }
 
         .header-container img {
             width: 250px;
             height: 90px;
-            margin-left: 12rem;
         }
 
         .dark-mode-toggle {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-left: 50px;
+            position: absolute;
+            right: 20px;
         }
 
         .toggle-switch {
-            position: absolute;
-            right: 0;
             width: 50px;
             height: 24px;
             background-color: #a9bcd6;
             border-radius: 12px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            margin-bottom: 30px;
         }
 
         .toggle-switch.active {
@@ -86,116 +95,24 @@
             color: #D7827E;
         }
 
-        #games-container {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            padding: 5px;
-        }
-
-        .game-box {
-            border: 1px solid rgba(59, 131, 246, 0.39);
-            padding: 5px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(10px);
-            border-radius: 5px;
-            font-size: 10px;
-            width: 150px;
-            height: 120px;
+        /* Main content container - takes remaining space and centers content */
+        .main-content {
+            flex: 1; /* Take up remaining space */
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            justify-content: flex-start;
+            padding: 0 20px;
+            overflow-y: auto; /* Allow vertical scrolling if needed */
+            min-height: 0; /* Allow flexbox shrinking */
         }
 
-        .game-box:active, .game-box:hover, .game-box:focus,
-        .game-box:focus-within {
-            transform: scale(1.03);
-            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.2);
-            border-color: rgba(220, 38, 38, 0.4);
-            background: rgba(255, 255, 255, 0.8);
-            transition: all 0.2s ease;
-        }
-
-        .team-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-        }
-
-        .team-logo {
-            width: 35px;
-            height: 35px;
-        }
-
-        .team-abbr, .team-score {
-            font-size: 16px;
-            margin: 0 5px;
-            font-weight: 600;
-            color: #0252bb;
-        }
-
-        .game-status {
-            font-size: 15px;
-            font-weight: 700;
-            align-self: flex-start;
-            color: #ef4444;
-        }
-
-        #scorebug {
-            background-color: transparent;
-            top: 150px;
-        }
-
-        .nav-container {
-            display: flex;
-            justify-content: space-around;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid #ef4444;
-            position: relative;
-            align-items: center;
-            padding: 10px;
-            height: 50px;
-            width: 140%;
-            bottom: 0;
-            align-items: center;
-            margin-right: auto;
-            margin-left: auto;
-            margin-top: 10px;
-            margin-bottom: 0px;
-            transition: background-color 0.3s ease;
-        }
-
-        body.dark-mode .nav-container {
-            background-color: #222222;
-        }
-
-        .nav-container button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
-            margin-right: 20px;
-        }
-        
-        .nav-container svg {
-            height: 28px;
-            width: 28px;
-            fill: #6b7280;
-            transition: fill 0.2s; 
-        }
-
-        /* Datepicker Styles */
         .date-picker-container {
             display: flex;
+            position: relative;
             gap: 10px;
-            margin-left: auto;
-            margin-right: 45px;
+            margin-bottom: 20px;
+            flex-shrink: 0; /* Don't shrink */
         }
 
         .datepicker {
@@ -209,7 +126,6 @@
             gap: 10px;
             transition: all 0.3s ease;
             justify-content: center;
-            margin-right: 20px;
         }
 
         .datepicker:hover {
@@ -262,6 +178,182 @@
             transform: scale(0.95);
         }
 
+       .floating-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            color: linear-gradient(135deg, #dc2626 0%, #1e40af 100%);
+            transition: all 0.2s ease;
+            display: flex;
+        }
+
+        .floating-btn svg {
+            fill: currentColor;
+        }
+
+        .floating-btn:hover {
+            transform: scale(1.1);
+            color: #1e40af;
+        }
+
+        .floating-btn:active {
+            transform: scale(0.95);
+            color: #dc2626;
+        }
+
+        /* Games container with responsive grid */
+        #scorebug {
+            width: 100%;
+            max-width: 1200px; /* Maximum width for very large screens */
+        }
+
+        #games-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive columns */
+            gap: 10px;
+            padding: 5px;
+            width: 100%;
+        }
+
+        /* Responsive adjustments for different window sizes */
+        @media (max-width: 800px) {
+            #games-container {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 8px;
+            }
+        }
+
+        @media (min-width: 1000px) {
+            #games-container {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 12px;
+            }
+        }
+
+        .game-box {
+            border: 1px solid rgba(59, 131, 246, 0.39);
+            padding: 5px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 5px;
+            font-size: 10px;
+            width: 100%; /* Use full grid cell width */
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box; /* Include padding/border in width calculation */
+        }
+
+        .game-box:active, .game-box:hover, .game-box:focus,
+        .game-box:focus-within {
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.2);
+            border-color: rgba(220, 38, 38, 0.4);
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .team-logo {
+            width: 35px;
+            height: 35px;
+        }
+
+        .team-abbr, .team-score {
+            font-size: 16px;
+            margin: 0 5px;
+            font-weight: 600;
+            color: #0252bb;
+        }
+
+        .game-status {
+            font-size: 15px;
+            font-weight: 700;
+            align-self: flex-start;
+            color: #ef4444;
+        }
+
+        /* Navigation bar - always at bottom */
+        .nav-container {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #ef4444;
+            align-items: center;
+            padding: 10px;
+            height: 50px;
+            width: 100%;
+            margin-top: auto; /* Push to bottom */
+            flex-shrink: 0; /* Don't shrink */
+            transition: background-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        body.dark-mode .nav-container {
+            background-color: #222222;
+        }
+
+        .nav-container button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+        }
+        
+        .nav-container svg {
+            height: 28px;
+            width: 28px;
+            fill: #6b7280;
+            transition: fill 0.2s; 
+        }
+
+        body.dark-mode .nav-container svg {
+            fill: #b0b0b0;
+        }
+
+        .nav-container svg:hover {
+            fill: #3b82f6;
+            background-color: transparent;
+        }
+
+        body.dark-mode .nav-container svg:hover {
+            fill: #D7827E;
+            background-color: transparent;
+        }
+
+        body.dark-mode .game-box {
+            background-color: #131415;
+            border-color: #ff6a6d31;
+        }
+
+        body.dark-mode .team-abbr {
+            color: #b9b9bb;
+        }
+
+        body.dark-mode .team-score {
+            color: #b9b9bb;
+        }
+
+        body.dark-mode .game-box:active, body.dark-mode .game-box:hover, body.dark-mode .game-box:focus,
+        body.dark-mode .game-box:focus-within {
+            transform: scale(1.03);
+            box-shadow: #ff6a6c 0px 0px 10px 1px;
+            transition: transform .2s;
+        }
+
         .material-symbols-outlined {
             font-variation-settings:
             'FILL' 0,
@@ -287,8 +379,23 @@
                 <input type="date" id="date-input" class="date-input">
                 <button class="apply">Apply</button>
             </div>
-            <button id="openFloatingBtn" class="floating-btn" style="background: linear-gradient(135deg, #dc2626 0%, #1e40af 100%); border: none; border-radius: 5px; padding: 8px 12px; color: white; cursor: pointer; margin-left: 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm160-120h320v-240H320v240ZM160-240v-480 480Z"/></svg>
+            <button id="openFloatingBtn" class="floating-btn" alt="Floating Window">
+                 <svg xmlns="http://www.w3.org/2000/svg"
+                    height="32px"
+                    width="32px"
+                    viewBox="0 -960 960 960">
+                    <defs>
+                    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#dc2626"/>
+                        <stop offset="100%" stop-color="#1e40af"/>
+                    </linearGradient>
+                    </defs>
+                    <path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 
+                            23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 
+                            33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm160-
+                            120h320v-240H320v240ZM160-240v-480 480Z" 
+                        fill="url(#iconGradient)"/>
+                </svg>
             </button>
     </div>
     <div id="scorebug">
@@ -311,5 +418,4 @@
         </button>
     </div>
 </body>
-<script src="floating-window.js"></script>
 </html>

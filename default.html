@@ -253,7 +253,7 @@
             gap: 10px;
             transition: all 0.3s ease;
             justify-content: center;
-            margin-right: 20px;
+            margin-left: 20px;
         }
 
         .datepicker:hover {
@@ -306,6 +306,32 @@
             transform: scale(0.95);
         }
 
+       .floating-btn {
+            background: none;       /* remove background */
+            border: none;           /* remove border */
+            cursor: pointer;
+            padding: 6px;           /* space around icon */
+            color: linear-gradient(135deg, #dc2626 0%, #1e40af 100%);         /* icon color (default red-600) */
+            transition: all 0.2s ease;
+            display: flex;
+            position: inherit;
+        }
+
+        .floating-btn svg {
+            fill: currentColor;     /* icon inherits button text color */
+        }
+
+        .floating-btn:hover {
+            transform: scale(1.1);
+            color: #1e40af;         /* hover changes icon color */
+        }
+
+        .floating-btn:active {
+            transform: scale(0.95);
+            color: #dc2626;         /* active state back to red */
+        }
+
+
         .material-symbols-outlined {
             font-variation-settings:
             'FILL' 0,
@@ -331,8 +357,23 @@
                 <input type="date" id="date-input" class="date-input">
                 <button class="apply">Apply</button>
             </div>
-            <button id="openFloatingBtn" class="floating-btn" style="background: linear-gradient(135deg, #dc2626 0%, #1e40af 100%); border: none; border-radius: 5px; padding: 8px 12px; color: white; cursor: pointer; margin-left: 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm160-120h320v-240H320v240ZM160-240v-480 480Z"/></svg>
+            <button id="openFloatingBtn" class="floating-btn" title="Floating Window">
+                 <svg xmlns="http://www.w3.org/2000/svg"
+                    height="32px"
+                    width="32px"
+                    viewBox="0 -960 960 960">
+                    <defs>
+                    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#dc2626"/>
+                        <stop offset="100%" stop-color="#1e40af"/>
+                    </linearGradient>
+                    </defs>
+                    <path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 
+                            23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 
+                            33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm160-
+                            120h320v-240H320v240ZM160-240v-480 480Z" 
+                        fill="url(#iconGradient)"/>
+                </svg>
             </button>
     </div>
     <div id="scorebug">
