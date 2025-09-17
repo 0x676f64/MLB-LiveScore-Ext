@@ -1,5 +1,5 @@
 // Updated floating-window
-// floating-window.js - Enhanced floating window management
+// floating-window.js - Enhanced floating window management with fixed scorebug
 
 class FloatingWindowManager {
     constructor() {
@@ -169,30 +169,196 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = FloatingWindowManager;
 }
 
+// Fixed Score Bug SVG Functions
+function createBasesOutsSVG() {
+    return `
+        <svg class="bases-outs-svg" width="90" height="70" viewBox="0 0 90 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outs circles at the bottom -->
+            <circle class="out-circle" cx="25" cy="55" r="6" fill="#D9D9D9" stroke="#B9A2A2"/>
+            <circle class="out-circle" cx="45" cy="55" r="6" fill="#D9D9D9" stroke="#B9A2A2"/>
+            
+            <!-- Baseball diamond bases -->
+            <g class="baseball-diamond">
+                <!-- Third base (left) -->
+                <rect id="third-base" x="12" y="25" width="12" height="12" rx="1" 
+                      transform="rotate(45 18 31)" fill="#FFDDDD" stroke="#B9A2A2"/>
+                
+                <!-- Second base (top) -->
+                <rect id="second-base" x="39" y="12" width="12" height="12" rx="1" 
+                      transform="rotate(45 45 18)" fill="#FFDDDD" stroke="#B9A2A2"/>
+                
+                <!-- First base (right) -->
+                <rect id="first-base" x="66" y="25" width="12" height="12" rx="1" 
+                      transform="rotate(45 72 31)" fill="#FFDDDD" stroke="#B9A2A2"/>
+                
+                <!-- Home plate -->
+                <polygon points="45,40 48,37 52,37 55,40 52,43 48,43" 
+                         fill="#FFFFFF" stroke="#B9A2A2"/>
+            </g>
+            
+            <!-- Inning info text area -->
+            <text x="45" y="8" text-anchor="middle" class="inning-text" 
+                  fill="#666" font-size="8" font-family="Arial, sans-serif">INNING</text>
+        </svg>
+    `;
+}
+
+function updateBasesOutsSVG(svg, basesStatus, outsCount) {
+    if (!svg) return;
+    
+    const bases = {
+        first: svg.querySelector('#first-base'),
+        second: svg.querySelector('#second-base'),
+        third: svg.querySelector('#third-base')
+    };
+    
+    // Reset all bases to default color
+    Object.values(bases).forEach(base => {
+        if (base) {
+            base.setAttribute('fill', '#FFDDDD');
+        }
+    });
+    
+    // Update bases status if provided
+    if (basesStatus) {
+        if (basesStatus.first && bases.first) {
+            bases.first.setAttribute('fill', '#D7827E');
+        }
+        if (basesStatus.second && bases.second) {
+            bases.second.setAttribute('fill', '#D7827E');
+        }
+        if (basesStatus.third && bases.third) {
+            bases.third.setAttribute('fill', '#D7827E');
+        }
+    }
+    
+    // Update outs status
+    const outCircles = svg.querySelectorAll('.out-circle');
+    outCircles.forEach((circle, index) => {
+        const fillColor = index < outsCount ? '#D7827E' : '#D9D9D9';
+        circle.setAttribute('fill', fillColor);
+    });
+}
+
+// Fixed function to get live game data including bases/outs
+async function fetchLiveGameData(gamePk) {
+    try {
+        const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+        const data = await response.json();
+
+        if (data && data.liveData) {
+            const linescore = data.liveData.linescore;
+            const plays = data.liveData.plays;
+            
+            // Get inning info
+            const inningHalf = linescore.inningHalf ? 
+                (linescore.inningHalf === "Top" ? "TOP" : "BOT") : "";
+            const currentInning = linescore.currentInning || "";
+            const inningDisplay = `${inningHalf} ${currentInning}`;
+            
+            // Get bases status
+            const basesStatus = {
+                first: linescore.offense?.first || false,
+                second: linescore.offense?.second || false,
+                third: linescore.offense?.third || false
+            };
+            
+            // Get outs count
+            const outsCount = linescore.outs || 0;
+            
+            return {
+                inningDisplay,
+                basesStatus,
+                outsCount,
+                isLive: true
+            };
+        }
+    } catch (error) {
+        console.error("Error fetching live game data:", error);
+    }
+    
+    return {
+        inningDisplay: "In Progress",
+        basesStatus: { first: false, second: false, third: false },
+        outsCount: 0,
+        isLive: false
+    };
+}
+
+function updateGameBox(gameBox, game, awayTeamAbbr, homeTeamAbbr, inningInfo, inningClass, awayRecord = '', homeRecord = '', basesStatus = null, outsCount = 0, showScoreBug = false) {
+    
+    const newContent = `
+        <div class="new-content">
+            <a href="/gamefeed?gamePk=${game.gamePk}">
+                <div class="schedule game-schedule">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td class="team-logo">
+                                    <img src="https://www.mlbstatic.com/team-logos/${game.teams.away.team.id}.svg" 
+                                         alt="${game.teams.away.team.name}">
+                                </td>
+                                <td class="team">${awayTeamAbbr}</td>
+                                <td class="record">${awayRecord}</td>
+                                <td class="score">${game.teams.away.score !== undefined ? game.teams.away.score : ''}</td>
+                                <td rowspan="2" class="${inningClass}">${inningInfo}</td>
+                            </tr>
+                            <tr>
+                                <td class="team-logo">
+                                    <img src="https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg" 
+                                         alt="${game.teams.home.team.name}">
+                                </td>
+                                <td class="team">${homeTeamAbbr}</td>
+                                <td class="record">${homeRecord}</td>
+                                <td class="score">${game.teams.home.score !== undefined ? game.teams.home.score : ''}</td>
+                            </tr>
+                            ${showScoreBug && inningClass === 'inning' ? 
+                                `<tr><td colspan="5" class="score-bug-container">${createBasesOutsSVG()}</td></tr>` : 
+                                ''}
+                        </tbody>
+                    </table>
+                </div>
+            </a>
+        </div>
+    `;
+    
+    gameBox.innerHTML = newContent;
+    
+    // Update SVG if it's shown and game is in progress
+    if (showScoreBug && inningClass === 'inning') {
+        const svg = gameBox.querySelector('.bases-outs-svg');
+        if (svg && basesStatus !== null && outsCount !== undefined) {
+            // Small delay to ensure SVG is rendered
+            setTimeout(() => {
+                updateBasesOutsSVG(svg, basesStatus, outsCount);
+            }, 100);
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const darkModeToggle = document.getElementById('darkModeToggle');
     
     if (darkModeToggle) {
         // Set initial state
-        const isDark = await window.darkModeManager.isDarkModeEnabled();
+        const isDark = await window.darkModeManager?.isDarkModeEnabled();
         if (isDark) {
             darkModeToggle.classList.add('active');
         }
 
         // Toggle dark mode when clicked
         darkModeToggle.addEventListener('click', async () => {
-            await window.darkModeManager.toggle();
+            await window.darkModeManager?.toggle();
         });
     }
 
-    // Listen for dark mode changes (useful if you have multiple toggles)
+    // Listen for dark mode changes
     document.addEventListener('darkModeChanged', (event) => {
         console.log('Dark mode changed:', event.detail.isDark);
-        // You can add additional logic here if needed
     });
 });
 
-       // Enhanced MLB games functionality with datepicker
+// Enhanced MLB games functionality with fixed scorebug integration
 document.addEventListener("DOMContentLoaded", async () => {
     const gamesContainer = document.getElementById("games-container");
     const dateInput = document.getElementById("date-input");
@@ -245,24 +411,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Fetch live game details for in-progress games
-    async function fetchGameDetails(gamePk) {
-        try {
-            const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
-            const data = await response.json();
-
-            if (data && data.liveData) {
-                const linescore = data.liveData.linescore;
-                const inningHalf = linescore.inningHalf ? (linescore.inningHalf === "Top" ? "TOP" : "BOT") : "";
-                const currentInning = linescore.currentInning || "";
-                return `${inningHalf} ${currentInning}`;
-            }
-        } catch (error) {
-            console.error("Error fetching game details:", error);
-        }
-        return "In Progress";
-    }
-
     // Main function to fetch and display games for a specific date
     async function fetchGameData(selectedDate) {
         const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${selectedDate}`;
@@ -293,13 +441,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const homeAbbr = await fetchAbbreviation(homeTeamId);
                 const awayAbbr = await fetchAbbreviation(awayTeamId);
 
-                // Format status based on game state
+                // Initialize live game data
+                let liveGameData = null;
+                let showScoreBug = false;
+
+                // Format status and get live data for in-progress games
                 if (status === "Final" || status === "Game Over" || status === "Completed Early") {
                     status = "FINAL";
                 } else if (status === "Pre-Game" || status === "Scheduled") {
                     status = formatGameTime(game.gameDate);
                 } else if (status === "In Progress") {
-                    status = await fetchGameDetails(game.gamePk);
+                    // Fetch live game data for scorebug
+                    liveGameData = await fetchLiveGameData(game.gamePk);
+                    status = liveGameData.inningDisplay;
+                    showScoreBug = true;
                 }
 
                 const isDarkMode = document.body.classList.contains("dark-mode");
@@ -312,31 +467,58 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${awayTeamId}.svg`
                     : `https://www.mlbstatic.com/team-logos/${awayTeamId}.svg`;
 
-                gameBox.innerHTML = `
-                    <div class="game-status">${status}</div>
-                    <div class="team-row">
-                        <img src="${awayLogoSrc}" alt="${awayAbbr} logo" class="team-logo">
-                        <p class="team-abbr">${awayAbbr}</p>
-                        <p class="team-score">${awayScore}</p>
-                    </div>
-                    <div class="team-row">
-                        <img src="${homeLogoSrc}" alt="${homeAbbr} logo" class="team-logo">
-                        <p class="team-abbr">${homeAbbr}</p>
-                        <p class="team-score">${homeScore}</p>
+                // Create the game box content with scorebug positioned on the right
+                let gameBoxContent = `
+                    <div class="game-content-wrapper ${showScoreBug ? 'with-scorebug' : ''}">
+                        <div class="game-main-content">
+                            <div class="game-status">${status}</div>
+                            <div class="team-row">
+                                <img src="${awayLogoSrc}" alt="${awayAbbr} logo" class="team-logo">
+                                <p class="team-abbr">${awayAbbr}</p>
+                                <p class="team-score">${awayScore}</p>
+                            </div>
+                            <div class="team-row">
+                                <img src="${homeLogoSrc}" alt="${homeAbbr} logo" class="team-logo">
+                                <p class="team-abbr">${homeAbbr}</p>
+                                <p class="team-score">${homeScore}</p>
+                            </div>
+                        </div>
+                        ${showScoreBug && liveGameData ? `
+                            <div class="score-bug-container">
+                                ${createBasesOutsSVG()}
+                            </div>
+                        ` : ''}
                     </div>
                 `;
 
+                gameBox.innerHTML = gameBoxContent;
+
+                // Update scorebug after content is added
+                if (showScoreBug && liveGameData) {
+                    setTimeout(() => {
+                        const svg = gameBox.querySelector('.bases-outs-svg');
+                        if (svg) {
+                            updateBasesOutsSVG(svg, liveGameData.basesStatus, liveGameData.outsCount);
+                        }
+                    }, 100);
+                }
+
                 gameBox.addEventListener("click", () => {
-                    window.location.href = `popup.html?gamePk=${game.gamePk}`;
+                    window.location.href = `floating-pop.html?gamePk=${game.gamePk}`;
                 });
 
-                return { gameBox, gameStatus: status, gameDate: new Date(game.gameDate) };
+                return { 
+                    gameBox, 
+                    gameStatus: status, 
+                    gameDate: new Date(game.gameDate),
+                    isLive: showScoreBug
+                };
             }));
 
             // Sort games: Live on top, then Scheduled by time, then Final
             gameBoxes.sort((a, b) => {
-                if (a.gameStatus.includes("TOP") || a.gameStatus.includes("BOT")) return -1;
-                if (b.gameStatus.includes("TOP") || b.gameStatus.includes("BOT")) return 1;
+                if (a.isLive && !b.isLive) return -1;
+                if (b.isLive && !a.isLive) return 1;
                 if (a.gameStatus === "FINAL" && b.gameStatus !== "FINAL") return 1;
                 if (b.gameStatus === "FINAL" && a.gameStatus !== "FINAL") return -1;
                 return a.gameDate - b.gameDate;
@@ -368,9 +550,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         // Set min and max dates for the datepicker
         const minDate = new Date();
-        minDate.setDate(minDate.getDate() - 15000); // Allow 41 years back
+        minDate.setDate(minDate.getDate() - 15000);
         const maxDate = new Date();
-        maxDate.setDate(maxDate.getDate() + 15000); // Allow 41 years forward
+        maxDate.setDate(maxDate.getDate() + 15000);
         
         dateInput.min = formatDateForAPI(minDate);
         dateInput.max = formatDateForAPI(maxDate);
@@ -385,7 +567,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // Optional: Apply date on Enter key press
     dateInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const selectedDate = dateInput.value;
@@ -396,7 +577,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // Optional: Show/hide datepicker on input focus
     dateInput.addEventListener('focus', () => {
         datepickerContainer.hidden = false;
     });
@@ -404,17 +584,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Initialize the extension
     initializeDatepicker();
 
-    // Open floating window
-document.getElementById('openFloatingBtn').addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'openFloatingWindow' });
-    window.close(); // Close popup
-});
+    // Floating window buttons
+    const openFloatingBtn = document.getElementById('openFloatingBtn');
+    const toggleFloatingBtn = document.getElementById('toggleFloatingBtn');
 
-// Toggle floating window  
-document.getElementById('toggleFloatingBtn').addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'toggleFloatingWindow' });
-    window.close(); // Close popup
-});
+    if (openFloatingBtn) {
+        openFloatingBtn.addEventListener('click', () => {
+            chrome.runtime.sendMessage({ action: 'openFloatingWindow' });
+            window.close();
+        });
+    }
+
+    if (toggleFloatingBtn) {
+        toggleFloatingBtn.addEventListener('click', () => {
+            chrome.runtime.sendMessage({ action: 'toggleFloatingWindow' });
+            window.close();
+        });
+    }
 
     // Set up interval to refresh games every 30 seconds (only for today's games)
     setInterval(autoRefreshGames, 30000);
@@ -423,16 +609,14 @@ document.getElementById('toggleFloatingBtn').addEventListener('click', () => {
     setInterval(() => {
         const currentBaseballDate = getCurrentBaseballDate();
         if (dateInput.value !== currentBaseballDate) {
-            // If the baseball date has changed (crossed 9am), update to new date
             const now = new Date();
             const currentHour = now.getHours();
             const currentMinute = now.getMinutes();
             
-            // Only auto-update if it's exactly 9:00am (within the check interval)
             if (currentHour === 9 && currentMinute === 0) {
                 dateInput.value = currentBaseballDate;
                 fetchGameData(currentBaseballDate);
             }
         }
-    }, 60000); // Check every minute
+    }, 60000);
 });

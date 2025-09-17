@@ -4,20 +4,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MLB Scores - Games List</title>
     <link rel="stylesheet" href="style.css">
-    <script src="default.js" defer></script>
+    <script src="floating-window.js" defer></script>
     <script src="navigation.js" defer></script>
     <script src="darkMode.js" defer></script>
 <head>
-    <style>
+<style>
          html {
             scrollbar-width: thin;
             height: 100%;
         }
         
         body {
-            min-width: 610px; /* Changed from fixed width to min-width */
-            width: 100%; /* Allow full width usage */
-            height: 100vh; /* Use full viewport height */
+            min-width: 280px; /* Reduced minimum width for better mobile support */
+            width: 100%;
+            height: 100vh;
             margin: 0;
             padding: 20px 0;
             font-family: "Rubik", sans-serif;
@@ -25,8 +25,8 @@
             color: #4a5568;
             background-color: #f7fafc;
             display: flex;
-            flex-direction: column; /* Stack elements vertically */
-            overflow-x: auto; /* Allow horizontal scroll if needed */
+            flex-direction: column;
+            overflow-x: auto;
         }
 
         /* Dark mode styles */
@@ -38,15 +38,16 @@
         .header-container {
             display: flex;
             align-items: center;
-            justify-content: center; /* Center the header content */
+            justify-content: center;
             padding: 15px 10px;
             position: relative;
-            flex-shrink: 0; /* Prevent shrinking */
+            flex-shrink: 0;
         }
 
         .header-container img {
-            width: 250px;
-            height: 90px;
+            width: min(250px, 80vw); /* Responsive header image */
+            height: auto;
+            max-height: 90px;
         }
 
         .dark-mode-toggle {
@@ -97,14 +98,14 @@
 
         /* Main content container - takes remaining space and centers content */
         .main-content {
-            flex: 1; /* Take up remaining space */
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
             padding: 0 20px;
-            overflow-y: auto; /* Allow vertical scrolling if needed */
-            min-height: 0; /* Allow flexbox shrinking */
+            overflow-y: auto;
+            min-height: 0;
         }
 
         .date-picker-container {
@@ -112,7 +113,9 @@
             position: relative;
             gap: 10px;
             margin-bottom: 20px;
-            flex-shrink: 0; /* Don't shrink */
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .datepicker {
@@ -126,6 +129,7 @@
             gap: 10px;
             transition: all 0.3s ease;
             justify-content: center;
+            min-width: 200px;
         }
 
         .datepicker:hover {
@@ -143,6 +147,8 @@
             font-size: 14px;
             font-weight: 500;
             transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
         }
 
         .date-input:focus {
@@ -167,6 +173,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             font-size: 14px;
+            white-space: nowrap;
         }
 
         .apply:hover {
@@ -186,6 +193,7 @@
             color: linear-gradient(135deg, #dc2626 0%, #1e40af 100%);
             transition: all 0.2s ease;
             display: flex;
+            flex-shrink: 0;
         }
 
         .floating-btn svg {
@@ -202,52 +210,141 @@
             color: #dc2626;
         }
 
-        /* Games container with responsive grid */
+        /* Games container with highly responsive grid */
         #scorebug {
             width: 100%;
-            max-width: 1200px; /* Maximum width for very large screens */
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         #games-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive columns */
-            gap: 10px;
+            gap: clamp(8px, 2vw, 15px);
             padding: 5px;
             width: 100%;
+            
+            /* Ultra-responsive grid that adapts to container width */
+            grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
         }
 
-        /* Responsive adjustments for different window sizes */
-        @media (max-width: 800px) {
+        /* Responsive breakpoints for different layouts */
+        @media (max-width: 400px) {
             #games-container {
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                gap: 8px;
+                /* Single column on very narrow screens */
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .game-box {
+                height: 15rem !important; /* Taller boxes for single column */
+                width: 32rem !important;
+            }
+
+            .team-logo {
+                height: 60px !important;
+                width: 60px !important;
+            }
+
+            .team-abbr {
+                font-size: 1.5rem !important;
+            }
+
+            .game-status {
+                font-size: 1rem !important;
+            }
+
+            .team-score {
+                font-size: 1.5rem !important;
+            }
+
+            .team-row {
+                display: flex !important;
+                width: 100% !important;
+                justify-content: start !important;
+                gap: 4rem !important;
             }
         }
 
-        @media (min-width: 1000px) {
+        @media (min-width: 401px) and (max-width: 600px) {
             #games-container {
-                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                /* Two columns on narrow screens */
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .game-box {
+                height: 130px !important;
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 800px) {
+            #games-container {
+                /* Three columns on medium screens */
+                grid-template-columns: repeat(3, 1fr);
                 gap: 12px;
+            }
+            
+            .game-box {
+                height: 125px !important;
+            }
+        }
+
+        @media (min-width: 801px) and (max-width: 1000px) {
+            #games-container {
+                /* Four columns on larger screens */
+                grid-template-columns: repeat(4, 1fr);
+                gap: 12px;
+            }
+            
+            .game-box {
+                height: 120px !important;
+            }
+        }
+
+        @media (min-width: 1001px) and (max-width: 1200px) {
+            #games-container {
+                /* Five columns on wide screens */
+                grid-template-columns: repeat(5, 1fr);
+                gap: 15px;
+            }
+            
+            .game-box {
+                height: 115px !important;
+            }
+        }
+
+        @media (min-width: 1201px) {
+            #games-container {
+                /* Six or more columns on very wide screens */
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 15px;
+            }
+            
+            .game-box {
+                height: 110px !important;
             }
         }
 
         .game-box {
             border: 1px solid rgba(59, 131, 246, 0.39);
-            padding: 5px;
+            padding: 8px;
             text-align: center;
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(10px);
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 10px;
-            width: 100%; /* Use full grid cell width */
-            height: 120px;
+            width: 100%;
+            height: 120px; /* Default height, overridden by media queries */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            box-sizing: border-box; /* Include padding/border in width calculation */
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .game-box:active, .game-box:hover, .game-box:focus,
@@ -264,25 +361,35 @@
             align-items: center;
             justify-content: space-between;
             width: 100%;
+            flex: 1;
         }
 
         .team-logo {
-            width: 35px;
-            height: 35px;
+            width: clamp(25px, 8vw, 40px);
+            height: clamp(25px, 8vw, 40px);
+            flex-shrink: 0;
         }
 
         .team-abbr, .team-score {
-            font-size: 16px;
-            margin: 0 5px;
+            font-size: clamp(12px, 3vw, 18px);
+            margin: 0 clamp(3px, 1vw, 8px);
             font-weight: 600;
             color: #0252bb;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .game-status {
-            font-size: 15px;
+            font-size: clamp(11px, 2.5vw, 16px);
             font-weight: 700;
-            align-self: flex-start;
+            align-self: center;
             color: #ef4444;
+            text-align: center;
+            margin: 5px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* Navigation bar - always at bottom */
@@ -293,11 +400,11 @@
             backdrop-filter: blur(10px);
             border-top: 1px solid #ef4444;
             align-items: center;
-            padding: 10px;
+            padding: 8px;
             height: 50px;
             width: 100%;
-            margin-top: auto; /* Push to bottom */
-            flex-shrink: 0; /* Don't shrink */
+            margin-top: auto;
+            flex-shrink: 0;
             transition: background-color 0.3s ease;
             box-sizing: border-box;
         }
@@ -310,12 +417,16 @@
             background: none;
             border: none;
             cursor: pointer;
-            padding: 10px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
         }
         
         .nav-container svg {
-            height: 28px;
-            width: 28px;
+            height: clamp(20px, 5vw, 28px);
+            width: clamp(20px, 5vw, 28px);
             fill: #6b7280;
             transition: fill 0.2s; 
         }
@@ -354,6 +465,17 @@
             transition: transform .2s;
         }
 
+        body.dark-mode .datepicker {
+            background: rgba(30, 30, 30, 0.7);
+            border-color: rgba(255, 106, 108, 0.2);
+        }
+
+        body.dark-mode .date-input {
+            background: rgba(40, 40, 40, 0.9);
+            border-color: #ff6a6d;
+            color: #D7827E;
+        }
+
         .material-symbols-outlined {
             font-variation-settings:
             'FILL' 0,
@@ -362,8 +484,279 @@
             'opsz' 48
         }
 
-    </style>
+        /* Container query support for modern browsers */
+        @container (max-width: 300px) {
+            .game-box {
+                height: 150px;
+            }
+            
+            .team-logo {
+                width: 30px;
+                height: 30px;
+            }
+        }
 
+        /* Add smooth transitions for layout changes */
+        * {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Improve touch targets for mobile */
+        @media (hover: none) and (pointer: coarse) {
+            .game-box {
+                min-height: 44px; /* Minimum touch target size */
+                padding: 12px 8px;
+            }
+            
+            .nav-container button {
+                min-width: 44px;
+                min-height: 44px;
+            }
+            
+            .floating-btn {
+                padding: 12px;
+            }
+        }
+
+       /* Additional CSS for the scorebug - add this to your existing style.css */
+
+.score-bug-container {
+    text-align: center;
+    padding: 5px;
+    margin-top: 5px;
+    border-top: 1px solid rgba(185, 162, 162, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 8px 8px;
+}
+
+.bases-outs-svg {
+    transition: all 0.3s ease;
+    max-width: 90px;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Responsive scorebug display */
+@media (max-width: 400px) {
+    .bases-outs-svg {
+        display: block !important;
+        max-width: 80px;
+    }
+    
+    .game-box {
+        padding-bottom: 10px; /* Extra space for scorebug */
+    }
+    
+    .score-bug-container {
+        padding: 8px 4px;
+    }
+}
+
+@media (min-width: 401px) and (max-width: 600px) {
+    .bases-outs-svg {
+        display: block !important;
+        max-width: 70px;
+    }
+}
+
+@media (min-width: 601px) {
+    .bases-outs-svg {
+        display: block !important;
+        max-width: 85px;
+    }
+}
+
+/* Dark mode styling for scorebug */
+body.dark-mode .score-bug-container {
+    background: rgba(0, 0, 0, 0.1);
+    border-top-color: rgba(255, 106, 108, 0.2);
+}
+
+body.dark-mode .bases-outs-svg .inning-text {
+    fill: #D7827E;
+}
+
+body.dark-mode .bases-outs-svg rect {
+    stroke: #D7827E;
+}
+
+body.dark-mode .bases-outs-svg circle {
+    stroke: #D7827E;
+}
+
+body.dark-mode .bases-outs-svg polygon {
+    stroke: #D7827E;
+}
+
+/* Wrapper for game content with side-by-side layout */
+.game-content-wrapper {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+}
+
+.game-content-wrapper.with-scorebug {
+    gap: 8px;
+}
+
+.game-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.score-bug-container {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(185, 162, 162, 0.2);
+    width: 80px;
+    min-width: 80px;
+}
+
+.bases-outs-svg {
+    transition: all 0.3s ease;
+    width: 80px;
+    height: 60px;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Responsive scorebug positioning */
+@media (max-width: 400px) {
+    .game-content-wrapper.with-scorebug {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .score-bug-container {
+        width: 100%;
+        min-width: unset;
+        padding: 4px;
+    }
+    
+    .bases-outs-svg {
+        width: 100px;
+        height: 60px;
+    }
+}
+
+@media (min-width: 401px) and (max-width: 600px) {
+    .score-bug-container {
+        width: 70px;
+        min-width: 70px;
+    }
+    
+    .bases-outs-svg {
+        width: 65px;
+        height: 55px;
+    }
+}
+
+@media (min-width: 601px) {
+    .score-bug-container {
+        width: 80px;
+        min-width: 80px;
+    }
+    
+    .bases-outs-svg {
+        width: 75px;
+        height: 60px;
+    }
+}
+
+/* Dark mode styling for scorebug */
+body.dark-mode .score-bug-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 106, 108, 0.3);
+}
+
+body.dark-mode .bases-outs-svg .inning-text {
+    fill: #D7827E;
+}
+
+body.dark-mode .bases-outs-svg rect {
+    stroke: #D7827E;
+}
+
+body.dark-mode .bases-outs-svg circle {
+    stroke: #D7827E;
+}
+
+body.dark-mode .bases-outs-svg polygon {
+    stroke: #D7827E;
+}
+
+/* Animation for bases and outs updates */
+.bases-outs-svg rect,
+.bases-outs-svg circle {
+    transition: fill 0.4s ease-in-out;
+}
+
+/* Enhanced game box for scorebug games */
+.game-box.with-scorebug {
+    min-height: 140px;
+    padding-bottom: 5px;
+}
+
+/* Ensure scorebug doesn't interfere with click events */
+.score-bug-container {
+    pointer-events: none;
+}
+
+/* Make sure the SVG elements are properly sized */
+.bases-outs-svg rect {
+    stroke-width: 1;
+}
+
+.bases-outs-svg circle {
+    stroke-width: 1;
+}
+
+.bases-outs-svg polygon {
+    stroke-width: 1;
+}
+
+/* Text styling for inning display in SVG */
+.inning-text {
+    font-family: 'Rubik', Arial, sans-serif;
+    font-weight: 600;
+    font-size: 8px;
+}
+
+/* Hover effects for better interactivity */
+.game-box:hover .bases-outs-svg {
+    transform: scale(1.05);
+}
+
+/* Additional spacing for games with scorebugs */
+.game-box:has(.score-bug-container) {
+    padding-bottom: 8px;
+}
+
+/* Better visibility of active bases */
+.bases-outs-svg rect[fill="#D7827E"] {
+    filter: drop-shadow(0 0 2px rgba(215, 130, 126, 0.6));
+}
+
+.bases-outs-svg circle[fill="#D7827E"] {
+    filter: drop-shadow(0 0 2px rgba(215, 130, 126, 0.6));
+}
+
+/* Ensure proper stacking order */
+.score-bug-container {
+    position: relative;
+    z-index: 1;
+}
+    </style>
 </head>
 <body>
     <div class="header-container">
@@ -379,23 +772,8 @@
                 <input type="date" id="date-input" class="date-input">
                 <button class="apply">Apply</button>
             </div>
-            <button id="openFloatingBtn" class="floating-btn" alt="Floating Window">
-                 <svg xmlns="http://www.w3.org/2000/svg"
-                    height="32px"
-                    width="32px"
-                    viewBox="0 -960 960 960">
-                    <defs>
-                    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#dc2626"/>
-                        <stop offset="100%" stop-color="#1e40af"/>
-                    </linearGradient>
-                    </defs>
-                    <path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 
-                            23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 
-                            33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm160-
-                            120h320v-240H320v240ZM160-240v-480 480Z" 
-                        fill="url(#iconGradient)"/>
-                </svg>
+            <button id="openFloatingBtn" class="floating-btn" title="Floating Window">
+                 <img src="assets/floating_window_icon.svg" alt="Floating Window" width="32" height="32">
             </button>
     </div>
     <div id="scorebug">

@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="floating-pop.js" defer></script>
+    <title>Document</title>
+</head>
+    <style>
+html {
+    scrollbar-width: none;
+    max-height: 580px;
+}
+
+body {
+    width: 600px;
+    font-family: "Rubik", sans-serif;
+    height: 600px;
+    transform: scale(0.9);
+    transform-origin: top left;
+}
+
+body.dark-mode #popup-container {
+    background-color: #101012;
+    color: #ffffff;
+}
+
+#popup-container {
+    width: 640px;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    border: 3px solid #041e41;
+    background-color: #f7fafc;;
+    padding: 10px;
+    position: relative;
+    border-radius: 10px;
+}
+
+#game-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+    width: 80%; /* Keep this to ensure it spans full width */
+    margin-right: 20px;
+}
+
+#scorebug {
+    text-align: center;
+    background-color: #f7fafc;
+    color: #000;
+}
+
+#scorebug h2 {
+    text-align: center;
+}
+
+.balls-strikes {
+    font-weight: 400;
+    background-color: #f7fafc;
+}
+
+/* --- New styles for the tab section --- */
+#tab-section {
+    width: 100%; /* Make the tab section span full width */
+    margin-bottom: 15px; /* Space between tabs and gameplay-info-container */
+    padding-bottom: 10px; /* Padding for the tabs themselves */
+    border-bottom: 1px solid #ddd; /* This line separates tabs from gameplay info */
+    display: flex;
+    justify-content: center; /* Center the tabs container within this section */
+}
+
+#gameplay-info-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 15px; /* Adjust as needed for space below gameplay info */
+    padding-bottom: 10px; /* Adjust as needed for space below gameplay info */
+}
+
+#inning-info {
+    margin-right: 10px;
+}
+
+/* Create team container for logo and record */
+.team-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.team-logo {
+    display: block;
+    width: 80px;
+    height: 80px;
+}
+
+.team-record {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* --- CRITICAL CHANGE: Revert .game-status to row and adjust positioning --- */
+.game-status {
+    display: flex;
+    flex-direction: row; /* Keep as row to place scores left/right of center */
+    align-items: center; /* Vertically center items */
+    justify-content: space-around; /* Distribute space among items */
+    width: 60%; /* Adjust as needed, but 40% seems reasonable */
+    position: relative; /* Needed for absolute positioning of scores if chosen */
+}
+
+/* New: Container for inning/stadium to keep them centered */
+#center-elements {
+    display: flex;
+    flex-direction: column; /* Stack inning and stadium */
+    align-items: center; /* Center them horizontally */
+    flex-grow: 1; /* Allow it to take up available space */
+    min-width: 120px; /* Ensure it has enough space for text */
+    /* Remove any margins that push it too far down, it should be naturally centered */
+    margin: 0;
+}
+
+.stadium {
+    display: block;
+    color: #0B0F13;
+    margin-bottom: 5px; /* Add margin below stadium info */
+    text-align: center; /* Ensure text is centered */
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+.team-score {
+    font-size: 1.5rem;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+    color: #0B0F13;
+    /* Scores will now be direct children of .game-status, not #center-elements */
+    /* No specific margin needed here as justify-content will handle spacing */
+}
+
+.inning {
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-width: 60px;
+    text-align: center;
+    color: #bf0d3d;
+    margin-bottom: 5px; /* Space between inning and stadium */
+}
+
+.player-info {
+    width: 120px;
+    padding: 8px;
+    background-color: transparent;
+    border-radius: 5px;
+}
+
+.player-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    width: 120%;
+}
+
+.player-position {
+    font-style: italic;
+    margin-bottom: 5px;
+    color: #bf0d3d;
+}
+
+.prob-stats {
+    font-size: 12px;
+    color: #bf0d3d;
+    font-weight: 400;
+}
+
+.player-stat {
+    margin: 2px 0;
+    font-size: 0.9em;
+}
+
+.lineup {
+    font-size: 12px;
+    margin: 20px 0;
+}
+
+.lineup:first-child {
+    font-weight: bold;
+}
+
+.hand {
+    color: #db7872;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.field {
+    color: #D7827E;
+    font-weight: 500;
+    font-style: italic;
+}
+
+#away-player-info {
+    margin-left: 30px;
+}
+
+#home-player-info {
+    margin-right: 70px;
+}
+
+.team-logo {
+    display: block;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+}
+
+.team-record {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+#scoreboard-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.scoreboard {
+    width: auto;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 14px;
+}
+
+.scoreboard th, .scoreboard td {
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+}
+
+.scoreboard th {
+    background-color: #333;
+    color: white;
+}
+
+.away-team {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.home-team {
+    background-color: #e0e0e0;
+    font-weight: bold;
+}
+
+#pitch-data-section {
+    width: 100%;
+    margin: 10px auto;
+}
+
+#pitch-data-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 4px;
+    position: relative;
+    width: 100%;
+    bottom: 15px;
+    background-color: #041e41;
+    border-radius: 10px;
+    border-left: #bf0d3d 3px solid;
+    border-bottom: #bf0d3d 1px solid;
+    color: white;
+}
+
+.inning-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: #ff6a6c;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.player-image-container {
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-left: 55px;
+    position: relative;
+}
+
+.player-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #d7827e;
+    background-color: #e5decf;
+    object-fit: cover;
+}
+
+.content-wrapper {
+    display: flex;
+    flex: 1;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.play-details {
+    flex: 1;
+    margin-top: 5px;
+}
+
+.pitch-event {
+    background-color: #041e41;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 10rem;
+    font-weight: bold;
+    font-size: 15px;
+    display: inline-block;
+}
+
+.pitch-description {
+    color: #333;
+    font-size: 15px;
+    line-height: 1.3;
+    margin: 0 0 8px 0;
+    font-weight: 400;
+    padding: 10px 0;
+    align-items: center;
+    text-align: left;
+}
+
+.hit-data {
+    display: flex;
+    gap: 24px; /* Increased gap for better spacing */
+    margin-top: 8px;
+    padding: 12px 20px; /* Added horizontal padding */
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 6px;
+    border-left: 4px solid #bf0d3d;
+    border-bottom: 1px solid #bf0d3d;
+    width: 80%; /* Increased width to spread out more */
+    justify-content: space-evenly; /* This will evenly distribute the 3 stats */
+}
+
+.hit-data span {
+    display: flex;
+    flex-direction: column;
+    text-align: center; 
+    flex: 1;
+    font-size: 14px; 
+    font-weight: bold; 
+    color: #041e41;
+    
+}
+
+.hit-data span strong {
+    font-size: 14px;
+    color: #041e41;
+    margin-bottom: 4px;
+}
+
+.pitch-info {
+    margin: 0 5px;
+    font-size: 12px;
+    flex: 1;
+    text-align: center;
+}
+
+.winning-pitcher, .losing-pitcher {
+    color: #bf0d3d;
+    font-weight: 500;
+}
+
+#top-performers {
+    text-align: center;
+    color: #041e41;
+}
+
+.top-performers-row {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 5px;
+    color: #041e41;
+    gap: 60px;
+}
+
+.top-performer {
+    flex: 1;
+    text-align: center;
+    padding: 15px;
+    font-weight: 500;
+}
+
+.performer-name {
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.performer-stats {
+    font-size: 12px;
+    color: #bf0d3d;
+    font-weight: 500;
+    width: 120%;
+}
+
+.performer-name {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.performer-name span {
+    display: block;
+}
+
+.ball {
+    color: white;
+    background-color: #33a378;
+}
+
+.strike, .out {
+    color: white;
+    background-color: #f84144;
+}
+
+.hit {
+    color: white;
+    background-color: #004f6f;
+}
+
+.foul {
+    color: white;
+    background-color: #f84144;
+}
+
+.change {
+    color: white;
+    background-color: #004f6f;
+}
+
+.unclassified {
+    color: white;
+    background-color: #004f6f;
+}
+
+#away-player-stats, #home-player-stats {
+    width: 120%;
+}
+
+.performer-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid #D7827E;
+    object-fit: cover;
+    margin-bottom: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.top-performer {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Tabs Container (now within its own #tab-section) */
+#tabs-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    background-color: #041e41;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 2px;
+}
+
+.tab-button {
+    flex-grow: 1;
+    padding: 5px 3px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: white;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 10px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.tab-button.active {
+    background-color: #bf0d3d;
+    color: white;
+}
+
+.tab-button:hover:not(.active) {
+    background-color: #e0e0e0;
+}
+
+/* --- Content Area --- */
+#content-area {
+    padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    flex-grow: 1;
+    margin-top: 15px; /* Keep this to separate from content above */
+}
+
+#loading-indicator {
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    color: #666;
+}
+
+/* --- Content Styling (Boxscore, Plays) --- */
+.boxscore-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+.boxscore-table th, .boxscore-table td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 0.8em;
+    white-space: nowrap;
+}
+
+.boxscore-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    color: #444;
+}
+
+.boxscore-table td:nth-child(1) { text-align: left; }
+.boxscore-table td:nth-child(n+2) { text-align: center; }
+.boxscore-pitching-table td:nth-child(n+2) { text-align: center; }
+
+.inning-runs {
+    text-align: center;
+}
+
+h3 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    color: #D7827E;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+h4 {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: #444;
+    font-size: 1em;
+    text-align: center;
+}
+
+.scoring-play-item {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #eee;
+    font-size: 0.9em;
+}
+
+.scoring-play-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.scoring-play-item strong {
+    color: #bf0d3d;
+}
+
+.play-by-play-item {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dotted #eee;
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+.play-by-play-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.play-by-play-inning {
+    font-weight: bold;
+    color: #D7827E;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 3px;
+    text-align: center;
+    background-color: #f9f9f9;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+/* All Plays */
+
+#all-plays-container {
+    width: 100%;
+    height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #e0eaf8ff;
+    border-radius: 8px;
+    font-family: Rubik, sans-serif;
+    scrollbar-width: thin;
+}
+
+.play-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: slideIn 0.3s ease-out forwards;
+    position: relative;
+}
+
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.inning-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: #ff6a6c;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.player-image-container {
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-left: 55px;
+    position: relative;
+}
+
+.player-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #bf0d3d;
+    background-color: #e5decf;
+    object-fit: cover;
+}
+
+.event-icon {
+    position: absolute;
+    bottom: -15px;
+    right: -10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #bf0d3d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: white;
+    border: 2px solid white;
+}
+
+.play-details {
+    flex: 1;
+    margin-top: 5px;
+}
+
+.event-name {
+    border: 3px solid #2a283e;
+    color: black;
+    padding: 4px 8px;
+    border-radius: 10rem;
+    font-weight: bold;
+    font-size: 16px;
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+.play-description {
+    color: #333;
+    font-size: 15px;
+    line-height: 1.3;
+    margin: 0;
+    width: 100%;
+    font-weight: 400;
+}
+
+.game-start-item {
+    display: flex;
+    background: linear-gradient(135deg, #041e41, #133a6e);
+    color: white;
+    flex-direction: column;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+}
+
+/* All Plays SVG */
+
+.game-situation {
+    display: flex;
+    align-items: right;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 8px;
+    background: #e5decf;
+    border-radius: 4px;
+}
+
+.count-info {
+    display: flex;
+    flex-direction: column; 
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.count {
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.outs {
+    color: #666;
+    font-size: 11px;
+}
+
+.field-display {
+    flex-shrink: 0;
+}
+
+.video-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.video-button:hover {
+  transform: scale(1.08) translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(217,230,243,0.98));
+}
+
+/* Lineup Container Styles */
+.lineup-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 8px;
+}
+
+.lineup-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 18px;
+    font-size: 11px;
+}
+
+/* Away Team Lineup - Numbers on Outside (Left) */
+.away-lineup {
+    display: flex;
+    align-items: center;
+    flex: 0 0 120px;
+    gap: 4px;
+}
+
+.away-lineup .lineup-num {
+    flex: 0 0 12px;
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+}
+
+.away-lineup .hand {
+    flex: 0 0 12px;
+    font-size: 9px;
+    text-align: center;
+}
+
+.away-lineup .player-name-short {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Home Team Lineup - Numbers on Outside (Right) */
+.home-lineup {
+    display: flex;
+    align-items: center;
+    flex: 0 0 120px;
+    gap: 4px;
+    flex-direction: row-reverse;
+}
+
+.home-lineup .lineup-num {
+    flex: 0 0 12px;
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+}
+
+.home-lineup .field {
+    flex: 0 0 16px;
+    font-size: 9px;
+    text-align: center;
+    color: #888;
+}
+
+.home-lineup .hand {
+    flex: 0 0 12px;
+    font-size: 9px;
+    text-align: center;
+}
+
+.home-lineup .player-name-short {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* Progress Bar Container - Center */
+.avg-progress-container {
+    flex: 0 0 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 8px;
+}
+
+.avg-progress-bar {
+    position: relative;
+    width: 50px;
+    height: 12px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.avg-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444 0%, #ffaa00 50%, #00aa44 100%);
+    transition: width 0.3s ease;
+    border-radius: 5px;
+}
+
+.avg-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    font-weight: bold;
+    color: #000;
+    text-shadow: 0 0 2px white;
+    z-index: 2;
+}
+
+/* Responsive adjustments for tight spaces */
+@media (max-width: 400px) {
+    .lineup-row {
+        font-size: 10px;
+    }
+    
+    .away-lineup, .home-lineup {
+        flex: 0 0 100px;
+    }
+    
+    .avg-progress-container {
+        flex: 0 0 45px;
+        margin: 0 4px;
+    }
+    
+    .avg-progress-bar {
+        width: 40px;
+        height: 10px;
+    }
+    
+    .avg-text {
+        font-size: 7px;
+    }
+}
+
+#lineups-container {
+    position: relative;
+    padding-left: 140px;   /* Make room for away lineup */
+    padding-right: 140px;  /* Make room for home lineup */
+}
+
+.lineup-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    height: 24px;
+}
+
+.away-row {
+    justify-content: flex-start;
+}
+
+.home-row {
+    justify-content: flex-end;
+}
+
+.away-lineup,
+.home-lineup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.away-lineup .lineup-num,
+.home-lineup .lineup-num {
+    font-weight: bold;
+    min-width: 16px;
+}
+
+.starter-hand {
+    color: #bf0d3d;
+    font-style: italic;
+}
+
+.hand {
+    font-size: 0.9em;
+    color: #bf0d3d;
+}
+
+.field {
+    font-size: 0.85em;
+    color: #bf0d3d;
+}
+
+.avg {
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.avg-progress-container {
+    margin: 0 8px;
+    width: 80px;
+    justify-content: center;
+}
+
+.avg-progress-bar {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 0 2px rgb(231, 194, 194);
+}
+
+.avg-fill {
+    height: 100%;
+    background: #aaa; /* Muted gray */
+    width: 0;
+    transition: width 0.4s ease;
+}
+
+.avg-text {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #4dff07;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.avg-progress-bar:hover .avg-text {
+    opacity: 1;
+}
+
+#backButton {
+    font-family: 'Rubik', sans-serif;
+    background-color: #041e41;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 10%;
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+#backButton:hover {
+    background-color: #052857;
+    border-color: #bf0d3d;
+}
+    </style>
+<body>
+</body>
+<button id="backButton">Go Back</button>
+<script src="button-float.js"></script>
+</html>
