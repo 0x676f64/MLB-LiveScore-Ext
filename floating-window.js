@@ -169,36 +169,26 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = FloatingWindowManager;
 }
 
-// Fixed Score Bug SVG Functions
-function createBasesOutsSVG() {
+// Fixed Baseball Bases/Outs SVG Functions
+function createBasesOutsSVG(basesStatus = {}, outsCount = 0) {
+    // Default empty bases status if not provided
+    const bases = {
+        first: basesStatus.first || false,
+        second: basesStatus.second || false,
+        third: basesStatus.third || false
+    };
+    
     return `
-        <svg class="bases-outs-svg" width="90" height="70" viewBox="0 0 90 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Outs circles at the bottom -->
-            <circle class="out-circle" cx="25" cy="55" r="6" fill="#D9D9D9" stroke="#B9A2A2"/>
-            <circle class="out-circle" cx="45" cy="55" r="6" fill="#D9D9D9" stroke="#B9A2A2"/>
+        <svg class="svg-scorebug" width="200" height="200" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius: 4px;">
+            <!-- Outs circles -->
+            <circle class="out-circle" cx="13" cy="61" r="6" fill="${outsCount >= 1 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <circle class="out-circle" cx="30" cy="61" r="6" fill="${outsCount >= 2 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <circle class="out-circle" cx="47" cy="61" r="6" fill="${outsCount >= 3 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
             
-            <!-- Baseball diamond bases -->
-            <g class="baseball-diamond">
-                <!-- Third base (left) -->
-                <rect id="third-base" x="12" y="25" width="12" height="12" rx="1" 
-                      transform="rotate(45 18 31)" fill="#FFDDDD" stroke="#B9A2A2"/>
-                
-                <!-- Second base (top) -->
-                <rect id="second-base" x="39" y="12" width="12" height="12" rx="1" 
-                      transform="rotate(45 45 18)" fill="#FFDDDD" stroke="#B9A2A2"/>
-                
-                <!-- First base (right) -->
-                <rect id="first-base" x="66" y="25" width="12" height="12" rx="1" 
-                      transform="rotate(45 72 31)" fill="#FFDDDD" stroke="#B9A2A2"/>
-                
-                <!-- Home plate -->
-                <polygon points="45,40 48,37 52,37 55,40 52,43 48,43" 
-                         fill="#FFFFFF" stroke="#B9A2A2"/>
-            </g>
-            
-            <!-- Inning info text area -->
-            <text x="45" y="8" text-anchor="middle" class="inning-text" 
-                  fill="#666" font-size="8" font-family="Arial, sans-serif">INNING</text>
+            <!-- Bases (diamond shaped) -->
+            <rect id="third-base" x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${bases.third ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <rect id="second-base" x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${bases.second ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <rect id="first-base" x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${bases.first ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
         </svg>
     `;
 }
@@ -212,35 +202,26 @@ function updateBasesOutsSVG(svg, basesStatus, outsCount) {
         third: svg.querySelector('#third-base')
     };
     
-    // Reset all bases to default color
-    Object.values(bases).forEach(base => {
-        if (base) {
-            base.setAttribute('fill', '#FFDDDD');
-        }
-    });
-    
-    // Update bases status if provided
-    if (basesStatus) {
-        if (basesStatus.first && bases.first) {
-            bases.first.setAttribute('fill', '#D7827E');
-        }
-        if (basesStatus.second && bases.second) {
-            bases.second.setAttribute('fill', '#D7827E');
-        }
-        if (basesStatus.third && bases.third) {
-            bases.third.setAttribute('fill', '#D7827E');
-        }
+    // Update bases status
+    if (bases.first) {
+        bases.first.setAttribute('fill', basesStatus?.first ? '#bf0d3e' : '#e2e8f0');
+    }
+    if (bases.second) {
+        bases.second.setAttribute('fill', basesStatus?.second ? '#bf0d3e' : '#e2e8f0');
+    }
+    if (bases.third) {
+        bases.third.setAttribute('fill', basesStatus?.third ? '#bf0d3e' : '#e2e8f0');
     }
     
     // Update outs status
     const outCircles = svg.querySelectorAll('.out-circle');
     outCircles.forEach((circle, index) => {
-        const fillColor = index < outsCount ? '#D7827E' : '#D9D9D9';
+        const fillColor = index < outsCount ? '#bf0d3e' : '#e2e8f0';
         circle.setAttribute('fill', fillColor);
     });
 }
 
-// Fixed function to get live game data including bases/outs
+// Enhanced function to get live game data including bases/outs
 async function fetchLiveGameData(gamePk) {
     try {
         const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
@@ -248,7 +229,6 @@ async function fetchLiveGameData(gamePk) {
 
         if (data && data.liveData) {
             const linescore = data.liveData.linescore;
-            const plays = data.liveData.plays;
             
             // Get inning info
             const inningHalf = linescore.inningHalf ? 
@@ -256,21 +236,26 @@ async function fetchLiveGameData(gamePk) {
             const currentInning = linescore.currentInning || "";
             const inningDisplay = `${inningHalf} ${currentInning}`;
             
-            // Get bases status
+            // Get bases status - handle different possible data structures
             const basesStatus = {
-                first: linescore.offense?.first || false,
-                second: linescore.offense?.second || false,
-                third: linescore.offense?.third || false
+                first: linescore.offense?.first || linescore.offense?.runner1 || false,
+                second: linescore.offense?.second || linescore.offense?.runner2 || false,
+                third: linescore.offense?.third || linescore.offense?.runner3 || false
             };
             
             // Get outs count
             const outsCount = linescore.outs || 0;
             
+            // Check if game is actually live
+            const gameStatus = data.gameData?.status?.statusCode;
+            const isLive = gameStatus === 'I' || gameStatus === 'IP'; // In progress
+            
             return {
                 inningDisplay,
                 basesStatus,
                 outsCount,
-                isLive: true
+                isLive,
+                gameStatus: data.gameData?.status?.detailedState || 'Unknown'
             };
         }
     } catch (error) {
@@ -281,8 +266,55 @@ async function fetchLiveGameData(gamePk) {
         inningDisplay: "In Progress",
         basesStatus: { first: false, second: false, third: false },
         outsCount: 0,
-        isLive: false
+        isLive: false,
+        gameStatus: 'Error'
     };
+}
+
+// Function to inject the SVG into a game box for live games
+function injectBasesOutsSVG(gameBoxElement, basesStatus, outsCount) {
+    // Find or create container for the SVG (to the right of game info)
+    let svgContainer = gameBoxElement.querySelector('.score-bug-container');
+    
+    if (!svgContainer) {
+        svgContainer = document.createElement('div');
+        svgContainer.className = 'score-bug-container';
+        svgContainer.style.cssText = `
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+        `;
+        gameBoxElement.style.position = 'relative'; // Ensure parent is positioned
+        gameBoxElement.appendChild(svgContainer);
+    }
+    
+    // Update the SVG content
+    svgContainer.innerHTML = createBasesOutsSVG(basesStatus, outsCount);
+}
+
+// Function to update live game displays with bases/outs info
+async function updateLiveGameDisplays() {
+    const gameBoxes = document.querySelectorAll('.game-box[data-game-pk]');
+    
+    for (const gameBox of gameBoxes) {
+        const gamePk = gameBox.getAttribute('data-game-pk');
+        if (!gamePk) continue;
+        
+        const gameData = await fetchLiveGameData(gamePk);
+        
+        if (gameData.isLive) {
+            // Inject the bases/outs SVG
+            injectBasesOutsSVG(gameBox, gameData.basesStatus, gameData.outsCount);
+            
+            // Update inning display if element exists
+            const inningElement = gameBox.querySelector('.inning-display');
+            if (inningElement) {
+                inningElement.textContent = gameData.inningDisplay;
+            }
+        }
+    }
 }
 
 function updateGameBox(gameBox, game, awayTeamAbbr, homeTeamAbbr, inningInfo, inningClass, awayRecord = '', homeRecord = '', basesStatus = null, outsCount = 0, showScoreBug = false) {
@@ -313,7 +345,7 @@ function updateGameBox(gameBox, game, awayTeamAbbr, homeTeamAbbr, inningInfo, in
                                 <td class="score">${game.teams.home.score !== undefined ? game.teams.home.score : ''}</td>
                             </tr>
                             ${showScoreBug && inningClass === 'inning' ? 
-                                `<tr><td colspan="5" class="score-bug-container">${createBasesOutsSVG()}</td></tr>` : 
+                                `<tr><td colspan="5" class="score-bug-container">${createBasesOutsSVG(basesStatus, outsCount)}</td></tr>` : 
                                 ''}
                         </tbody>
                     </table>
@@ -326,11 +358,11 @@ function updateGameBox(gameBox, game, awayTeamAbbr, homeTeamAbbr, inningInfo, in
     
     // Update SVG if it's shown and game is in progress
     if (showScoreBug && inningClass === 'inning') {
-        const svg = gameBox.querySelector('.bases-outs-svg');
-        if (svg && basesStatus !== null && outsCount !== undefined) {
+        const svgElement = gameBox.querySelector('svg');
+        if (svgElement && basesStatus !== null && outsCount !== undefined) {
             // Small delay to ensure SVG is rendered
             setTimeout(() => {
-                updateBasesOutsSVG(svg, basesStatus, outsCount);
+                updateBasesOutsSVG(svgElement, basesStatus, outsCount);
             }, 100);
         }
     }
@@ -429,6 +461,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const gameBoxes = await Promise.all(data.dates[0].games.map(async (game) => {
                 const gameBox = document.createElement("div");
                 gameBox.classList.add("game-box");
+                gameBox.setAttribute("data-game-pk", game.gamePk); // Add this for live updates
 
                 const homeTeam = game.teams.home.team.name;
                 const awayTeam = game.teams.away.team.name;
@@ -485,7 +518,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         </div>
                         ${showScoreBug && liveGameData ? `
                             <div class="score-bug-container">
-                                ${createBasesOutsSVG()}
+                                ${createBasesOutsSVG(liveGameData.basesStatus, liveGameData.outsCount)}
                             </div>
                         ` : ''}
                     </div>
@@ -496,9 +529,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 // Update scorebug after content is added
                 if (showScoreBug && liveGameData) {
                     setTimeout(() => {
-                        const svg = gameBox.querySelector('.bases-outs-svg');
-                        if (svg) {
-                            updateBasesOutsSVG(svg, liveGameData.basesStatus, liveGameData.outsCount);
+                        const svgElement = gameBox.querySelector('svg');
+                        if (svgElement) {
+                            updateBasesOutsSVG(svgElement, liveGameData.basesStatus, liveGameData.outsCount);
                         }
                     }, 100);
                 }
@@ -604,6 +637,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Set up interval to refresh games every 30 seconds (only for today's games)
     setInterval(autoRefreshGames, 30000);
+    
+    // Set up interval to update live games every 30 seconds using the new function
+    setInterval(updateLiveGameDisplays, 30000);
     
     // Check every minute if we need to update the "baseball date" at 9am
     setInterval(() => {

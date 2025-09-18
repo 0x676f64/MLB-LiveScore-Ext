@@ -612,14 +612,13 @@ body.dark-mode .bases-outs-svg polygon {
 .score-bug-container {
     flex-shrink: 0;
     display: flex;
+    position: absolute;
     align-items: center;
     justify-content: center;
     padding: 2px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     border: 1px solid rgba(185, 162, 162, 0.2);
-    width: 80px;
-    min-width: 80px;
 }
 
 .bases-outs-svg {
@@ -633,26 +632,30 @@ body.dark-mode .bases-outs-svg polygon {
 /* Responsive scorebug positioning */
 @media (max-width: 400px) {
     .game-content-wrapper.with-scorebug {
-        flex-direction: column;
+        flex-direction: row;
         gap: 4px;
     }
     
     .score-bug-container {
-        width: 100%;
+        display: flex;
+        position: relative;
+        align-items: flex-end;
+        justify-content: flex-end;
+        width: 40%;
         min-width: unset;
         padding: 4px;
     }
-    
+
     .bases-outs-svg {
-        width: 100px;
-        height: 60px;
+        width: 50px !important;
+        height: 50px !important;
     }
 }
 
 @media (min-width: 401px) and (max-width: 600px) {
     .score-bug-container {
-        width: 70px;
-        min-width: 70px;
+        width: 60px;
+        min-width: 60px;
     }
     
     .bases-outs-svg {
@@ -663,8 +666,8 @@ body.dark-mode .bases-outs-svg polygon {
 
 @media (min-width: 601px) {
     .score-bug-container {
-        width: 80px;
-        min-width: 80px;
+        width: 70px;
+        min-width: 70px;
     }
     
     .bases-outs-svg {
@@ -740,15 +743,6 @@ body.dark-mode .bases-outs-svg polygon {
 /* Additional spacing for games with scorebugs */
 .game-box:has(.score-bug-container) {
     padding-bottom: 8px;
-}
-
-/* Better visibility of active bases */
-.bases-outs-svg rect[fill="#D7827E"] {
-    filter: drop-shadow(0 0 2px rgba(215, 130, 126, 0.6));
-}
-
-.bases-outs-svg circle[fill="#D7827E"] {
-    filter: drop-shadow(0 0 2px rgba(215, 130, 126, 0.6));
 }
 
 /* Ensure proper stacking order */
