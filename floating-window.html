@@ -257,6 +257,16 @@
                 font-size: 1.5rem !important;
                 align-items: center !important;
             }
+
+            .nav-container {
+                width: 140% !important;
+                height: 100px !important;
+            }
+
+            .nav-container svg {
+                height: 2rem !important;
+                width: 2rem !important;
+            }
         }
 
         @media (min-width: 401px) and (max-width: 600px) {
@@ -291,7 +301,7 @@
             }
             
             .game-box {
-                height: 120px !important;
+                height: 140px !important;
             }
         }
 
@@ -303,19 +313,43 @@
             }
             
             .game-box {
-                height: 115px !important;
+                height: 140px !important;
             }
         }
 
         @media (min-width: 1201px) {
             #games-container {
                 /* Six or more columns on very wide screens */
-                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                grid-template-columns: repeat(6, 1fr);
                 gap: 15px;
             }
             
             .game-box {
-                height: 110px !important;
+                height: 140px !important;
+            }
+        }
+
+        @media (min-width: 1401px) {
+            #games-container {
+                /* Seven columns on ultra-wide screens */
+                grid-template-columns: repeat(7, 1fr);
+                gap: 15px
+            }
+
+            .game-box {
+                height: 140px !important;
+            }
+        }
+
+        @media (min-width: 1681px) {
+            #games-container {
+                /* Eight columns on extremely wide screens */
+                grid-template-columns: repeat(8, 1fr);
+                gap: 15px;
+            }
+
+            .game-box {
+                height: 140px !important;
             }
         }
 
@@ -500,7 +534,7 @@
     
     .game-box {
         padding-bottom: 10px; /* Extra space for scorebug */
-        margin-left: 20px;
+        margin-left: 0.5rem;
     }
     
     .score-bug-container {
@@ -599,6 +633,7 @@
 }
 
 @media (min-width: 401px) and (max-width: 600px) {
+
     .score-bug-container {
         width: 60px;
         min-width: 60px;
@@ -607,6 +642,11 @@
     .bases-outs-svg {
         width: 65px;
         height: 55px;
+    }
+
+    .game-box {
+        padding-bottom: 8px; /* Extra space for scorebug */
+        width: 20rem;
     }
 }
 
@@ -619,6 +659,11 @@
     .bases-outs-svg {
         width: 75px;
         height: 60px;
+    }
+
+    .game-box {
+        padding-bottom: 8px; /* Extra space for scorebug */
+        width: 17rem;
     }
 }
 
