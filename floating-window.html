@@ -255,13 +255,7 @@
 
             .team-score {
                 font-size: 1.5rem !important;
-            }
-
-            .team-row {
-                display: flex !important;
-                width: 100% !important;
-                justify-content: start !important;
-                gap: 4rem !important;
+                align-items: center !important;
             }
         }
 
@@ -409,10 +403,6 @@
             box-sizing: border-box;
         }
 
-        body.dark-mode .nav-container {
-            background-color: #222222;
-        }
-
         .nav-container button {
             background: none;
             border: none;
@@ -438,42 +428,6 @@
         .nav-container svg:hover {
             fill: #3b82f6;
             background-color: transparent;
-        }
-
-        body.dark-mode .nav-container svg:hover {
-            fill: #D7827E;
-            background-color: transparent;
-        }
-
-        body.dark-mode .game-box {
-            background-color: #131415;
-            border-color: #ff6a6d31;
-        }
-
-        body.dark-mode .team-abbr {
-            color: #b9b9bb;
-        }
-
-        body.dark-mode .team-score {
-            color: #b9b9bb;
-        }
-
-        body.dark-mode .game-box:active, body.dark-mode .game-box:hover, body.dark-mode .game-box:focus,
-        body.dark-mode .game-box:focus-within {
-            transform: scale(1.03);
-            box-shadow: #ff6a6c 0px 0px 10px 1px;
-            transition: transform .2s;
-        }
-
-        body.dark-mode .datepicker {
-            background: rgba(30, 30, 30, 0.7);
-            border-color: rgba(255, 106, 108, 0.2);
-        }
-
-        body.dark-mode .date-input {
-            background: rgba(40, 40, 40, 0.9);
-            border-color: #ff6a6d;
-            color: #D7827E;
         }
 
         .material-symbols-outlined {
@@ -546,10 +500,24 @@
     
     .game-box {
         padding-bottom: 10px; /* Extra space for scorebug */
+        margin-left: 20px;
     }
     
     .score-bug-container {
         padding: 8px 4px;
+    }
+
+    .game-main-content {
+        padding: 10px;
+    }
+
+    .team-row {
+        width: 80%;
+    }
+
+    .header-container {
+        display: flex;
+        align-items: center;
     }
 }
 
@@ -565,28 +533,6 @@
         display: block !important;
         max-width: 85px;
     }
-}
-
-/* Dark mode styling for scorebug */
-body.dark-mode .score-bug-container {
-    background: rgba(0, 0, 0, 0.1);
-    border-top-color: rgba(255, 106, 108, 0.2);
-}
-
-body.dark-mode .bases-outs-svg .inning-text {
-    fill: #D7827E;
-}
-
-body.dark-mode .bases-outs-svg rect {
-    stroke: #D7827E;
-}
-
-body.dark-mode .bases-outs-svg circle {
-    stroke: #D7827E;
-}
-
-body.dark-mode .bases-outs-svg polygon {
-    stroke: #D7827E;
 }
 
 /* Wrapper for game content with side-by-side layout */
@@ -641,7 +587,7 @@ body.dark-mode .bases-outs-svg polygon {
         position: relative;
         align-items: flex-end;
         justify-content: flex-end;
-        width: 40%;
+        width: 25%;
         min-width: unset;
         padding: 4px;
     }
@@ -674,28 +620,6 @@ body.dark-mode .bases-outs-svg polygon {
         width: 75px;
         height: 60px;
     }
-}
-
-/* Dark mode styling for scorebug */
-body.dark-mode .score-bug-container {
-    background: rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 106, 108, 0.3);
-}
-
-body.dark-mode .bases-outs-svg .inning-text {
-    fill: #D7827E;
-}
-
-body.dark-mode .bases-outs-svg rect {
-    stroke: #D7827E;
-}
-
-body.dark-mode .bases-outs-svg circle {
-    stroke: #D7827E;
-}
-
-body.dark-mode .bases-outs-svg polygon {
-    stroke: #D7827E;
 }
 
 /* Animation for bases and outs updates */
