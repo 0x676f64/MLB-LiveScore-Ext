@@ -29,12 +29,6 @@
             overflow-x: auto;
         }
 
-        /* Dark mode styles */
-        body.dark-mode {
-            background-color: #101012;
-            color: #ffffff;
-        }
-
         .header-container {
             display: flex;
             align-items: center;
@@ -92,10 +86,6 @@
             color: #a0aec0;
         }
 
-        body.dark-mode .toggle-label {
-            color: #D7827E;
-        }
-
         /* Main content container - takes remaining space and centers content */
         .main-content {
             flex: 1;
@@ -110,12 +100,12 @@
 
         .date-picker-container {
             display: flex;
-            position: relative;
             gap: 10px;
             margin-bottom: 20px;
             flex-shrink: 0;
             flex-wrap: wrap;
             justify-content: center;
+            align-items: center;
         }
 
         .datepicker {
@@ -508,217 +498,217 @@
 
        /* Additional CSS for the scorebug - add this to your existing style.css */
 
-.score-bug-container {
-    text-align: center;
-    padding: 5px;
-    margin-top: 5px;
-    border-top: 1px solid rgba(185, 162, 162, 0.3);
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0 0 8px 8px;
-}
+        .score-bug-container {
+            text-align: center;
+            padding: 5px;
+            margin-top: 5px;
+            border-top: 1px solid rgba(185, 162, 162, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0 0 8px 8px;
+        }
 
-.bases-outs-svg {
-    transition: all 0.3s ease;
-    max-width: 90px;
-    height: auto;
-    margin: 0 auto;
-    display: block;
-}
+        .bases-outs-svg {
+            transition: all 0.3s ease;
+            max-width: 90px;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+        }
 
-/* Responsive scorebug display */
-@media (max-width: 400px) {
-    .bases-outs-svg {
-        display: block !important;
-        max-width: 80px;
-    }
-    
-    .game-box {
-        padding-bottom: 10px; /* Extra space for scorebug */
-        margin-left: 0.5rem;
-    }
-    
-    .score-bug-container {
-        padding: 8px 4px;
-    }
+        /* Responsive scorebug display */
+        @media (max-width: 400px) {
+            .bases-outs-svg {
+                display: block !important;
+                max-width: 80px;
+            }
+            
+            .game-box {
+                padding-bottom: 10px; /* Extra space for scorebug */
+                margin-left: 0.5rem;
+            }
+            
+            .score-bug-container {
+                padding: 8px 4px;
+            }
 
-    .game-main-content {
-        padding: 10px;
-    }
+            .game-main-content {
+                padding: 10px;
+            }
 
-    .team-row {
-        width: 80%;
-    }
+            .team-row {
+                width: 80%;
+            }
 
-    .header-container {
-        display: flex;
-        align-items: center;
-    }
-}
+            .header-container {
+                display: flex;
+                align-items: center;
+            }
+        }
 
-@media (min-width: 401px) and (max-width: 600px) {
-    .bases-outs-svg {
-        display: block !important;
-        max-width: 70px;
-    }
-}
+        @media (min-width: 401px) and (max-width: 600px) {
+            .bases-outs-svg {
+                display: block !important;
+                max-width: 70px;
+            }
+        }
 
-@media (min-width: 601px) {
-    .bases-outs-svg {
-        display: block !important;
-        max-width: 85px;
-    }
-}
+        @media (min-width: 601px) {
+            .bases-outs-svg {
+                display: block !important;
+                max-width: 85px;
+            }
+        }
 
-/* Wrapper for game content with side-by-side layout */
-.game-content-wrapper {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    align-items: stretch;
-}
+        /* Wrapper for game content with side-by-side layout */
+        .game-content-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: stretch;
+        }
 
-.game-content-wrapper.with-scorebug {
-    gap: 8px;
-}
+        .game-content-wrapper.with-scorebug {
+            gap: 8px;
+        }
 
-.game-main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-}
+        .game-main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-.score-bug-container {
-    flex-shrink: 0;
-    display: flex;
-    position: absolute;
-    align-items: center;
-    justify-content: center;
-    padding: 2px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    border: 1px solid rgba(185, 162, 162, 0.2);
-}
+        .score-bug-container {
+            flex-shrink: 0;
+            display: flex;
+            position: absolute;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(185, 162, 162, 0.2);
+        }
 
-.bases-outs-svg {
-    transition: all 0.3s ease;
-    width: 80px;
-    height: 60px;
-    margin: 0 auto;
-    display: block;
-}
+        .bases-outs-svg {
+            transition: all 0.3s ease;
+            width: 80px;
+            height: 60px;
+            margin: 0 auto;
+            display: block;
+        }
 
-/* Responsive scorebug positioning */
-@media (max-width: 400px) {
-    .game-content-wrapper.with-scorebug {
-        flex-direction: row;
-        gap: 4px;
-    }
-    
-    .score-bug-container {
-        display: flex;
-        position: relative;
-        align-items: flex-end;
-        justify-content: flex-end;
-        width: 25%;
-        min-width: unset;
-        padding: 4px;
-    }
+        /* Responsive scorebug positioning */
+        @media (max-width: 400px) {
+            .game-content-wrapper.with-scorebug {
+                flex-direction: row;
+                gap: 4px;
+            }
+            
+            .score-bug-container {
+                display: flex;
+                position: relative;
+                align-items: flex-end;
+                justify-content: flex-end;
+                width: 25%;
+                min-width: unset;
+                padding: 4px;
+            }
 
-    .bases-outs-svg {
-        width: 50px !important;
-        height: 50px !important;
-    }
-}
+            .bases-outs-svg {
+                width: 50px !important;
+                height: 50px !important;
+            }
+        }
 
-@media (min-width: 401px) and (max-width: 600px) {
+        @media (min-width: 401px) and (max-width: 600px) {
 
-    .score-bug-container {
-        width: 60px;
-        min-width: 60px;
-    }
-    
-    .bases-outs-svg {
-        width: 65px;
-        height: 55px;
-    }
+            .score-bug-container {
+                width: 60px;
+                min-width: 60px;
+            }
+            
+            .bases-outs-svg {
+                width: 65px;
+                height: 55px;
+            }
 
-    .game-box {
-        padding-bottom: 8px; /* Extra space for scorebug */
-        width: 20rem;
-    }
-}
+            .game-box {
+                padding-bottom: 8px; /* Extra space for scorebug */
+                width: 20rem;
+            }
+        }
 
-@media (min-width: 601px) {
-    .score-bug-container {
-        width: 70px;
-        min-width: 70px;
-    }
-    
-    .bases-outs-svg {
-        width: 75px;
-        height: 60px;
-    }
+        @media (min-width: 601px) {
+            .score-bug-container {
+                width: 70px;
+                min-width: 70px;
+            }
+            
+            .bases-outs-svg {
+                width: 75px;
+                height: 60px;
+            }
 
-    .game-box {
-        padding-bottom: 8px; /* Extra space for scorebug */
-        width: 17rem;
-    }
-}
+            .game-box {
+                padding-bottom: 8px; /* Extra space for scorebug */
+                width: 17rem;
+            }
+        }
 
-/* Animation for bases and outs updates */
-.bases-outs-svg rect,
-.bases-outs-svg circle {
-    transition: fill 0.4s ease-in-out;
-}
+        /* Animation for bases and outs updates */
+        .bases-outs-svg rect,
+        .bases-outs-svg circle {
+            transition: fill 0.4s ease-in-out;
+        }
 
-/* Enhanced game box for scorebug games */
-.game-box.with-scorebug {
-    min-height: 140px;
-    padding-bottom: 5px;
-}
+        /* Enhanced game box for scorebug games */
+        .game-box.with-scorebug {
+            min-height: 140px;
+            padding-bottom: 5px;
+        }
 
-/* Ensure scorebug doesn't interfere with click events */
-.score-bug-container {
-    pointer-events: none;
-}
+        /* Ensure scorebug doesn't interfere with click events */
+        .score-bug-container {
+            pointer-events: none;
+        }
 
-/* Make sure the SVG elements are properly sized */
-.bases-outs-svg rect {
-    stroke-width: 1;
-}
+        /* Make sure the SVG elements are properly sized */
+        .bases-outs-svg rect {
+            stroke-width: 1;
+        }
 
-.bases-outs-svg circle {
-    stroke-width: 1;
-}
+        .bases-outs-svg circle {
+            stroke-width: 1;
+        }
 
-.bases-outs-svg polygon {
-    stroke-width: 1;
-}
+        .bases-outs-svg polygon {
+            stroke-width: 1;
+        }
 
-/* Text styling for inning display in SVG */
-.inning-text {
-    font-family: 'Rubik', Arial, sans-serif;
-    font-weight: 600;
-    font-size: 8px;
-}
+        /* Text styling for inning display in SVG */
+        .inning-text {
+            font-family: 'Rubik', Arial, sans-serif;
+            font-weight: 600;
+            font-size: 8px;
+        }
 
-/* Hover effects for better interactivity */
-.game-box:hover .bases-outs-svg {
-    transform: scale(1.05);
-}
+        /* Hover effects for better interactivity */
+        .game-box:hover .bases-outs-svg {
+            transform: scale(1.05);
+        }
 
-/* Additional spacing for games with scorebugs */
-.game-box:has(.score-bug-container) {
-    padding-bottom: 8px;
-}
+        /* Additional spacing for games with scorebugs */
+        .game-box:has(.score-bug-container) {
+            padding-bottom: 8px;
+        }
 
-/* Ensure proper stacking order */
-.score-bug-container {
-    position: relative;
-    z-index: 1;
-}
+        /* Ensure proper stacking order */
+        .score-bug-container {
+            position: relative;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
