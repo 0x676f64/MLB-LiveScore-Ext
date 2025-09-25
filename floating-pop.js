@@ -2494,16 +2494,16 @@ function createPlayItem(play, gameData) {
         border-bottom: 1px solid #bf0d3e;
     ">
         <div class="stat-item" style="text-align: center; flex: 1;">
-            <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
-            <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${exitVelo}</div>
+            <div class="stat-item-ev" style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
+            <div class="stat-item-ev-result" style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${exitVelo}</div>
         </div>
         <div class="stat-item" style="text-align: center; flex: 1;">
-            <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
-            <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${launchAngle}</div>
+            <div class="stat-item-la" style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
+            <div class="stat-item-la-result" style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${launchAngle}</div>
         </div>
         <div class="stat-item" style="text-align: center; flex: 1;">
-            <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Distance</div>
-            <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${distance}</div>
+            <div class="stat-item-dis" style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Distance</div>
+            <div class="stat-item-dis-result" style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${distance}</div>
         </div>
     </div>
     `;
@@ -3114,16 +3114,16 @@ function createScoringPlayItem(play, gameInfo, index) {
             border-bottom: 1px solid #bf0d3e;
         ">
             <div class="stat-item" style="text-align: center; flex: 1;">
-                <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
-                <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${exitVelo}</div>
+                <div class="stat-item-ev" style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Exit Velo</div>
+                <div class="stat-item-ev-result" style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${exitVelo}</div>
             </div>
             <div class="stat-item" style="text-align: center; flex: 1;">
-                <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
-                <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${launchAngle}</div>
+                <div class="stat-item-la" style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Launch Angle</div>
+                <div class="stat-item-la-result" style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${launchAngle}</div>
             </div>
             <div class="stat-item" style="text-align: center; flex: 1;">
-                <div style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Distance</div>
-                <div style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${distance}</div>
+                <div class="stat-item-dis" style="font-size: 11px; color: #041e42; font-weight: 600; text-transform: uppercase;">Distance</div>
+                <div class="stat-item-dis-result" style="font-size: 14px; font-weight: bold; color: #bf0d3e;">${distance}</div>
             </div>
         </div>
     `;
