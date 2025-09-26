@@ -242,12 +242,6 @@ document.getElementById('openFloatingBtn').addEventListener('click', () => {
     window.close(); // Close popup
 });
 
-// Toggle floating window  
-document.getElementById('toggleFloatingBtn').addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'toggleFloatingWindow' });
-    window.close(); // Close popup
-});
-
     // Set up interval to refresh games every 30 seconds (only for today's games)
     setInterval(autoRefreshGames, 30000);
     

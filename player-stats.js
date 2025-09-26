@@ -559,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { name: 'hits', display: 'Hits', goodHigh: true },
             { name: 'doubles', display: 'Doubles', goodHigh: true },
             { name: 'triples', display: 'Triples', goodHigh: true },
-            { name: 'strikeOuts', display: 'Strike Outs', goodLow: true },
+            { name: 'strikeOuts', display: 'Strike Outs', goodHigh: false },
             { name: 'runs', display: 'Runs', goodHigh: true },
             { name: 'baseOnBalls', display: 'Walks', goodHigh: true },
             { name: 'totalBases', display: 'Total Bases', goodHigh: true },

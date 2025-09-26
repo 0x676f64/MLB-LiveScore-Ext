@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_circle_left" />
     <script src="floating-pop.js" defer></script>
-    <script src="mlb-video-matcher.js" defer></script>
+    <script src="mlb-video-matcher-float.js" defer></script>
     <title>Document</title>
 </head>
     <style>
 html {
     scrollbar-width: none;
-    max-height: 580px;
+    height: 600px;
+    max-height: 616px;
 }
 
 body {
     width: 600px;
     font-family: "Rubik", sans-serif;
-    height: 600px;
+    height: 635px;
     transform: scale(0.9);
     transform-origin: top left;
 }
@@ -28,12 +29,11 @@ body.dark-mode #popup-container {
 }
 
 #popup-container {
-    width: 640px;
-    height: 600px;
+    width: 600px;
+    height: 630px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
     border: 3px solid #041e41;
     background-color: #f7fafc;;
     padding: 10px;
@@ -282,6 +282,7 @@ body.dark-mode #popup-container {
     border-left: #bf0d3d 3px solid;
     border-bottom: #bf0d3d 1px solid;
     color: white;
+    margin-right: 15px;
 }
 
 .inning-indicator {
@@ -631,13 +632,14 @@ h4 {
 
 #all-plays-container {
     width: 100%;
-    height: 400px;
+    height: 500px;
     overflow-y: auto;
     padding: 10px;
     background-color: #e0eaf8ff;
     border-radius: 8px;
     font-family: Rubik, sans-serif;
     scrollbar-width: thin;
+    overflow-x: hidden;
 }
 
 .play-item {
@@ -903,6 +905,13 @@ h4 {
 
 /* Responsive adjustments on default floating windows */
 @media (max-width: 400px) {
+    html {
+        height: auto;
+    }
+    body {
+        height: auto;
+    }
+
     .lineup-row {
         font-size: 10px;
     }
@@ -928,6 +937,10 @@ h4 {
     #popup-container {
         width: 65%;
         padding: 8px;
+    }
+
+    #scoring-play-container {
+        width: 90% !important;
     }
 
     #game-info {
@@ -1081,6 +1094,30 @@ h4 {
 
     .nav-container {
         display: hidden !important;
+    }
+
+    .play-details {
+        width: 100% !important;
+    }
+
+    .game-situation {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 2px !important;
+        position: absolute !important;
+        z-index: 11 !important;
+        background: transparent !important;
+        right: -3vw !important;
+        bottom: 4vh !important;
+    }
+
+    .boxscore-container {
+        overflow-x: hidden !important;
+        height: 500px !important;
+    }
+
+    .team-row {
+        margin-left: 20px !important;
     }
 }
 
