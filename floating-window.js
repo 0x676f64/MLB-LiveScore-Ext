@@ -1,5 +1,4 @@
-// Updated floating-window
-// floating-window.js - Enhanced floating window management with fixed scorebug
+// Updated floating-window.js - Enhanced with responsive layouts
 
 class FloatingWindowManager {
     constructor() {
@@ -14,16 +13,13 @@ class FloatingWindowManager {
     async openFloatingWindow() {
         try {
             if (this.windowId) {
-                // If window exists, focus it
                 await chrome.windows.update(this.windowId, { focused: true });
                 return;
             }
 
-            // Get current screen dimensions
             const displays = await chrome.system.display.getInfo();
             const primaryDisplay = displays[0];
             
-            // Calculate center position
             const left = Math.round(
                 primaryDisplay.bounds.left + 
                 (primaryDisplay.bounds.width - this.defaultWidth) / 2
@@ -34,21 +30,20 @@ class FloatingWindowManager {
             );
 
             const windowOptions = {
-                url: 'floating-window.html', // Your HTML file
+                url: 'floating-window.html',
                 type: 'popup',
                 width: this.defaultWidth,
                 height: this.defaultHeight,
                 left: left,
                 top: top,
                 focused: true,
-                alwaysOnTop: true, // Set to true if you want it always on top
+                alwaysOnTop: true,
             };
 
             const window = await chrome.windows.create(windowOptions);
             this.windowId = window.id;
             this.isOpen = true;
 
-            // Listen for window close
             chrome.windows.onRemoved.addListener((closedWindowId) => {
                 if (closedWindowId === this.windowId) {
                     this.windowId = null;
@@ -80,98 +75,37 @@ class FloatingWindowManager {
             await this.openFloatingWindow();
         }
     }
-
-    async resizeWindow(width, height) {
-        if (this.windowId) {
-            try {
-                const updateInfo = {
-                    width: Math.max(width, this.minWidth),
-                    height: Math.max(height, this.minHeight)
-                };
-                await chrome.windows.update(this.windowId, updateInfo);
-            } catch (error) {
-                console.error('Error resizing window:', error);
-            }
-        }
-    }
-
-    async centerWindow() {
-        if (this.windowId) {
-            try {
-                const displays = await chrome.system.display.getInfo();
-                const primaryDisplay = displays[0];
-                const window = await chrome.windows.get(this.windowId);
-                
-                const left = Math.round(
-                    primaryDisplay.bounds.left + 
-                    (primaryDisplay.bounds.width - window.width) / 2
-                );
-                const top = Math.round(
-                    primaryDisplay.bounds.top + 
-                    (primaryDisplay.bounds.height - window.height) / 2
-                );
-
-                await chrome.windows.update(this.windowId, { left, top });
-            } catch (error) {
-                console.error('Error centering window:', error);
-            }
-        }
-    }
 }
 
-// Create global instance
 const floatingWindowManager = new FloatingWindowManager();
 
-// Message listener for communication with popup/content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
         case 'openFloatingWindow':
             floatingWindowManager.openFloatingWindow();
             sendResponse({ success: true });
             break;
-            
         case 'closeFloatingWindow':
             floatingWindowManager.closeFloatingWindow();
             sendResponse({ success: true });
             break;
-            
         case 'toggleFloatingWindow':
             floatingWindowManager.toggleFloatingWindow();
             sendResponse({ success: true });
             break;
-            
-        case 'resizeFloatingWindow':
-            floatingWindowManager.resizeWindow(request.width, request.height);
-            sendResponse({ success: true });
-            break;
-            
-        case 'centerFloatingWindow':
-            floatingWindowManager.centerWindow();
-            sendResponse({ success: true });
-            break;
-            
-        case 'getFloatingWindowStatus':
-            sendResponse({ 
-                isOpen: floatingWindowManager.isOpen,
-                windowId: floatingWindowManager.windowId 
-            });
-            break;
-            
         default:
             sendResponse({ success: false, error: 'Unknown action' });
     }
-    
-    return true; // Keep message channel open for async response
+    return true;
 });
 
-// Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = FloatingWindowManager;
+// Utility function to check if we're in compact mode
+function isCompactMode() {
+    return window.innerWidth <= 400;
 }
 
-// Fixed Baseball Bases/Outs SVG Functions
-function createBasesOutsSVG(basesStatus = {}, outsCount = 0) {
-    // Default empty bases status if not provided
+// Create compact bases/outs SVG for floating window
+function createCompactBasesOutsSVG(basesStatus = {}, outsCount = 0) {
     const bases = {
         first: basesStatus.first || false,
         second: basesStatus.second || false,
@@ -179,480 +113,577 @@ function createBasesOutsSVG(basesStatus = {}, outsCount = 0) {
     };
     
     return `
-        <svg class="svg-scorebug" width="200" height="200" viewBox="0 0 58 79" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius: 4px;">
-            <!-- Outs circles -->
-            <circle class="out-circle" cx="13" cy="61" r="6" fill="${outsCount >= 1 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
-            <circle class="out-circle" cx="30" cy="61" r="6" fill="${outsCount >= 2 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
-            <circle class="out-circle" cx="47" cy="61" r="6" fill="${outsCount >= 3 ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+        <svg class="compact-bases-outs" width="80" height="60" viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outs dots -->
+            <circle cx="20" cy="52" r="6" fill="${outsCount >= 1 ? '#bf0d3d' : '#f7fafc'}" stroke="#bf0d3d" stroke-width="2" opacity="0.9"/>
+            <circle cx="40" cy="52" r="6" fill="${outsCount >= 2 ? '#bf0d3d' : '#f7fafc'}" stroke="#bf0d3d" stroke-width="2" opacity="0.9"/>
+            <circle cx="60" cy="52" r="6" fill="${outsCount >= 3 ? '#bf0d3d' : '#f7fafc'}" stroke="#bf0d3d" stroke-width="2" opacity="0.9"/>
             
-            <!-- Bases (diamond shaped) -->
-            <rect id="third-base" x="17.6066" y="29.7071" width="14" height="14" transform="rotate(45 17.6066 29.7071)" fill="${bases.third ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
-            <rect id="second-base" x="29.364" y="17.7071" width="14" height="14" transform="rotate(45 29.364 17.7071)" fill="${bases.second ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
-            <rect id="first-base" x="41.6066" y="29.7071" width="14" height="14" transform="rotate(45 41.6066 29.7071)" fill="${bases.first ? '#bf0d3e' : '#e2e8f0'}" stroke="#bf0d3e" stroke-width="1" opacity="0.8"/>
+            <!-- Diamond bases -->
+            <rect x="34" y="7" width="12" height="12" transform="rotate(45 40 14)" fill="${bases.second ? '#0252bb' : '#ECEFF8'}" stroke="#0252bb" stroke-width="2" opacity="0.6"/>
+            <rect x="54" y="20" width="12" height="12" transform="rotate(45 60 26)" fill="${bases.first ? '#0252bb' : '#ECEFF8'}" stroke="#0252bb" stroke-width="2" opacity="0.6"/>
+            <rect x="14" y="20" width="12" height="12" transform="rotate(45 20 26)" fill="${bases.third ? '#0252bb' : '#ECEFF8'}" stroke="#0252bb" stroke-width="2" opacity="0.6"/>
         </svg>
-    `;
-}
+        `;
+    }
 
-function updateBasesOutsSVG(svg, basesStatus, outsCount) {
-    if (!svg) return;
-    
-    const bases = {
-        first: svg.querySelector('#first-base'),
-        second: svg.querySelector('#second-base'),
-        third: svg.querySelector('#third-base')
-    };
-    
-    // Update bases status
-    if (bases.first) {
-        bases.first.setAttribute('fill', basesStatus?.first ? '#bf0d3e' : '#e2e8f0');
-    }
-    if (bases.second) {
-        bases.second.setAttribute('fill', basesStatus?.second ? '#bf0d3e' : '#e2e8f0');
-    }
-    if (bases.third) {
-        bases.third.setAttribute('fill', basesStatus?.third ? '#bf0d3e' : '#e2e8f0');
-    }
-    
-    // Update outs status
-    const outCircles = svg.querySelectorAll('.out-circle');
-    outCircles.forEach((circle, index) => {
-        const fillColor = index < outsCount ? '#bf0d3e' : '#e2e8f0';
-        circle.setAttribute('fill', fillColor);
-    });
-}
 
-// Enhanced function to get live game data including bases/outs
-async function fetchLiveGameData(gamePk) {
+// Fetch detailed game data including line score and pitcher info
+async function fetchDetailedGameData(gamePk) {
     try {
         const response = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
         const data = await response.json();
 
-        if (data && data.liveData) {
+        if (data && data.liveData && data.gameData) {
             const linescore = data.liveData.linescore;
+            const boxscore = data.liveData.boxscore;
             
-            // Get inning info
-            const inningHalf = linescore.inningHalf ? 
-                (linescore.inningHalf === "Top" ? "TOP" : "BOT") : "";
+            // Inning info
+            const inningHalf = linescore.inningHalf === "Top" ? "TOP" : "BOT";
             const currentInning = linescore.currentInning || "";
-            const inningDisplay = `${inningHalf} ${currentInning}`;
             
-            // Get bases status - handle different possible data structures
+            // Bases and outs
             const basesStatus = {
-                first: linescore.offense?.first || linescore.offense?.runner1 || false,
-                second: linescore.offense?.second || linescore.offense?.runner2 || false,
-                third: linescore.offense?.third || linescore.offense?.runner3 || false
+                first: linescore.offense?.first || false,
+                second: linescore.offense?.second || false,
+                third: linescore.offense?.third || false
             };
-            
-            // Get outs count
             const outsCount = linescore.outs || 0;
             
-            // Check if game is actually live
+            // Line score by inning
+            const innings = linescore.innings || [];
+            
+            // Pitcher info
+            const awayTeamId = data.gameData.teams.away.id;
+            const homeTeamId = data.gameData.teams.home.id;
+            
+            let awayPitcher = null;
+            let homePitcher = null;
+            
+            // Get pitcher info from boxscore
+            if (boxscore.teams) {
+                const awayPitchers = boxscore.teams.away.pitchers || [];
+                const homePitchers = boxscore.teams.home.pitchers || [];
+                const awayPlayers = boxscore.teams.away.players || {};
+                const homePlayers = boxscore.teams.home.players || {};
+                
+                // Find current/last pitcher
+                if (linescore.defense) {
+                    const currentPitcherId = linescore.defense.pitcher?.id;
+                    if (currentPitcherId) {
+                        const pitcherKey = `ID${currentPitcherId}`;
+                        const pitcher = awayPlayers[pitcherKey] || homePlayers[pitcherKey];
+                        if (pitcher) {
+                            const isAway = awayPlayers[pitcherKey] !== undefined;
+                            const pitcherData = {
+                                name: pitcher.person.fullName,
+                                record: pitcher.seasonStats?.pitching ? 
+                                    `${pitcher.seasonStats.pitching.wins}-${pitcher.seasonStats.pitching.losses}` : '0-0',
+                                era: pitcher.seasonStats?.pitching?.era || '0.00',
+                                saves: pitcher.seasonStats?.pitching?.saves || 0
+                            };
+                            if (isAway) awayPitcher = pitcherData;
+                            else homePitcher = pitcherData;
+                        }
+                    }
+                }
+                
+                // Get probable pitchers for pre-game
+                if (data.gameData.probablePitchers) {
+                    if (data.gameData.probablePitchers.away && !awayPitcher) {
+                        const probableAway = data.gameData.probablePitchers.away;
+                        awayPitcher = {
+                            name: probableAway.fullName,
+                            record: `${probableAway.wins || 0}-${probableAway.losses || 0}`,
+                            era: probableAway.era || '0.00'
+                        };
+                    }
+                    if (data.gameData.probablePitchers.home && !homePitcher) {
+                        const probableHome = data.gameData.probablePitchers.home;
+                        homePitcher = {
+                            name: probableHome.fullName,
+                            record: `${probableHome.wins || 0}-${probableHome.losses || 0}`,
+                            era: probableHome.era || '0.00'
+                        };
+                    }
+                }
+            }
+            
+            // Game status
             const gameStatus = data.gameData?.status?.statusCode;
-            const isLive = gameStatus === 'I' || gameStatus === 'IP'; // In progress
+            const isLive = gameStatus === 'I' || gameStatus === 'IP';
+            const isFinal = gameStatus === 'F' || gameStatus === 'FR' || gameStatus === 'FT' || gameStatus === 'O';
+            const isPreGame = gameStatus === 'P' || gameStatus === 'S' || gameStatus === 'PR' || gameStatus === 'P';
+            
+            // Totals
+            const awayRuns = linescore.teams?.away?.runs || 0;
+            const homeRuns = linescore.teams?.home?.runs || 0;
+            const awayHits = linescore.teams?.away?.hits || 0;
+            const homeHits = linescore.teams?.home?.hits || 0;
+            const awayErrors = linescore.teams?.away?.errors || 0;
+            const homeErrors = linescore.teams?.home?.errors || 0;
             
             return {
-                inningDisplay,
+                inningHalf,
+                currentInning,
                 basesStatus,
                 outsCount,
+                innings,
+                awayPitcher,
+                homePitcher,
                 isLive,
-                gameStatus: data.gameData?.status?.detailedState || 'Unknown'
+                isFinal,
+                isPreGame,
+                awayRuns,
+                homeRuns,
+                awayHits,
+                homeHits,
+                awayErrors,
+                homeErrors,
+                venue: data.gameData.venue?.name || '',
+                detailedState: data.gameData.status.detailedState
             };
         }
     } catch (error) {
-        console.error("Error fetching live game data:", error);
+        console.error("Error fetching detailed game data:", error);
     }
     
-    return {
-        inningDisplay: "In Progress",
-        basesStatus: { first: false, second: false, third: false },
-        outsCount: 0,
-        isLive: false,
-        gameStatus: 'Error'
-    };
+    return null;
 }
 
-// Function to inject the SVG into a game box for live games
-function injectBasesOutsSVG(gameBoxElement, basesStatus, outsCount) {
-    // Find or create container for the SVG (to the right of game info)
-    let svgContainer = gameBoxElement.querySelector('.score-bug-container');
-    
-    if (!svgContainer) {
-        svgContainer = document.createElement('div');
-        svgContainer.className = 'score-bug-container';
-        svgContainer.style.cssText = `
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 10;
-        `;
-        gameBoxElement.style.position = 'relative'; // Ensure parent is positioned
-        gameBoxElement.appendChild(svgContainer);
+// Format pitcher name (last name only for compact view)
+function formatPitcherName(fullName, compact = false) {
+    if (!fullName) return 'TBD';
+    if (compact) {
+        const parts = fullName.split(' ');
+        return parts[parts.length - 1];
     }
-    
-    // Update the SVG content
-    svgContainer.innerHTML = createBasesOutsSVG(basesStatus, outsCount);
+    return fullName;
 }
 
-// Function to update live game displays with bases/outs info
-async function updateLiveGameDisplays() {
-    const gameBoxes = document.querySelectorAll('.game-box[data-game-pk]');
+// Create compact game box for floating window (max-width: 400px)
+async function createCompactGameBox(game, detailedData) {
+    const awayTeamAbbr = await fetchAbbreviation(game.teams.away.team.id);
+    const homeTeamAbbr = await fetchAbbreviation(game.teams.home.team.id);
+    const awayScore = game.teams.away.score || 0;
+    const homeScore = game.teams.home.score || 0;
+    const awayRecord = game.teams.away.leagueRecord ? 
+        `${game.teams.away.leagueRecord.wins}-${game.teams.away.leagueRecord.losses}` : '0-0';
+    const homeRecord = game.teams.home.leagueRecord ? 
+        `${game.teams.home.leagueRecord.wins}-${game.teams.home.leagueRecord.losses}` : '0-0';
     
-    for (const gameBox of gameBoxes) {
-        const gamePk = gameBox.getAttribute('data-game-pk');
-        if (!gamePk) continue;
-        
-        const gameData = await fetchLiveGameData(gamePk);
-        
-        if (gameData.isLive) {
-            // Inject the bases/outs SVG
-            injectBasesOutsSVG(gameBox, gameData.basesStatus, gameData.outsCount);
-            
-            // Update inning display if element exists
-            const inningElement = gameBox.querySelector('.inning-display');
-            if (inningElement) {
-                inningElement.textContent = gameData.inningDisplay;
-            }
-        }
-    }
-}
-
-function updateGameBox(gameBox, game, awayTeamAbbr, homeTeamAbbr, inningInfo, inningClass, awayRecord = '', homeRecord = '', basesStatus = null, outsCount = 0, showScoreBug = false) {
+    const isDarkMode = document.body.classList.contains("dark-mode");
+    const awayLogoSrc = isDarkMode
+        ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${game.teams.away.team.id}.svg`
+        : `https://www.mlbstatic.com/team-logos/${game.teams.away.team.id}.svg`;
+    const homeLogoSrc = isDarkMode
+        ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${game.teams.home.team.id}.svg`
+        : `https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg`;
     
-    const newContent = `
-        <div class="new-content">
-            <a href="/gamefeed?gamePk=${game.gamePk}">
-                <div class="schedule game-schedule">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td class="team-logo">
-                                    <img src="https://www.mlbstatic.com/team-logos/${game.teams.away.team.id}.svg" 
-                                         alt="${game.teams.away.team.name}">
-                                </td>
-                                <td class="team">${awayTeamAbbr}</td>
-                                <td class="record">${awayRecord}</td>
-                                <td class="score">${game.teams.away.score !== undefined ? game.teams.away.score : ''}</td>
-                                <td rowspan="2" class="${inningClass}">${inningInfo}</td>
-                            </tr>
-                            <tr>
-                                <td class="team-logo">
-                                    <img src="https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg" 
-                                         alt="${game.teams.home.team.name}">
-                                </td>
-                                <td class="team">${homeTeamAbbr}</td>
-                                <td class="record">${homeRecord}</td>
-                                <td class="score">${game.teams.home.score !== undefined ? game.teams.home.score : ''}</td>
-                            </tr>
-                            ${showScoreBug && inningClass === 'inning' ? 
-                                `<tr><td colspan="5" class="score-bug-container">${createBasesOutsSVG(basesStatus, outsCount)}</td></tr>` : 
-                                ''}
-                        </tbody>
-                    </table>
+    // PRE-GAME LAYOUT
+    if (detailedData && detailedData.isPreGame) {
+        const gameTime = formatGameTime(game.gameDate);
+        return `
+            <div class="compact-game-box pre-game" data-game-pk="${game.gamePk}">
+                <div class="compact-header">
+                    <div class="team-info away">
+                        <img src="${awayLogoSrc}" alt="${awayTeamAbbr}" class="team-logo-sm">
+                        <span class="team-abbr">${awayTeamAbbr}</span>
+                        <span class="team-record">${awayRecord}</span>
+                    </div>
+                    <div class="game-time">${gameTime}</div>
+                    <div class="team-info home">
+                        <span class="team-record">${homeRecord}</span>
+                        <span class="team-abbr">${homeTeamAbbr}</span>
+                        <img src="${homeLogoSrc}" alt="${homeTeamAbbr}" class="team-logo-sm">
+                    </div>
                 </div>
-            </a>
+                <div class="pitchers-row">
+                    <div class="pitcher away">
+                        <div class="pitcher-label">PROBABLE</div>
+                        <div class="pitcher-name">${formatPitcherName(detailedData.awayPitcher?.name, true)}</div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="pitcher home">
+                        <div class="pitcher-label">PROBABLE</div>
+                        <div class="pitcher-name">${formatPitcherName(detailedData.homePitcher?.name, true)}</div>
+                    </div>
+                </div>
+                <div class="venue-info">${detailedData.venue}</div>
+            </div>
+        `;
+    }
+    
+    // LIVE GAME LAYOUT
+    if (detailedData && detailedData.isLive) {
+        const inningDisplay = `${detailedData.inningHalf} ${detailedData.currentInning}`;
+        
+        // Build line score HTML
+        let lineScoreHTML = '<div class="line-score-compact">';
+        lineScoreHTML += '<table><thead><tr><th></th>';
+        
+        // Inning headers
+        for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
+            lineScoreHTML += `<th>${i + 1}</th>`;
+        }
+        lineScoreHTML += '<th>R</th><th>H</th><th>E</th></tr></thead><tbody>';
+        
+        // Away team row
+        lineScoreHTML += `<tr><td class="team-cell">${awayTeamAbbr}</td>`;
+        for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
+            const runs = detailedData.innings[i]?.away?.runs ?? '-';
+            lineScoreHTML += `<td>${runs}</td>`;
+        }
+        lineScoreHTML += `<td class="total">${detailedData.awayRuns}</td>`;
+        lineScoreHTML += `<td>${detailedData.awayHits}</td>`;
+        lineScoreHTML += `<td>${detailedData.awayErrors}</td></tr>`;
+        
+        // Home team row
+        lineScoreHTML += `<tr><td class="team-cell">${homeTeamAbbr}</td>`;
+        for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
+            const runs = detailedData.innings[i]?.home?.runs ?? '-';
+            lineScoreHTML += `<td>${runs}</td>`;
+        }
+        lineScoreHTML += `<td class="total">${detailedData.homeRuns}</td>`;
+        lineScoreHTML += `<td>${detailedData.homeHits}</td>`;
+        lineScoreHTML += `<td>${detailedData.homeErrors}</td></tr>`;
+        
+        lineScoreHTML += '</tbody></table></div>';
+        
+        return `
+            <div class="compact-game-box live-game" data-game-pk="${game.gamePk}">
+                <div class="live-header">
+                    <div class="team-score-row away">
+                        <img src="${awayLogoSrc}" alt="${awayTeamAbbr}" class="team-logo-md">
+                        <span class="team-abbr-large">${awayTeamAbbr}</span>
+                        <span class="team-record-sm">${awayRecord}</span>
+                        <span class="score-large">${awayScore}</span>
+                    </div>
+                    <div class="inning-indicator">
+                        <div class="inning-text">${inningDisplay}</div>
+                        ${createCompactBasesOutsSVG(detailedData.basesStatus, detailedData.outsCount)}
+                    </div>
+                    <div class="team-score-row home">
+                        <span class="score-large">${homeScore}</span>
+                        <span class="team-record-sm">${homeRecord}</span>
+                        <span class="team-abbr-large">${homeTeamAbbr}</span>
+                        <img src="${homeLogoSrc}" alt="${homeTeamAbbr}" class="team-logo-md">
+                    </div>
+                </div>
+                ${lineScoreHTML}
+                <div class="venue-info">${detailedData.venue}</div>
+            </div>
+        `;
+    }
+    
+    // FINAL GAME LAYOUT
+    if (detailedData && detailedData.isFinal) {
+        // Build line score
+        let lineScoreHTML = '<div class="line-score-compact">';
+        lineScoreHTML += '<table><thead><tr><th></th>';
+        
+        for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
+            lineScoreHTML += `<th>${i + 1}</th>`;
+        }
+        lineScoreHTML += '<th>R</th><th>H</th><th>E</th></tr></thead><tbody>';
+        
+        // Away team
+        lineScoreHTML += `<tr><td class="team-cell">${awayTeamAbbr}</td>`;
+        for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
+            const runs = detailedData.innings[i]?.away?.runs ?? '0';
+            lineScoreHTML += `<td>${runs}</td>`;
+        }
+        lineScoreHTML += `<td class="total">${detailedData.awayRuns}</td>`;
+        lineScoreHTML += `<td>${detailedData.awayHits}</td>`;
+        lineScoreHTML += `<td>${detailedData.awayErrors}</td></tr>`;
+        
+        // Home team
+        lineScoreHTML += `<tr><td class="team-cell">${homeTeamAbbr}</td>`;
+        for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
+            const runs = detailedData.innings[i]?.home?.runs ?? '0';
+            lineScoreHTML += `<td>${runs}</td>`;
+        }
+        lineScoreHTML += `<td class="total">${detailedData.homeRuns}</td>`;
+        lineScoreHTML += `<td>${detailedData.homeHits}</td>`;
+        lineScoreHTML += `<td>${detailedData.homeErrors}</td></tr>`;
+        
+        lineScoreHTML += '</tbody></table></div>';
+        
+        return `
+            <div class="compact-game-box final-game" data-game-pk="${game.gamePk}">
+                <div class="final-header">
+                    <div class="team-final-row">
+                        <img src="${awayLogoSrc}" alt="${awayTeamAbbr}" class="team-logo-sm">
+                        <span class="team-abbr">${awayTeamAbbr}</span>
+                        <span class="team-record">${awayRecord}</span>
+                        <span class="final-label">Final</span>
+                        <span class="score-md">${awayScore}</span>
+                    </div>
+                    <div class="team-final-row">
+                        <img src="${homeLogoSrc}" alt="${homeTeamAbbr}" class="team-logo-sm">
+                        <span class="team-abbr">${homeTeamAbbr}</span>
+                        <span class="team-record">${homeRecord}</span>
+                        <span class="final-label"></span>
+                        <span class="score-md">${homeScore}</span>
+                    </div>
+                </div>
+                ${lineScoreHTML}
+                ${detailedData.awayPitcher || detailedData.homePitcher ? `
+                <div class="pitchers-final">
+                    ${detailedData.awayPitcher ? `
+                    <div class="pitcher-final">
+                        <span class="pitcher-result">W: ${formatPitcherName(detailedData.awayPitcher.name)}</span>
+                        <span class="pitcher-stats">${detailedData.awayPitcher.record} | ${detailedData.awayPitcher.era} ERA</span>
+                    </div>` : ''}
+                    ${detailedData.homePitcher ? `
+                    <div class="pitcher-final">
+                        <span class="pitcher-result">L: ${formatPitcherName(detailedData.homePitcher.name)}</span>
+                        <span class="pitcher-stats">${detailedData.homePitcher.record} | ${detailedData.homePitcher.era} ERA</span>
+                    </div>` : ''}
+                </div>` : ''}
+                <div class="venue-info">${detailedData.venue}</div>
+            </div>
+        `;
+    }
+    
+    // Fallback for unknown status
+    return `
+        <div class="compact-game-box" data-game-pk="${game.gamePk}">
+            <div class="compact-header">
+                <div class="team-info">
+                    <img src="${awayLogoSrc}" alt="${awayTeamAbbr}" class="team-logo-sm">
+                    <span>${awayTeamAbbr}</span>
+                    <span>${awayScore}</span>
+                </div>
+                <div class="game-status">${game.status.detailedState}</div>
+                <div class="team-info">
+                    <span>${homeScore}</span>
+                    <span>${homeTeamAbbr}</span>
+                    <img src="${homeLogoSrc}" alt="${homeTeamAbbr}" class="team-logo-sm">
+                </div>
+            </div>
         </div>
     `;
+}
+
+// Get current baseball date
+function getCurrentBaseballDate() {
+    const now = new Date();
+    const currentHour = now.getHours();
     
-    gameBox.innerHTML = newContent;
+    if (currentHour < 9) {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return formatDateForAPI(yesterday);
+    }
     
-    // Update SVG if it's shown and game is in progress
-    if (showScoreBug && inningClass === 'inning') {
-        const svgElement = gameBox.querySelector('svg');
-        if (svgElement && basesStatus !== null && outsCount !== undefined) {
-            // Small delay to ensure SVG is rendered
-            setTimeout(() => {
-                updateBasesOutsSVG(svgElement, basesStatus, outsCount);
-            }, 100);
-        }
+    return formatDateForAPI(now);
+}
+
+function formatDateForAPI(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatGameTime(gameDate) {
+    const dateTime = new Date(gameDate);
+    return dateTime.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+async function fetchAbbreviation(teamId) {
+    try {
+        const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`);
+        const data = await response.json();
+        return data.teams[0].abbreviation || "N/A";
+    } catch (error) {
+        console.error("Error fetching abbreviation:", error);
+        return "N/A";
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    const darkModeToggle = document.getElementById('darkModeToggle');
+// Main fetch and display function
+async function fetchGameData(selectedDate) {
+    const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${selectedDate}`;
+    const gamesContainer = document.getElementById("games-container");
     
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        gamesContainer.innerHTML = "";
+
+        if (!data.dates.length || !data.dates[0].games.length) {
+            gamesContainer.innerHTML = `<p class="no-games">No games scheduled for ${selectedDate}</p>`;
+            return;
+        }
+
+        const isCompact = isCompactMode();
+        
+        const gameBoxes = await Promise.all(data.dates[0].games.map(async (game) => {
+            let gameBoxHTML;
+            
+            if (isCompact) {
+                // Fetch detailed data for compact layout
+                const detailedData = await fetchDetailedGameData(game.gamePk);
+                gameBoxHTML = await createCompactGameBox(game, detailedData);
+            } else {
+                // Original layout for wider screens
+                gameBoxHTML = await createStandardGameBox(game);
+            }
+            
+            const gameBox = document.createElement("div");
+            gameBox.innerHTML = gameBoxHTML;
+            const content = gameBox.firstElementChild;
+            
+            content.addEventListener("click", () => {
+                window.location.href = `floating-pop.html?gamePk=${game.gamePk}`;
+            });
+            
+            return {
+                element: content,
+                isLive: game.status.statusCode === 'I' || game.status.statusCode === 'IP',
+                isFinal: game.status.statusCode === 'F' || game.status.statusCode === 'FR',
+                gameDate: new Date(game.gameDate)
+            };
+        }));
+
+        // Sort: Live first, then scheduled, then final
+        gameBoxes.sort((a, b) => {
+            if (a.isLive && !b.isLive) return -1;
+            if (b.isLive && !a.isLive) return 1;
+            if (a.isFinal && !b.isFinal) return 1;
+            if (b.isFinal && !a.isFinal) return -1;
+            return a.gameDate - b.gameDate;
+        });
+
+        gameBoxes.forEach(({ element }) => gamesContainer.appendChild(element));
+    } catch (error) {
+        console.error("Error fetching game data:", error);
+        gamesContainer.innerHTML = "<p class='error'>Failed to load games.</p>";
+    }
+}
+
+// Standard game box for wider screens (existing layout)
+async function createStandardGameBox(game) {
+    const awayTeamAbbr = await fetchAbbreviation(game.teams.away.team.id);
+    const homeTeamAbbr = await fetchAbbreviation(game.teams.home.team.id);
+    const awayScore = game.teams.away.score || 0;
+    const homeScore = game.teams.home.score || 0;
+    let status = game.status.detailedState;
+    
+    if (status === "Final" || status === "Game Over") {
+        status = "FINAL";
+    } else if (status === "Pre-Game" || status === "Scheduled") {
+        status = formatGameTime(game.gameDate);
+    } else if (status === "In Progress") {
+        const liveData = await fetchDetailedGameData(game.gamePk);
+        if (liveData) {
+            status = `${liveData.inningHalf} ${liveData.currentInning}`;
+        }
+    }
+    
+    const isDarkMode = document.body.classList.contains("dark-mode");
+    const awayLogoSrc = isDarkMode
+        ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${game.teams.away.team.id}.svg`
+        : `https://www.mlbstatic.com/team-logos/${game.teams.away.team.id}.svg`;
+    const homeLogoSrc = isDarkMode
+        ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${game.teams.home.team.id}.svg`
+        : `https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg`;
+    
+    return `
+        <div class="game-box standard" data-game-pk="${game.gamePk}">
+            <div class="game-status">${status}</div>
+            <div class="team-row">
+                <img src="${awayLogoSrc}" alt="${awayTeamAbbr}" class="team-logo">
+                <p class="team-abbr">${awayTeamAbbr}</p>
+                <p class="team-score">${awayScore}</p>
+            </div>
+            <div class="team-row">
+                <img src="${homeLogoSrc}" alt="${homeTeamAbbr}" class="team-logo">
+                <p class="team-abbr">${homeTeamAbbr}</p>
+                <p class="team-score">${homeScore}</p>
+            </div>
+        </div>
+    `;
+}
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", async () => {
+    const gamesContainer = document.getElementById("games-container");
+    const dateInput = document.getElementById("date-input");
+    const applyButton = document.querySelector('.apply');
+    
+    if (dateInput && applyButton) {
+        const today = getCurrentBaseballDate();
+        dateInput.value = today;
+        
+        applyButton.addEventListener('click', () => {
+            const selectedDate = dateInput.value;
+            if (selectedDate) {
+                fetchGameData(selectedDate);
+            }
+        });
+        
+        dateInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const selectedDate = dateInput.value;
+                if (selectedDate) {
+                    fetchGameData(selectedDate);
+                }
+            }
+        });
+        
+        // Initial load
+        fetchGameData(today);
+    }
+    
+    // Handle window resize to switch between layouts
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            const selectedDate = dateInput?.value || getCurrentBaseballDate();
+            fetchGameData(selectedDate);
+        }, 300);
+    });
+    
+    // Auto-refresh live games every 30 seconds
+    setInterval(() => {
+        const selectedDate = dateInput?.value || getCurrentBaseballDate();
+        const todaysDate = getCurrentBaseballDate();
+        
+        // Only auto-refresh if viewing today's games
+        if (selectedDate === todaysDate) {
+            fetchGameData(selectedDate);
+        }
+    }, 30000);
+    
+    // Dark mode toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {
-        // Set initial state
         const isDark = await window.darkModeManager?.isDarkModeEnabled();
         if (isDark) {
             darkModeToggle.classList.add('active');
         }
 
-        // Toggle dark mode when clicked
         darkModeToggle.addEventListener('click', async () => {
             await window.darkModeManager?.toggle();
+            // Refresh to update team logos
+            const selectedDate = dateInput?.value || getCurrentBaseballDate();
+            fetchGameData(selectedDate);
         });
     }
 
-    // Listen for dark mode changes
     document.addEventListener('darkModeChanged', (event) => {
         console.log('Dark mode changed:', event.detail.isDark);
+        // Refresh to update team logos
+        const selectedDate = dateInput?.value || getCurrentBaseballDate();
+        fetchGameData(selectedDate);
     });
-});
-
-// Enhanced MLB games functionality with fixed scorebug integration
-document.addEventListener("DOMContentLoaded", async () => {
-    const gamesContainer = document.getElementById("games-container");
-    const dateInput = document.getElementById("date-input");
-    const applyButton = document.querySelector('.apply');
-    const datepickerContainer = document.querySelector('.datepicker');
-    
-    // Get the current "baseball date" - if before 9am, use previous day
-    function getCurrentBaseballDate() {
-        const now = new Date();
-        const currentHour = now.getHours();
-        
-        // If it's before 9am, use previous day's games
-        if (currentHour < 9) {
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            return formatDateForAPI(yesterday);
-        }
-        
-        return formatDateForAPI(now);
-    }
-    
-    // Format date for API (YYYY-MM-DD)
-    function formatDateForAPI(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-    
-    // Format game time to local time
-    function formatGameTime(gameDate) {
-        const dateTime = new Date(gameDate);
-        return dateTime.toLocaleTimeString([], {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true,
-            timeZoneName: 'short'
-        });
-    }
-
-    // Fetch team abbreviation
-    async function fetchAbbreviation(teamId) {
-        try {
-            const response = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`);
-            const data = await response.json();
-            return data.teams[0].abbreviation || "N/A";
-        } catch (error) {
-            console.error("Error fetching abbreviation:", error);
-            return "N/A";
-        }
-    }
-
-    // Main function to fetch and display games for a specific date
-    async function fetchGameData(selectedDate) {
-        const apiUrl = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${selectedDate}`;
-        
-        try {
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-
-            gamesContainer.innerHTML = "";
-
-            if (!data.dates.length || !data.dates[0].games.length) {
-                gamesContainer.innerHTML = `<p>No games found for ${selectedDate}...</p>`;
-                return;
-            }
-
-            const gameBoxes = await Promise.all(data.dates[0].games.map(async (game) => {
-                const gameBox = document.createElement("div");
-                gameBox.classList.add("game-box");
-                gameBox.setAttribute("data-game-pk", game.gamePk); // Add this for live updates
-
-                const homeTeam = game.teams.home.team.name;
-                const awayTeam = game.teams.away.team.name;
-                const homeScore = game.teams.home.score || 0;
-                const awayScore = game.teams.away.score || 0;
-                let status = game.status.detailedState;
-                const homeTeamId = game.teams.home.team.id;
-                const awayTeamId = game.teams.away.team.id;
-
-                const homeAbbr = await fetchAbbreviation(homeTeamId);
-                const awayAbbr = await fetchAbbreviation(awayTeamId);
-
-                // Initialize live game data
-                let liveGameData = null;
-                let showScoreBug = false;
-
-                // Format status and get live data for in-progress games
-                if (status === "Final" || status === "Game Over" || status === "Completed Early") {
-                    status = "FINAL";
-                } else if (status === "Pre-Game" || status === "Scheduled") {
-                    status = formatGameTime(game.gameDate);
-                } else if (status === "In Progress") {
-                    // Fetch live game data for scorebug
-                    liveGameData = await fetchLiveGameData(game.gamePk);
-                    status = liveGameData.inningDisplay;
-                    showScoreBug = true;
-                }
-
-                const isDarkMode = document.body.classList.contains("dark-mode");
-
-                const homeLogoSrc = isDarkMode
-                    ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${homeTeamId}.svg`
-                    : `https://www.mlbstatic.com/team-logos/${homeTeamId}.svg`;
-
-                const awayLogoSrc = isDarkMode
-                    ? `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${awayTeamId}.svg`
-                    : `https://www.mlbstatic.com/team-logos/${awayTeamId}.svg`;
-
-                // Create the game box content with scorebug positioned on the right
-                let gameBoxContent = `
-                    <div class="game-content-wrapper ${showScoreBug ? 'with-scorebug' : ''}">
-                        <div class="game-main-content">
-                            <div class="game-status">${status}</div>
-                            <div class="team-row">
-                                <img src="${awayLogoSrc}" alt="${awayAbbr} logo" class="team-logo">
-                                <p class="team-abbr">${awayAbbr}</p>
-                                <p class="team-score">${awayScore}</p>
-                            </div>
-                            <div class="team-row">
-                                <img src="${homeLogoSrc}" alt="${homeAbbr} logo" class="team-logo">
-                                <p class="team-abbr">${homeAbbr}</p>
-                                <p class="team-score">${homeScore}</p>
-                            </div>
-                        </div>
-                        ${showScoreBug && liveGameData ? `
-                            <div class="score-bug-container">
-                                ${createBasesOutsSVG(liveGameData.basesStatus, liveGameData.outsCount)}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-
-                gameBox.innerHTML = gameBoxContent;
-
-                // Update scorebug after content is added
-                if (showScoreBug && liveGameData) {
-                    setTimeout(() => {
-                        const svgElement = gameBox.querySelector('svg');
-                        if (svgElement) {
-                            updateBasesOutsSVG(svgElement, liveGameData.basesStatus, liveGameData.outsCount);
-                        }
-                    }, 100);
-                }
-
-                gameBox.addEventListener("click", () => {
-                    window.location.href = `floating-pop.html?gamePk=${game.gamePk}`;
-                });
-
-                return { 
-                    gameBox, 
-                    gameStatus: status, 
-                    gameDate: new Date(game.gameDate),
-                    isLive: showScoreBug
-                };
-            }));
-
-            // Sort games: Live on top, then Scheduled by time, then Final
-            gameBoxes.sort((a, b) => {
-                if (a.isLive && !b.isLive) return -1;
-                if (b.isLive && !a.isLive) return 1;
-                if (a.gameStatus === "FINAL" && b.gameStatus !== "FINAL") return 1;
-                if (b.gameStatus === "FINAL" && a.gameStatus !== "FINAL") return -1;
-                return a.gameDate - b.gameDate;
-            });
-
-            gameBoxes.forEach(({ gameBox }) => gamesContainer.appendChild(gameBox));
-        } catch (error) {
-            console.error("Error fetching game data:", error);
-            gamesContainer.innerHTML = "<p>Failed to load games.</p>";
-        }
-    }
-
-    // Auto-refresh function for live games (only for today's date)
-    async function autoRefreshGames() {
-        const currentSelectedDate = dateInput.value;
-        const todaysBaseballDate = getCurrentBaseballDate();
-        
-        // Only auto-refresh if we're viewing today's games
-        if (currentSelectedDate === todaysBaseballDate) {
-            await fetchGameData(currentSelectedDate);
-        }
-    }
-
-    // Initialize datepicker and load initial data
-    function initializeDatepicker() {
-        const today = getCurrentBaseballDate();
-        dateInput.value = today;
-        fetchGameData(today);
-        
-        // Set min and max dates for the datepicker
-        const minDate = new Date();
-        minDate.setDate(minDate.getDate() - 15000);
-        const maxDate = new Date();
-        maxDate.setDate(maxDate.getDate() + 15000);
-        
-        dateInput.min = formatDateForAPI(minDate);
-        dateInput.max = formatDateForAPI(maxDate);
-    }
-
-    // Event listeners for datepicker
-    applyButton.addEventListener('click', () => {
-        const selectedDate = dateInput.value;
-        if (selectedDate) {
-            fetchGameData(selectedDate);
-            datepickerContainer.hidden = true;
-        }
-    });
-
-    dateInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const selectedDate = dateInput.value;
-            if (selectedDate) {
-                fetchGameData(selectedDate);
-                datepickerContainer.hidden = true;
-            }
-        }
-    });
-
-    dateInput.addEventListener('focus', () => {
-        datepickerContainer.hidden = false;
-    });
-
-    // Initialize the extension
-    initializeDatepicker();
-
-    // Floating window buttons
-    const openFloatingBtn = document.getElementById('openFloatingBtn');
-    const toggleFloatingBtn = document.getElementById('toggleFloatingBtn');
-
-    if (openFloatingBtn) {
-        openFloatingBtn.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ action: 'openFloatingWindow' });
-            window.close();
-        });
-    }
-
-    if (toggleFloatingBtn) {
-        toggleFloatingBtn.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ action: 'toggleFloatingWindow' });
-            window.close();
-        });
-    }
-
-    // Set up interval to refresh games every 30 seconds (only for today's games)
-    setInterval(autoRefreshGames, 30000);
-    
-    // Set up interval to update live games every 30 seconds using the new function
-    setInterval(updateLiveGameDisplays, 30000);
-    
-    // Check every minute if we need to update the "baseball date" at 9am
-    setInterval(() => {
-        const currentBaseballDate = getCurrentBaseballDate();
-        if (dateInput.value !== currentBaseballDate) {
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
-            
-            if (currentHour === 9 && currentMinute === 0) {
-                dateInput.value = currentBaseballDate;
-                fetchGameData(currentBaseballDate);
-            }
-        }
-    }, 60000);
 });

@@ -517,36 +517,6 @@
             display: block;
         }
 
-        /* Responsive scorebug display */
-        @media (max-width: 400px) {
-            .bases-outs-svg {
-                display: block !important;
-                max-width: 80px;
-            }
-            
-            .game-box {
-                padding-bottom: 10px; /* Extra space for scorebug */
-                margin-left: 0.5rem;
-            }
-            
-            .score-bug-container {
-                padding: 8px 4px;
-            }
-
-            .game-main-content {
-                padding: 10px;
-            }
-
-            .team-row {
-                width: 80%;
-            }
-
-            .header-container {
-                display: flex;
-                align-items: center;
-            }
-        }
-
         @media (min-width: 401px) and (max-width: 600px) {
             .bases-outs-svg {
                 display: block !important;
@@ -601,26 +571,417 @@
             display: block;
         }
 
-        /* Responsive scorebug positioning */
+        /* Compact Layout Styles for max-width: 400px */
         @media (max-width: 400px) {
-            .game-content-wrapper.with-scorebug {
-                flex-direction: row;
-                gap: 4px;
+            /* Hide standard game boxes */
+            .game-box.standard {
+                display: none;
             }
             
-            .score-bug-container {
+            /* Compact Game Box Base Styles */
+            .compact-game-box {
+                height: 22rem;
+                width: 30rem;
+                background: #1a1a1a;
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 16px;
+                cursor: pointer;
+                transition: transform 0.2s, box-shadow 0.2s;
+                border: 1px solid #333;
+            }
+            
+            .compact-game-box:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+            
+            /* PRE-GAME LAYOUT */
+            .compact-game-box.pre-game .compact-header {
                 display: flex;
-                position: relative;
-                align-items: flex-end;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+            }
+            
+            .compact-game-box.pre-game .team-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex: 1;
+            }
+            
+            .compact-game-box.pre-game .team-info.away {
+                justify-content: flex-start;
+            }
+            
+            .compact-game-box.pre-game .team-info.home {
                 justify-content: flex-end;
-                width: 25%;
-                min-width: unset;
-                padding: 4px;
+            }
+            
+            .compact-game-box.pre-game .team-logo-sm {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .compact-game-box.pre-game .team-abbr {
+                font-weight: 600;
+                font-size: 16px;
+                color: #0252bb;
+            }
+            
+            .compact-game-box.pre-game .team-record {
+                font-size: 13px;
+                color: #888;
+            }
+            
+            .compact-game-box.pre-game .game-time {
+                font-size: 14px;
+                color: #bf0d3d;
+                font-weight: 500;
+                padding: 0 12px;
+                white-space: nowrap;
+                opacity: 0.7;
+            }
+            
+            .compact-game-box.pre-game .pitchers-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-top: 1px solid #333;
+                border-bottom: 1px solid #333;
+            }
+            
+            .compact-game-box.pre-game .pitcher {
+                flex: 1;
+                text-align: center;
+            }
+            
+            .compact-game-box.pre-game .pitcher-label {
+                font-size: 10px;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 4px;
+            }
+            
+            .compact-game-box.pre-game .pitcher-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: #1e40af;
+            }
+            
+            .compact-game-box.pre-game .vs-divider {
+                font-size: 12px;
+                color: #666;
+                font-weight: 600;
+                padding: 0 12px;
+            }
+            
+            .compact-game-box.pre-game .venue-info {
+                margin-top: 12px;
+                text-align: right;
+                font-size: 12px;
+                color: #666;
+            }
+            
+            /* LIVE GAME LAYOUT */
+            .compact-game-box.live-game {
+                background: linear-gradient(135deg, #1a1a1a 0%, #242424 100%);
+                border: 1px solid #444;
+            }
+            
+            .compact-game-box.live-game .live-header {
+                display: flex;
+                flex-direction: row;
+                gap: 2px;
+                margin-bottom: 6px;
+            }
+            
+            .compact-game-box.live-game .team-score-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            
+            .compact-game-box.live-game .team-score-row.away {
+                justify-content: flex-start;
+                width: 50%;
+            }
+            
+            .compact-game-box.live-game .team-score-row.home {
+                justify-content: flex-end;
+                width: 50%;
+            }
+            
+            .compact-game-box.live-game .team-logo-md {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .compact-game-box.live-game .team-abbr-large {
+                font-size: 20px;
+                font-weight: 700;
+                color: #0252bb;
+                flex: 1;
+            }
+            
+            .compact-game-box.live-game .team-score-row.home .team-abbr-large {
+                text-align: right;
+            }
+            
+            .compact-game-box.live-game .team-record-sm {
+                font-size: 13px;
+                color: #888;
+            }
+            
+            .compact-game-box.live-game .score-large {
+                font-size: 32px;
+                font-weight: 700;
+                color: #0252bb;
+                min-width: 40px;
+                text-align: center;
+            }
+            
+            .compact-game-box.live-game .inning-indicator {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2px;
+                padding: 5px 0;
+                border-top: 1px solid #041e41;
+                border-bottom: 1px solid #041e41;
+            }
+            
+            .compact-game-box.live-game .inning-text {
+                font-size: 14px;
+                font-weight: 600;
+                color: #ef4444;
+                letter-spacing: 1px;
+            }
+            
+            .compact-game-box.live-game .compact-bases-outs {
+                display: block;
+                margin: 0 auto;
             }
 
-            .bases-outs-svg {
-                width: 50px !important;
-                height: 50px !important;
+            
+            /* FINAL GAME LAYOUT */
+            .compact-game-box.final-game {
+                background: #1a1a1a;
+            }
+            
+            .compact-game-box.final-game .final-header {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            
+            .compact-game-box.final-game .team-final-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .compact-game-box.final-game .team-logo-sm {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .compact-game-box.final-game .team-abbr {
+                font-size: 16px;
+                font-weight: 600;
+                color: #fff;
+                min-width: 45px;
+            }
+            
+            .compact-game-box.final-game .team-record {
+                font-size: 13px;
+                color: #888;
+                min-width: 50px;
+            }
+            
+            .compact-game-box.final-game .final-label {
+                font-size: 12px;
+                color: #888;
+                text-transform: uppercase;
+                flex: 1;
+                text-align: center;
+                font-weight: 600;
+            }
+            
+            .compact-game-box.final-game .score-md {
+                font-size: 24px;
+                font-weight: 700;
+                color: #fff;
+                min-width: 35px;
+                text-align: right;
+            }
+            
+            .compact-game-box.final-game .pitchers-final {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 12px 0;
+                border-top: 1px solid #333;
+            }
+            
+            .compact-game-box.final-game .pitcher-final {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 13px;
+            }
+            
+            .compact-game-box.final-game .pitcher-result {
+                font-weight: 600;
+                color: #fff;
+            }
+            
+            .compact-game-box.final-game .pitcher-stats {
+                color: #888;
+            }
+            
+            /* LINE SCORE TABLE (Shared for Live & Final) */
+            .line-score-compact {
+                overflow-x: auto;
+                margin: 12px 0;
+                border-radius: 6px;
+                background: #0a0a0a;
+                padding: 8px;
+            }
+            
+            .line-score-compact table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                min-width: 300px;
+            }
+            
+            .line-score-compact th,
+            .line-score-compact td {
+                padding: 6px 4px;
+                text-align: center;
+                border: none;
+            }
+            
+            .line-score-compact th {
+                font-weight: 600;
+                color: #888;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            .line-score-compact td {
+                color: #fff;
+                font-weight: 500;
+            }
+            
+            .line-score-compact .team-cell {
+                font-weight: 700;
+                text-align: left;
+                padding-left: 8px;
+                min-width: 45px;
+            }
+            
+            .line-score-compact .total {
+                font-weight: 700;
+                color: #fff;
+                background: rgba(255, 255, 255, 0.05);
+            }
+            
+            .line-score-compact tr {
+                border-bottom: 1px solid #222;
+            }
+            
+            .line-score-compact tr:last-child {
+                border-bottom: none;
+            }
+            
+            /* Venue Info (Shared) */
+            .venue-info {
+                margin-top: 12px;
+                text-align: right;
+                font-size: 11px;
+                color: #666;
+                padding-top: 8px;
+                border-top: 1px solid #2a2a2a;
+            }
+            
+            /* Dark Mode Adjustments */
+            body.dark-mode .compact-game-box {
+                background: #111;
+                border-color: #2a2a2a;
+            }
+            
+            body.dark-mode .compact-game-box.live-game {
+                background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+                border-color: #333;
+            }
+            
+            body.dark-mode .line-score-compact {
+                background: #000;
+            }
+            
+            body.dark-mode .line-score-compact tr {
+                border-bottom-color: #1a1a1a;
+            }
+            
+            /* Light Mode Styles */
+            body:not(.dark-mode) .compact-game-box {
+                background: #fff;
+                border-color: #e5e7eb;
+            }
+            
+            body:not(.dark-mode) .compact-game-box.live-game {
+                background: linear-gradient(135deg, #f9fafb 0%, #fff 100%);
+                border-color: #d1d5db;
+            }
+            
+            body:not(.dark-mode) .line-score-compact {
+                background: #f9fafb;
+            }
+            
+            body:not(.dark-mode) .line-score-compact td {
+                color: #111;
+            }
+            
+            body:not(.dark-mode) .line-score-compact th {
+                color: #6b7280;
+            }
+            
+            body:not(.dark-mode) .line-score-compact tr {
+                border-bottom-color: #e5e7eb;
+            }
+            
+            body:not(.dark-mode) .line-score-compact .total {
+                background: rgba(0, 0, 0, 0.03);
+            }
+            
+            body:not(.dark-mode) .compact-game-box .inning-text {
+                color: #dc2626;
+            }
+            
+            body:not(.dark-mode) .venue-info {
+                color: #9ca3af;
+                border-top-color: #e5e7eb;
+            }
+            
+            body:not(.dark-mode) .pitchers-row,
+            body:not(.dark-mode) .inning-indicator,
+            body:not(.dark-mode) .pitchers-final {
+                border-color: #e5e7eb;
+            }
+        }
+
+        /* Ensure standard layout is hidden in compact mode */
+        @media (min-width: 401px) {
+            .compact-game-box {
+                display: none;
             }
         }
 
