@@ -211,9 +211,9 @@ async function fetchDetailedGameData(gamePk) {
             
             // Game status
             const gameStatus = data.gameData?.status?.statusCode;
-            const isLive = gameStatus === 'I' || gameStatus === 'IP';
+            const isLive = gameStatus === 'I' || gameStatus === 'IP' || gameStatus === 'IS' || gameStatus === 'IR' || gameStatus === 'MC';
             const isFinal = gameStatus === 'F' || gameStatus === 'FR' || gameStatus === 'FT' || gameStatus === 'O';
-            const isPreGame = gameStatus === 'P' || gameStatus === 'S' || gameStatus === 'PR' || gameStatus === 'P';
+            const isPreGame = gameStatus === 'P' || gameStatus === 'S' || gameStatus === 'PR' || gameStatus === 'P' || gameStatus === 'PW';
             
             // Totals
             const awayRuns = linescore.teams?.away?.runs || 0;
@@ -300,16 +300,22 @@ async function createCompactGameBox(game, detailedData) {
                 </div>
                 <div class="pitchers-row">
                     <div class="pitcher away">
-                        <div class="pitcher-label">PROBABLE</div>
-                        <div class="pitcher-name">${formatPitcherName(detailedData.awayPitcher?.name, true)}</div>
+                        ${detailedData.awayPitcher?.id ? `<https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_426,q_auto:best/v1/people/${detailedData.awayPitcher.id}/headshot/67/current" alt="${detailedData.awayPitcher.name}" class="pitcher-headshot">` : ''}
+                        <div class="pitcher-info">
+                            <div class="pitcher-label">PROBABLE</div>
+                            <div class="pitcher-name">${formatPitcherName(detailedData.awayPitcher?.name, true)}</div>
+                        </div>
                     </div>
                     <div class="vs-divider">VS</div>
                     <div class="pitcher home">
-                        <div class="pitcher-label">PROBABLE</div>
-                        <div class="pitcher-name">${formatPitcherName(detailedData.homePitcher?.name, true)}</div>
+                        ${detailedData.homePitcher?.id ? `<img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${detailedData.homePitcher.id}/headshot/67/current" alt="${detailedData.homePitcher.name}" class="pitcher-headshot">` : ''}
+                        <div class="pitcher-info">
+                            <div class="pitcher-label">PROBABLE</div>
+                            <div class="pitcher-name">${formatPitcherName(detailedData.homePitcher?.name, true)}</div>
+                        </div>
                     </div>
                 </div>
-                <div class="venue-info">${detailedData.venue}</div>
+                <div class="venue-info"><img src="https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg" alt="Home Team Logo" class="team-logo-venue"/>${detailedData.venue}</div>
             </div>
         `;
     }
@@ -371,7 +377,7 @@ async function createCompactGameBox(game, detailedData) {
                     </div>
                 </div>
                 ${lineScoreHTML}
-                <div class="venue-info">${detailedData.venue}</div>
+                <div class="venue-info"><img src="https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg" alt="Home Team Logo" class="team-logo-venue"/>${detailedData.venue}</div>
             </div>
         `;
     }
@@ -441,7 +447,7 @@ async function createCompactGameBox(game, detailedData) {
                         <span class="pitcher-stats">${detailedData.homePitcher.record} | ${detailedData.homePitcher.era} ERA</span>
                     </div>` : ''}
                 </div>` : ''}
-                <div class="venue-info">${detailedData.venue}</div>
+                <div class="venue-info"><img src="https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg" alt="Home Team Logo" class="team-logo-venue"/>${detailedData.venue}</div>
             </div>
         `;
     }
