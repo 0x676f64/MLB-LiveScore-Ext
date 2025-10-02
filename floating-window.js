@@ -1,4 +1,4 @@
-// Updated floating-window.js - Enhanced with responsive layouts
+// Updated floating-window.js - Enhanced with pitcher headshots
 
 class FloatingWindowManager {
     constructor() {
@@ -125,8 +125,7 @@ function createCompactBasesOutsSVG(basesStatus = {}, outsCount = 0) {
             <rect x="14" y="20" width="12" height="12" transform="rotate(45 20 26)" fill="${bases.third ? '#0252bb' : '#ECEFF8'}" stroke="#0252bb" stroke-width="2" opacity="0.6"/>
         </svg>
         `;
-    }
-
+}
 
 // Fetch detailed game data including line score and pitcher info
 async function fetchDetailedGameData(gamePk) {
@@ -137,6 +136,7 @@ async function fetchDetailedGameData(gamePk) {
         if (data && data.liveData && data.gameData) {
             const linescore = data.liveData.linescore;
             const boxscore = data.liveData.boxscore;
+            const decisions = data.liveData.decisions;
             
             // Inning info
             const inningHalf = linescore.inningHalf === "Top" ? "TOP" : "BOT";
@@ -159,61 +159,133 @@ async function fetchDetailedGameData(gamePk) {
             
             let awayPitcher = null;
             let homePitcher = null;
+            let winningPitcher = null;
+            let losingPitcher = null;
+            let savePitcher = null;
             
-            // Get pitcher info from boxscore
-            if (boxscore.teams) {
-                const awayPitchers = boxscore.teams.away.pitchers || [];
-                const homePitchers = boxscore.teams.home.pitchers || [];
-                const awayPlayers = boxscore.teams.away.players || {};
-                const homePlayers = boxscore.teams.home.players || {};
-                
-                // Find current/last pitcher
-                if (linescore.defense) {
-                    const currentPitcherId = linescore.defense.pitcher?.id;
-                    if (currentPitcherId) {
-                        const pitcherKey = `ID${currentPitcherId}`;
-                        const pitcher = awayPlayers[pitcherKey] || homePlayers[pitcherKey];
-                        if (pitcher) {
-                            const isAway = awayPlayers[pitcherKey] !== undefined;
-                            const pitcherData = {
-                                name: pitcher.person.fullName,
-                                record: pitcher.seasonStats?.pitching ? 
-                                    `${pitcher.seasonStats.pitching.wins}-${pitcher.seasonStats.pitching.losses}` : '0-0',
-                                era: pitcher.seasonStats?.pitching?.era || '0.00',
-                                saves: pitcher.seasonStats?.pitching?.saves || 0
-                            };
-                            if (isAway) awayPitcher = pitcherData;
-                            else homePitcher = pitcherData;
-                        }
+            // Get probable pitchers for pre-game
+            if (data.gameData.probablePitchers) {
+                if (data.gameData.probablePitchers.away) {
+                    const probableAway = data.gameData.probablePitchers.away;
+                    awayPitcher = {
+                        id: probableAway.id,
+                        name: probableAway.fullName,
+                        record: `${probableAway.wins || 0}-${probableAway.losses || 0}`,
+                        era: probableAway.era || '0.00'
+                    };
+                }
+                if (data.gameData.probablePitchers.home) {
+                    const probableHome = data.gameData.probablePitchers.home;
+                    homePitcher = {
+                        id: probableHome.id,
+                        name: probableHome.fullName,
+                        record: `${probableHome.wins || 0}-${probableHome.losses || 0}`,
+                        era: probableHome.era || '0.00'
+                    };
+                }
+            }
+            
+           // Get current pitcher for live games
+            if (boxscore.teams && linescore.defense) {
+                const currentPitcherId = linescore.defense.pitcher?.id;
+                if (currentPitcherId) {
+                    const pitcherKey = `ID${currentPitcherId}`;
+                    const awayPlayers = boxscore.teams.away.players || {};
+                    const homePlayers = boxscore.teams.home.players || {};
+                    const pitcher = awayPlayers[pitcherKey] || homePlayers[pitcherKey];
+                    
+                    if (pitcher) {
+                        const isAway = awayPlayers[pitcherKey] !== undefined;
+                        const pitcherData = {
+                            id: currentPitcherId,
+                            name: pitcher.person.fullName,
+                            record: pitcher.seasonStats?.pitching ?
+                                `${pitcher.seasonStats.pitching.wins}-${pitcher.seasonStats.pitching.losses}` : '0-0',
+                            era: pitcher.seasonStats?.pitching?.era || '0.00',
+                            saves: pitcher.seasonStats?.pitching?.saves || 0
+                        };
+                        if (isAway) awayPitcher = pitcherData;
+                        else homePitcher = pitcherData;
                     }
                 }
+            }
+
+            // Get current hitter for live games
+            if (boxscore.teams && linescore.offense) {
+                const currentHitterId = linescore.offense.batter?.id;
+                if (currentHitterId) {
+                    const hitterKey = `ID${currentHitterId}`;
+                    const awayPlayers = boxscore.teams.away.players || {};
+                    const homePlayers = boxscore.teams.home.players || {};
+                    const hitter = awayPlayers[hitterKey] || homePlayers[hitterKey];
+                    
+                    if (hitter) {
+                        const isAway = awayPlayers[hitterKey] !== undefined;
+                        const hitterData = {
+                            id: currentHitterId,
+                            name: hitter.person.fullName,
+                            avg: hitter.seasonStats?.batting?.avg || '.000',
+                            hr: hitter.seasonStats?.batting?.homeRuns || 0,
+                            ops: hitter.seasonStats?.batting?.ops || '.000'
+                        };
+                        if (isAway) awayHitter = hitterData;
+                        else homeHitter = hitterData;
+                    }
+                }
+            }
+            
+            // Get decision pitchers for final games
+            if (decisions) {
+                if (decisions.winner) {
+                    const winnerKey = `ID${decisions.winner.id}`;
+                    const awayPlayers = boxscore.teams.away.players || {};
+                    const homePlayers = boxscore.teams.home.players || {};
+                    const winnerPlayer = awayPlayers[winnerKey] || homePlayers[winnerKey];
+                    
+                    winningPitcher = {
+                        id: decisions.winner.id,
+                        name: decisions.winner.fullName,
+                        record: winnerPlayer?.seasonStats?.pitching ? 
+                            `${winnerPlayer.seasonStats.pitching.wins}-${winnerPlayer.seasonStats.pitching.losses}` : '0-0',
+                        era: winnerPlayer?.seasonStats?.pitching?.era || '0.00'
+                    };
+                }
                 
-                // Get probable pitchers for pre-game
-                if (data.gameData.probablePitchers) {
-                    if (data.gameData.probablePitchers.away && !awayPitcher) {
-                        const probableAway = data.gameData.probablePitchers.away;
-                        awayPitcher = {
-                            name: probableAway.fullName,
-                            record: `${probableAway.wins || 0}-${probableAway.losses || 0}`,
-                            era: probableAway.era || '0.00'
-                        };
-                    }
-                    if (data.gameData.probablePitchers.home && !homePitcher) {
-                        const probableHome = data.gameData.probablePitchers.home;
-                        homePitcher = {
-                            name: probableHome.fullName,
-                            record: `${probableHome.wins || 0}-${probableHome.losses || 0}`,
-                            era: probableHome.era || '0.00'
-                        };
-                    }
+                if (decisions.loser) {
+                    const loserKey = `ID${decisions.loser.id}`;
+                    const awayPlayers = boxscore.teams.away.players || {};
+                    const homePlayers = boxscore.teams.home.players || {};
+                    const loserPlayer = awayPlayers[loserKey] || homePlayers[loserKey];
+                    
+                    losingPitcher = {
+                        id: decisions.loser.id,
+                        name: decisions.loser.fullName,
+                        record: loserPlayer?.seasonStats?.pitching ? 
+                            `${loserPlayer.seasonStats.pitching.wins}-${loserPlayer.seasonStats.pitching.losses}` : '0-0',
+                        era: loserPlayer?.seasonStats?.pitching?.era || '0.00'
+                    };
+                }
+                
+                if (decisions.save) {
+                    const saveKey = `ID${decisions.save.id}`;
+                    const awayPlayers = boxscore.teams.away.players || {};
+                    const homePlayers = boxscore.teams.home.players || {};
+                    const savePlayer = awayPlayers[saveKey] || homePlayers[saveKey];
+                    
+                    savePitcher = {
+                        id: decisions.save.id,
+                        name: decisions.save.fullName,
+                        saves: savePlayer?.seasonStats?.pitching?.saves || 0,
+                        era: savePlayer?.seasonStats?.pitching?.era || '0.00'
+                    };
                 }
             }
             
             // Game status
             const gameStatus = data.gameData?.status?.statusCode;
-            const isLive = gameStatus === 'I' || gameStatus === 'IP' || gameStatus === 'IS' || gameStatus === 'IR' || gameStatus === 'MC';
+            const isLive = gameStatus === 'I' || gameStatus === 'IP' || gameStatus === 'IS' || gameStatus === 'IR' || gameStatus === 'MC' || gameStatus === 'MA';
             const isFinal = gameStatus === 'F' || gameStatus === 'FR' || gameStatus === 'FT' || gameStatus === 'O';
-            const isPreGame = gameStatus === 'P' || gameStatus === 'S' || gameStatus === 'PR' || gameStatus === 'P' || gameStatus === 'PW';
+            const isPreGame = gameStatus === 'P' || gameStatus === 'S' || gameStatus === 'PR' || gameStatus === 'PW';
             
             // Totals
             const awayRuns = linescore.teams?.away?.runs || 0;
@@ -231,6 +303,9 @@ async function fetchDetailedGameData(gamePk) {
                 innings,
                 awayPitcher,
                 homePitcher,
+                winningPitcher,
+                losingPitcher,
+                savePitcher,
                 isLive,
                 isFinal,
                 isPreGame,
@@ -259,6 +334,12 @@ function formatPitcherName(fullName, compact = false) {
         return parts[parts.length - 1];
     }
     return fullName;
+}
+
+// Generate pitcher headshot URL
+function getPitcherHeadshotURL(pitcherId) {
+    if (!pitcherId) return '';
+    return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${pitcherId}/headshot/67/current`;
 }
 
 // Create compact game box for floating window (max-width: 400px)
@@ -300,18 +381,20 @@ async function createCompactGameBox(game, detailedData) {
                 </div>
                 <div class="pitchers-row">
                     <div class="pitcher away">
-                        ${detailedData.awayPitcher?.id ? `<https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_426,q_auto:best/v1/people/${detailedData.awayPitcher.id}/headshot/67/current" alt="${detailedData.awayPitcher.name}" class="pitcher-headshot">` : ''}
+                        ${detailedData.awayPitcher?.id ? `<img src="${getPitcherHeadshotURL(detailedData.awayPitcher.id)}" alt="${detailedData.awayPitcher.name}" class="pitcher-headshot">` : ''}
                         <div class="pitcher-info">
                             <div class="pitcher-label">PROBABLE</div>
                             <div class="pitcher-name">${formatPitcherName(detailedData.awayPitcher?.name, true)}</div>
+                            ${detailedData.awayPitcher ? `<div class="pitcher-stats">${detailedData.awayPitcher.record} | ${detailedData.awayPitcher.era} ERA</div>` : ''}
                         </div>
                     </div>
                     <div class="vs-divider">VS</div>
                     <div class="pitcher home">
-                        ${detailedData.homePitcher?.id ? `<img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${detailedData.homePitcher.id}/headshot/67/current" alt="${detailedData.homePitcher.name}" class="pitcher-headshot">` : ''}
+                        ${detailedData.homePitcher?.id ? `<img src="${getPitcherHeadshotURL(detailedData.homePitcher.id)}" alt="${detailedData.homePitcher.name}" class="pitcher-headshot">` : ''}
                         <div class="pitcher-info">
                             <div class="pitcher-label">PROBABLE</div>
                             <div class="pitcher-name">${formatPitcherName(detailedData.homePitcher?.name, true)}</div>
+                            ${detailedData.homePitcher ? `<div class="pitcher-stats">${detailedData.homePitcher.record} | ${detailedData.homePitcher.era} ERA</div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -377,6 +460,7 @@ async function createCompactGameBox(game, detailedData) {
                     </div>
                 </div>
                 ${lineScoreHTML}
+                <div class="pitchers-live-row"></div>
                 <div class="venue-info"><img src="https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg" alt="Home Team Logo" class="team-logo-venue"/>${detailedData.venue}</div>
             </div>
         `;
@@ -415,6 +499,50 @@ async function createCompactGameBox(game, detailedData) {
         
         lineScoreHTML += '</tbody></table></div>';
         
+        // Build pitchers decisions section
+        let pitchersHTML = '';
+        if (detailedData.winningPitcher || detailedData.losingPitcher || detailedData.savePitcher) {
+            pitchersHTML = '<div class="pitchers-final">';
+            
+            if (detailedData.winningPitcher) {
+                pitchersHTML += `
+                    <div class="pitcher-decision">
+                        ${detailedData.winningPitcher.id ? `<img src="${getPitcherHeadshotURL(detailedData.winningPitcher.id)}" alt="${detailedData.winningPitcher.name}" class="pitcher-headshot-small">` : ''}
+                        <div class="pitcher-decision-info">
+                            <span class="pitcher-result">W: ${formatPitcherName(detailedData.winningPitcher.name)}</span>
+                            <span class="pitcher-stats">${detailedData.winningPitcher.record} | ${detailedData.winningPitcher.era} ERA</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (detailedData.losingPitcher) {
+                pitchersHTML += `
+                    <div class="pitcher-decision">
+                        ${detailedData.losingPitcher.id ? `<img src="${getPitcherHeadshotURL(detailedData.losingPitcher.id)}" alt="${detailedData.losingPitcher.name}" class="pitcher-headshot-small">` : ''}
+                        <div class="pitcher-decision-info">
+                            <span class="pitcher-result">L: ${formatPitcherName(detailedData.losingPitcher.name)}</span>
+                            <span class="pitcher-stats">${detailedData.losingPitcher.record} | ${detailedData.losingPitcher.era} ERA</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (detailedData.savePitcher) {
+                pitchersHTML += `
+                    <div class="pitcher-decision">
+                        ${detailedData.savePitcher.id ? `<img src="${getPitcherHeadshotURL(detailedData.savePitcher.id)}" alt="${detailedData.savePitcher.name}" class="pitcher-headshot-small">` : ''}
+                        <div class="pitcher-decision-info">
+                            <span class="pitcher-result">SV: ${formatPitcherName(detailedData.savePitcher.name)}</span>
+                            <span class="pitcher-stats">${detailedData.savePitcher.saves} SV | ${detailedData.savePitcher.era} ERA</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            pitchersHTML += '</div>';
+        }
+        
         return `
             <div class="compact-game-box final-game" data-game-pk="${game.gamePk}">
                 <div class="final-header">
@@ -422,31 +550,19 @@ async function createCompactGameBox(game, detailedData) {
                         <img src="${awayLogoSrc}" alt="${awayTeamAbbr}" class="team-logo-sm">
                         <span class="team-abbr">${awayTeamAbbr}</span>
                         <span class="team-record">${awayRecord}</span>
-                        <span class="final-label">Final</span>
                         <span class="score-md">${awayScore}</span>
+                         <span class="final-label">Final</span>
                     </div>
                     <div class="team-final-row">
-                        <img src="${homeLogoSrc}" alt="${homeTeamAbbr}" class="team-logo-sm">
-                        <span class="team-abbr">${homeTeamAbbr}</span>
-                        <span class="team-record">${homeRecord}</span>
-                        <span class="final-label"></span>
                         <span class="score-md">${homeScore}</span>
+                        <span class="team-record">${homeRecord}</span>
+                        <span class="team-abbr">${homeTeamAbbr}</span>
+                        <img src="${homeLogoSrc}" alt="${homeTeamAbbr}" class="team-logo-sm">
+                        <span class="final-label"></span>
                     </div>
                 </div>
                 ${lineScoreHTML}
-                ${detailedData.awayPitcher || detailedData.homePitcher ? `
-                <div class="pitchers-final">
-                    ${detailedData.awayPitcher ? `
-                    <div class="pitcher-final">
-                        <span class="pitcher-result">W: ${formatPitcherName(detailedData.awayPitcher.name)}</span>
-                        <span class="pitcher-stats">${detailedData.awayPitcher.record} | ${detailedData.awayPitcher.era} ERA</span>
-                    </div>` : ''}
-                    ${detailedData.homePitcher ? `
-                    <div class="pitcher-final">
-                        <span class="pitcher-result">L: ${formatPitcherName(detailedData.homePitcher.name)}</span>
-                        <span class="pitcher-stats">${detailedData.homePitcher.record} | ${detailedData.homePitcher.era} ERA</span>
-                    </div>` : ''}
-                </div>` : ''}
+                ${pitchersHTML}
                 <div class="venue-info"><img src="https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg" alt="Home Team Logo" class="team-logo-venue"/>${detailedData.venue}</div>
             </div>
         `;

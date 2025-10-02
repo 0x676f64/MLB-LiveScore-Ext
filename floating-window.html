@@ -228,7 +228,7 @@
             }
             
             .game-box {
-                height: 15rem !important; /* Taller boxes for single column */
+                height: auto !important; /* Taller boxes for single column */
                 width: 32rem !important;
             }
 
@@ -580,7 +580,7 @@
             
             /* Compact Game Box Base Styles */
             .compact-game-box {
-                height: 22rem;
+                height: auto;
                 width: 30rem;
                 background: #1a1a1a;
                 border-radius: 8px;
@@ -659,7 +659,7 @@
             }
             
             .compact-game-box.pre-game .pitcher-label {
-                font-size: 10px;
+                font-size: 12px;
                 color: #666;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
@@ -667,7 +667,7 @@
             }
             
             .compact-game-box.pre-game .pitcher-name {
-                font-size: 14px;
+                font-size: 15px;
                 font-weight: 600;
                 color: #1e40af;
             }
@@ -696,11 +696,10 @@
             }
 
             .pitcher-headshot {
-                width: 30px;
-                height: 30px;
+                width: 40px;
+                height: 40px;
                 border-radius: 50%;
                 object-fit: cover;
-                margin-right: 8px;
             }
             
             /* LIVE GAME LAYOUT */
@@ -792,7 +791,7 @@
             
             .compact-game-box.final-game .final-header {
                 display: flex;
-                flex-direction: column;
+                flex-direction:row;
                 gap: 8px;
                 margin-bottom: 16px;
             }
@@ -811,7 +810,7 @@
             .compact-game-box.final-game .team-abbr {
                 font-size: 16px;
                 font-weight: 600;
-                color: #fff;
+                color: #0252bb;
                 min-width: 45px;
             }
             
@@ -828,6 +827,7 @@
                 flex: 1;
                 text-align: center;
                 font-weight: 600;
+                margin-left: 10px;
             }
             
             .compact-game-box.final-game .score-md {
@@ -840,17 +840,13 @@
             
             .compact-game-box.final-game .pitchers-final {
                 display: flex;
-                flex-direction: column;
-                gap: 8px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 18px;
                 padding: 12px 0;
                 border-top: 1px solid #333;
-            }
-            
-            .compact-game-box.final-game .pitcher-final {
-                display: flex;
-                justify-content: space-between;
                 align-items: center;
-                font-size: 13px;
+                justify-content: space-between;
             }
             
             .compact-game-box.final-game .pitcher-result {
@@ -860,6 +856,17 @@
             
             .compact-game-box.final-game .pitcher-stats {
                 color: #888;
+            }
+
+            .pitcher-headshot-small {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+
+            .pitcher-final {
+                margin-right: 20px;
             }
             
             /* LINE SCORE TABLE (Shared for Live & Final) */
