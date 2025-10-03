@@ -27,7 +27,7 @@ body.dark-mode #popup-container {
 
 #popup-container {
     width: 640px;
-    height: 600px;
+    height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -536,31 +536,6 @@ body.dark-mode #popup-container {
     font-style: italic;
     color: #666;
 }
-
-/* --- Content Styling (Boxscore, Plays) --- */
-.boxscore-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 15px;
-}
-
-.boxscore-table th, .boxscore-table td {
-    border: 1px solid #ddd;
-    padding: 6px 8px;
-    text-align: left;
-    font-size: 0.8em;
-    white-space: nowrap;
-}
-
-.boxscore-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-    color: #444;
-}
-
-.boxscore-table td:nth-child(1) { text-align: left; }
-.boxscore-table td:nth-child(n+2) { text-align: center; }
-.boxscore-pitching-table td:nth-child(n+2) { text-align: center; }
 
 .inning-runs {
     text-align: center;

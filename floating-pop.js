@@ -1631,7 +1631,9 @@ function generatedSVGField(count, onBase) {
 }
 
    // setInterval(() => fetchGameData(gamePk), 2000); // Refresh every 2s
-    async function loadBoxScore() {
+
+// Boxscore Function 
+async function loadBoxScore() {
     const boxScoreContainer = document.getElementById("boxscore-content");
     boxScoreContainer.style.display = "block";
     boxScoreContainer.innerHTML = "<p>Loading Box Score...</p>";
@@ -1690,212 +1692,183 @@ function generatedSVGField(count, onBase) {
         const awayLineup = gameInfo?.teams?.away?.lineup || [];
         const homeLineup = gameInfo?.teams?.home?.lineup || [];
 
-        // Debug logging
-        console.log("Away lineup:", awayLineup);
-        console.log("Home lineup:", homeLineup);
-        console.log("Away stats players:", Object.keys(awayStats.players || {}));
-        console.log("Home stats players:", Object.keys(homeStats.players || {}));
-
         // Get player stats from boxscore
-     // Updated getPlayerStats function to include season batting average
-// Updated getPlayerStats function to include season batting average
-function getPlayerStats(playerId, teamStats, isHitter = true) {
-    const playerKey = `ID${playerId}`;
-    const player = teamStats.players[playerKey];
-    
-    console.log(`Looking for player ${playerId} (${playerKey}) in teamStats:`, player ? "FOUND" : "NOT FOUND");
-    
-    if (!player) return null;
-    
-    if (isHitter) {
-        const gameStats = player.stats?.batting || {};
-        const seasonStats = player.seasonStats?.batting || {};
-        
-        return {
-            name: player.person?.fullName || 'Unknown',
-            position: player.position?.abbreviation || '',
-            ab: gameStats.atBats || 0,
-            r: gameStats.runs || 0,
-            h: gameStats.hits || 0,
-            rbi: gameStats.rbi || 0,
-            bb: gameStats.baseOnBalls || 0,
-            so: gameStats.strikeOuts || 0,
-            seasonAvg: seasonStats.avg || '.000'  // Season batting average
-        };
-    } else {
-        const gameStats = player.stats?.pitching || {};
-        const seasonStats = player.seasonStats?.pitching || {};
-        
-        return {
-            name: player.person?.fullName || 'Unknown',
-            position: player.position?.abbreviation || 'P',
-            ip: gameStats.inningsPitched || '0.0',
-            h: gameStats.hits || 0,
-            r: gameStats.runs || 0,
-            er: gameStats.earnedRuns || 0,
-            bb: gameStats.baseOnBalls || 0,
-            so: gameStats.strikeOuts || 0,
-            seasonEra: seasonStats.era || '0.00'  // Season ERA
-        };
-    }
-}
-
-// Updated getAllBatters function to include season stats
-function getAllBatters(teamStats) {
-    const batters = [];
-    const batterIds = teamStats.batters || [];
-    
-    batterIds.forEach(id => {
-        const playerKey = `ID${id}`;
-        const player = teamStats.players[playerKey];
-        if (player && player.stats?.batting) {
-            const gameStats = player.stats.batting;
-            const seasonStats = player.seasonStats?.batting || {};
+        function getPlayerStats(playerId, teamStats, isHitter = true) {
+            const playerKey = `ID${playerId}`;
+            const player = teamStats.players[playerKey];
             
-            batters.push({
-                id: id,
-                name: player.person?.fullName || 'Unknown',
-                position: player.position?.abbreviation || '',
-                battingOrder: player.battingOrder || 99,
-                ab: gameStats.atBats || 0,
-                r: gameStats.runs || 0,
-                h: gameStats.hits || 0,
-                rbi: gameStats.rbi || 0,
-                bb: gameStats.baseOnBalls || 0,
-                so: gameStats.strikeOuts || 0,
-                seasonAvg: seasonStats.avg || '.000'  // Season batting average
+            if (!player) return null;
+            
+            if (isHitter) {
+                const gameStats = player.stats?.batting || {};
+                const seasonStats = player.seasonStats?.batting || {};
+                
+                return {
+                    name: player.person?.fullName || 'Unknown',
+                    position: player.position?.abbreviation || '',
+                    ab: gameStats.atBats || 0,
+                    r: gameStats.runs || 0,
+                    h: gameStats.hits || 0,
+                    rbi: gameStats.rbi || 0,
+                    bb: gameStats.baseOnBalls || 0,
+                    so: gameStats.strikeOuts || 0,
+                    seasonAvg: seasonStats.avg || '.000'
+                };
+            } else {
+                const gameStats = player.stats?.pitching || {};
+                const seasonStats = player.seasonStats?.pitching || {};
+                
+                return {
+                    name: player.person?.fullName || 'Unknown',
+                    position: player.position?.abbreviation || 'P',
+                    ip: gameStats.inningsPitched || '0.0',
+                    h: gameStats.hits || 0,
+                    r: gameStats.runs || 0,
+                    er: gameStats.earnedRuns || 0,
+                    bb: gameStats.baseOnBalls || 0,
+                    so: gameStats.strikeOuts || 0,
+                    seasonEra: seasonStats.era || '0.00'
+                };
+            }
+        }
+
+        function getAllBatters(teamStats) {
+            const batters = [];
+            const batterIds = teamStats.batters || [];
+            
+            batterIds.forEach(id => {
+                const playerKey = `ID${id}`;
+                const player = teamStats.players[playerKey];
+                if (player && player.stats?.batting) {
+                    const gameStats = player.stats.batting;
+                    const seasonStats = player.seasonStats?.batting || {};
+                    
+                    batters.push({
+                        id: id,
+                        name: player.person?.fullName || 'Unknown',
+                        position: player.position?.abbreviation || '',
+                        battingOrder: player.battingOrder || 99,
+                        ab: gameStats.atBats || 0,
+                        r: gameStats.runs || 0,
+                        h: gameStats.hits || 0,
+                        rbi: gameStats.rbi || 0,
+                        bb: gameStats.baseOnBalls || 0,
+                        so: gameStats.strikeOuts || 0,
+                        seasonAvg: seasonStats.avg || '.000'
+                    });
+                }
             });
+            
+            return batters.sort((a, b) => a.battingOrder - b.battingOrder);
         }
-    });
-    
-    // Sort by batting order
-    return batters.sort((a, b) => a.battingOrder - b.battingOrder);
-}
 
-// Updated createBattingStatsRow function to use season average
-function createBattingStatsRow(player, battingOrder, teamStats) {
-    const playerId = player.person?.id || player.id;
-    console.log(`Creating batting row for player ${playerId} at batting order ${battingOrder}`);
-    
-    let stats = null;
-    
-    // Try to get stats using the original method
-    if (playerId) {
-        stats = getPlayerStats(playerId, teamStats, true);
-    }
-    
-    // If that didn't work, try to find the player by name in the batters
-    if (!stats && player.person?.fullName) {
-        const allBatters = getAllBatters(teamStats);
-        const foundBatter = allBatters.find(b => b.name === player.person.fullName);
-        if (foundBatter) {
-            stats = foundBatter;
+        function createBattingStatsRow(player, battingOrder, teamStats) {
+            const playerId = player.person?.id || player.id;
+            let stats = null;
+            
+            if (playerId) {
+                stats = getPlayerStats(playerId, teamStats, true);
+            }
+            
+            if (!stats && player.person?.fullName) {
+                const allBatters = getAllBatters(teamStats);
+                const foundBatter = allBatters.find(b => b.name === player.person.fullName);
+                if (foundBatter) {
+                    stats = foundBatter;
+                }
+            }
+            
+            if (!stats) {
+                const playerName = player.person?.fullName || player.name || 'Unknown';
+                return `
+                    <tr>
+                        <td class="batting-order">${battingOrder}</td>
+                        <td class="player-name-boxscore" title="${playerName}">${playerName}</td>
+                        <td class="position">${player.position?.abbreviation || ''}</td>
+                        <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>.000</td>
+                    </tr>
+                `;
+            }
+
+            const nameParts = stats.name.split(' ');
+            const suffixes = ['Jr.', 'Jr', 'Sr.', 'Sr', 'II', 'III', 'IV', 'V'];
+            const lastPart = nameParts[nameParts.length - 1];
+            const lastName = suffixes.includes(lastPart) && nameParts.length > 2
+                ? nameParts[nameParts.length - 2] 
+                : lastPart;
+
+            const shortName = stats.name.length > 15 && nameParts.length >= 2 
+                ? `${nameParts[0][0]}. ${lastName}` 
+                : stats.name;
+                
+            return `
+                <tr>
+                    <td class="batting-order">${battingOrder}</td>
+                    <td class="player-name-boxscore" title="${stats.name}">${shortName}</td>
+                    <td class="position">${stats.position}</td>
+                    <td>${stats.ab}</td>
+                    <td>${stats.r}</td>
+                    <td>${stats.h}</td>
+                    <td>${stats.rbi}</td>
+                    <td>${stats.bb}</td>
+                    <td>${stats.so}</td>
+                    <td>${stats.seasonAvg}</td>
+                </tr>
+            `;
         }
-    }
-    
-    // If still no stats, create a placeholder row
-    if (!stats) {
-        const playerName = player.person?.fullName || player.name || 'Unknown';
-        console.log(`No stats found for player: ${playerName} (ID: ${playerId})`);
-        return `
-            <tr>
-                <td class="batting-order">${battingOrder}</td>
-                <td class="player-name-boxscore" title="${playerName}">${playerName}</td>
-                <td class="position">${player.position?.abbreviation || ''}</td>
-                <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>.000</td>
-            </tr>
-        `;
-    }
 
-    // Format name as "First Initial. Last Name"
-    const nameParts = stats.name.split(' ');
-    const suffixes = ['Jr.', 'Jr', 'Sr.', 'Sr', 'II', 'III', 'IV', 'V'];
-    const lastPart = nameParts[nameParts.length - 1];
-    const lastName = suffixes.includes(lastPart) && nameParts.length > 2
-        ? nameParts[nameParts.length - 2] 
-        : lastPart;
+        function createPitchingStatsRow(pitcher, teamStats) {
+            const playerId = pitcher.person?.id;
+            const stats = getPlayerStats(playerId, teamStats, false);
+            
+            if (!stats) {
+                return `
+                    <tr class="pitcher-row">
+                        <td class="batting-order">P</td>
+                        <td class="player-name-boxscore" title="${pitcher.person?.fullName || 'Unknown'}">${pitcher.person?.fullName || 'Unknown'}</td>
+                        <td class="position">${pitcher.position?.abbreviation || 'P'}</td>
+                        <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+                    </tr>
+                `;
+            }
 
-    const shortName = stats.name.length > 15 && nameParts.length >= 2 
-        ? `${nameParts[0][0]}. ${lastName}` 
-        : stats.name;
-        
-    return `
-        <tr>
-            <td class="batting-order">${battingOrder}</td>
-            <td class="player-name-boxscore" title="${stats.name}">${shortName}</td>
-            <td class="position">${stats.position}</td>
-            <td>${stats.ab}</td>
-            <td>${stats.r}</td>
-            <td>${stats.h}</td>
-            <td>${stats.rbi}</td>
-            <td>${stats.bb}</td>
-            <td>${stats.so}</td>
-            <td>${stats.seasonAvg}</td>
-        </tr>
-    `;
-}
+            const nameParts = stats.name.split(' ');
+            const suffixes = ['Jr.', 'Jr', 'Sr.', 'Sr', 'II', 'III', 'IV', 'V'];
+            const lastPart = nameParts[nameParts.length - 1];
+            const lastName = suffixes.includes(lastPart) && nameParts.length > 2
+                ? nameParts[nameParts.length - 2] 
+                : lastPart;
 
-// Updated createPitchingStatsRow function to use season ERA
-function createPitchingStatsRow(pitcher, teamStats) {
-    const playerId = pitcher.person?.id;
-    const stats = getPlayerStats(playerId, teamStats, false);
-    
-    if (!stats) {
-        return `
-            <tr class="pitcher-row">
-                <td class="batting-order">P</td>
-                <td class="player-name-boxscore" title="${pitcher.person?.fullName || 'Unknown'}">${pitcher.person?.fullName || 'Unknown'}</td>
-                <td class="position">${pitcher.position?.abbreviation || 'P'}</td>
-                <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
-            </tr>
-        `;
-    }
+            const shortName = stats.name.length > 15 && nameParts.length >= 2 
+                ? `${nameParts[0][0]}. ${lastName}` 
+                : stats.name;
+            
+            return `
+                <tr class="pitcher-row">
+                    <td class="batting-order">P</td>
+                    <td class="player-name-boxscore" title="${stats.name}">${shortName}</td>
+                    <td class="position">${stats.position}</td>
+                    <td>${stats.ip}</td>
+                    <td>${stats.h}</td>
+                    <td>${stats.r}</td>
+                    <td>${stats.er}</td>
+                    <td>${stats.bb}</td>
+                    <td>${stats.so}</td>
+                    <td>${stats.seasonEra}</td>
+                </tr>
+            `;
+        }
 
-    // Format name as "First Initial. Last Name"
-    const nameParts = stats.name.split(' ');
-    const suffixes = ['Jr.', 'Jr', 'Sr.', 'Sr', 'II', 'III', 'IV', 'V'];
-    const lastPart = nameParts[nameParts.length - 1];
-    const lastName = suffixes.includes(lastPart) && nameParts.length > 2
-        ? nameParts[nameParts.length - 2] 
-        : lastPart;
-
-    const shortName = stats.name.length > 15 && nameParts.length >= 2 
-        ? `${nameParts[0][0]}. ${lastName}` 
-        : stats.name;
-    
-    return `
-        <tr class="pitcher-row">
-            <td class="batting-order">P</td>
-            <td class="player-name-boxscore" title="${stats.name}">${shortName}</td>
-            <td class="position">${stats.position}</td>
-            <td>${stats.ip}</td>
-            <td>${stats.h}</td>
-            <td>${stats.r}</td>
-            <td>${stats.er}</td>
-            <td>${stats.bb}</td>
-            <td>${stats.so}</td>
-            <td>${stats.seasonEra}</td>
-        </tr>
-    `;
-}
-
-       function createTeamSection(teamName, teamId, lineup, teamStats, isHome = false) {
-            const teamClass = isHome ? 'home-team' : 'away-team';
-            const toggleId = isHome ? 'home-team-toggle' : 'away-team-toggle';
-            const contentId = isHome ? 'home-team-content' : 'away-team-content';
-
-            // Get batting lineup - try multiple approaches
+        function createTeamContent(lineup, teamStats) {
+            // Get batting lineup
             let battingLineup = [];
             
-            // Approach 1: Use provided lineup if it exists and has players
             if (lineup && lineup.length > 0) {
-                // Filter out pitchers from batting lineup
                 battingLineup = lineup.filter(player => {
                     const position = player.position?.abbreviation || '';
                     return position !== 'P' && position !== 'Pitcher';
                 });
             } else {
-                // Approach 2: Fall back to getting all batters from boxscore and sorting them
                 const allBatters = getAllBatters(teamStats);
                 battingLineup = allBatters.filter(batter => {
                     const position = batter.position || '';
@@ -1906,9 +1879,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 }));
             }
 
-            console.log(`${teamName} batting lineup (filtered):`, battingLineup);
-
-            // Get all pitchers who appeared in the game (for pitching section only)
+            // Get pitchers
             const pitcherIds = teamStats.pitchers || [];
             const pitchers = pitcherIds.map(id => {
                 const playerKey = `ID${id}`;
@@ -1921,99 +1892,84 @@ function createPitchingStatsRow(pitcher, teamStats) {
             }).filter(p => p !== null);
 
             return `
-                <div class="team-section ${teamClass}">
-                    <div class="team-header" data-content-id="${contentId}" data-toggle-id="${toggleId}">
-                        <img src="https://www.mlbstatic.com/team-logos/${teamId}.svg" alt="${teamName}" class="team-logo-small">
-                        <span class="team-name-small">${teamName}</span>
-                        <span class="toggle-icon" id="${toggleId}">▼</span>
-                    </div>
-                    <div class="team-content" id="${contentId}">
-                        <div class="stats-table-wrapper">
-                            <div class="section-subtitle">Batting</div>
-                            <table class="stats-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Player</th>
-                                        <th>Pos</th>
-                                        <th>AB</th>
-                                        <th>R</th>
-                                        <th>H</th>
-                                        <th>RBI</th>
-                                        <th>BB</th>
-                                        <th>K</th>
-                                        <th>AVG</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${battingLineup.map((player, index) => 
-                                        createBattingStatsRow(player, index + 1, teamStats)
-                                    ).join('')}
-                                </tbody>
-                            </table>
-                            
-                            <div class="section-subtitle">Pitching</div>
-                            <table class="stats-table">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>Pitcher</th>
-                                        <th>Pos</th>
-                                        <th>IP</th>
-                                        <th>H</th>
-                                        <th>R</th>
-                                        <th>ER</th>
-                                        <th>BB</th>
-                                        <th>K</th>
-                                        <th>ERA</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${pitchers.map(pitcher => 
-                                        createPitchingStatsRow(pitcher, teamStats)
-                                    ).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="stats-table-wrapper">
+                    <div class="section-subtitle">Batting</div>
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Player</th>
+                                <th>Pos</th>
+                                <th>AB</th>
+                                <th>R</th>
+                                <th>H</th>
+                                <th>RBI</th>
+                                <th>BB</th>
+                                <th>K</th>
+                                <th>AVG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${battingLineup.map((player, index) => 
+                                createBattingStatsRow(player, index + 1, teamStats)
+                            ).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <div class="section-subtitle">Pitching</div>
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Pitcher</th>
+                                <th>Pos</th>
+                                <th>IP</th>
+                                <th>H</th>
+                                <th>R</th>
+                                <th>ER</th>
+                                <th>BB</th>
+                                <th>K</th>
+                                <th>ERA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pitchers.map(pitcher => 
+                                createPitchingStatsRow(pitcher, teamStats)
+                            ).join('')}
+                        </tbody>
+                    </table>
                 </div>
             `;
         }
 
-        // Enhanced HTML with modern styling
         let fullHTML = `
         <style>
             .boxscore-container {
-                width: 300px;
-                height: 400px;
+                width: 100%;
+                max-width: 400px;
                 margin: 0 auto;
-                padding: 10px;
                 font-family: 'Rubik', Tahoma, Geneva, Verdana, sans-serif;
                 background: #f8f9fa;
-                overflow-y: auto;
-                display: block;
-                scrollbar-width: thin;
-              
+                display: flex;
+                flex-direction: column;
+                height: auto;
             }
 
-            .boxscore-title {
-                text-align: center;
-                margin: 0 0 12px 0;
-                font-size: 18px;
-                font-weight: 600;
-                color: #041e41;
+            /* Linescore Table */
+            .linescore-wrapper {
+                padding: 8px;
+                background: white;
+                border-bottom: 2px solid rgba(4,30,65,0.1);
             }
 
             .boxscore-table {
-                margin: 0 auto 15px auto;
-                width: 80%;
-                max-width: 80%;
+                width: 100%;
                 border-collapse: collapse;
                 background: white;
-                border-radius: 8px;
+                border-radius: 6px;
                 overflow: hidden;
-                box-shadow: 0 2px 8px #041e42;
-                margin-right: 80px;
+                box-shadow: 0 2px 8px rgba(4,30,65,0.15);
+                table-layout: fixed;
             }
 
             .boxscore-table thead {
@@ -2022,12 +1978,11 @@ function createPitchingStatsRow(pitcher, teamStats) {
             }
 
             .boxscore-table th {
-                padding: 8px 4px;
+                padding: 6px 2px;
                 text-align: center;
                 font-weight: 600;
-                font-size: 11px;
-                background: #041e42;
-                border-right: 1px solid rgba(255, 255, 255, 0.39);
+                font-size: 8px;
+                border-right: 1px solid rgba(255, 255, 255, 0.2);
                 color: white;
             }
 
@@ -2035,201 +1990,176 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 border-right: none;
             }
 
+            .boxscore-table th:first-child {
+                width: 32px;
+            }
+
             .boxscore-table tbody tr {
                 transition: background-color 0.2s ease;
             }
 
             .boxscore-table tbody tr:hover {
-                background-color: rgba(191,13,61,0.1);
-            }
-
-            .boxscore-table tbody tr:nth-child(even) {
-                background-color: rgba(4,30,65,0.05);
+                background-color: rgba(191,13,61,0.08);
             }
 
             .boxscore-table td {
-                padding: 8px 4px;
+                padding: 6px 2px;
                 text-align: center;
-                border-right: 1px solid rgba(4,30,65,0.15);
-                border-bottom: 1px solid rgba(4,30,65,0.15);
-                font-weight: 500;
+                border-right: 1px solid rgba(4,30,65,0.1);
+                font-weight: 600;
                 color: #041e41;
-                font-size: 11px;
+                font-size: 9px;
             }
 
             .boxscore-table td:last-child {
                 border-right: none;
             }
 
-            .boxscore-table tbody tr:last-child td {
-                border-bottom: none;
-            }
-
             .team-name {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 6px;
+                gap: 3px;
+                padding: 4px 2px;
             }
 
             .team-logo-boxscore {
-                width: 20px;
-                height: 20px;
+                width: 16px;
+                height: 16px;
             }
 
             .total-stats {
-                background: rgba(191,13,61,0.15) !important;
+                background: rgba(191,13,61,0.12) !important;
                 font-weight: 700;
                 color: #041e41;
             }
 
             .inning-score {
                 font-weight: 500;
-                min-width: 25px;
             }
 
-            /* Section Headers */
-            .section-title {
-                text-align: center;
-                margin: 15px 0 8px 0;
-                font-size: 14px;
-                font-weight: 600;
-                color: #041e41;
-                padding: 5px 0;
-                border-bottom: 2px solid #bf0d3d;
+            /* Tab Navigation */
+            .tab-navigation {
+                display: flex;
+                background: white;
+                border-bottom: 2px solid #041e42;
             }
 
-            .teams-row {
-                display: column;
-                gap: 8px;
-                justify-content: space-between;
-                margin-bottom: 10px;
-            }
-
-            .team-section {
+            .tab-button-boxscore {
                 flex: 1;
-                width: 100%;
-                border-radius: 6px;
-                overflow: hidden;
-                box-shadow: 0 4px 16px rgba(4,30,65,0.1), 0 2px 8px rgba(191,13,61,0.05);
-                background: rgba(255,255,255,0.8);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(4,30,65,0.1);
-                margin-bottom: 8px;
-            }
-
-            .team-header {
                 display: flex;
                 align-items: center;
-                padding: 10px 12px;
-                background: rgba(255,255,255,0.9);
-                backdrop-filter: blur(15px);
-                color: #041e41;
+                justify-content: center;
+                gap: 8px;
+                padding: 12px 8px;
+                background: rgba(4,30,65,0.05);
+                border: none;
                 cursor: pointer;
-                user-select: none;
-                transition: all 0.2s;
-                border-bottom: 1px solid rgba(4,30,65,0.1);
-            }
-
-            .team-header:hover {
-                background: rgba(248,249,250,0.95);
-                box-shadow: 0 2px 8px rgba(4,30,65,0.1);
-            }
-
-            .team-logo-small {
-                width: 18px;
-                height: 18px;
-                margin-right: 8px;
-            }
-
-            .team-name-small {
-                flex: 1;
-                font-weight: 600;
-                font-size: 12px;
-                font-family: 'Rubik';
-            }
-
-            .toggle-icon {
-                font-size: 12px;
-                transition: transform 0.2s;
-                font-weight: bold;
-            }
-
-            .toggle-icon.rotated {
-                transform: rotate(-90deg);
-            }
-
-            .team-content {
-                max-height: 380px;
-                overflow-y: auto;
-                transition: max-height 0.3s ease;
-                scrollbar-width: thin;
-                background: rgba(255,255,255,0.7);
-                backdrop-filter: blur(8px);
-            }
-
-            .team-content.collapsed {
-                max-height: 0;
-                overflow: hidden;
-            }
-
-            /* Stats Table Wrappers for Scrolling */
-            .stats-table-wrapper {
-                max-height: 360px;
-                overflow-y: auto;
-                scrollbar-width: none;
-            }
-
-            .section-subtitle {
-                background: rgba(248,249,250,0.8);
-                backdrop-filter: blur(5px);
-                padding: 6px 8px;
+                font-family: 'Rubik', sans-serif;
                 font-weight: 600;
                 font-size: 10px;
                 color: #041e41;
-                border-bottom: 1px solid rgba(4,30,65,0.15);
-                margin-top: 8px;
+                transition: all 0.2s ease;
+                border-bottom: 3px solid transparent;
             }
 
-            .section-subtitle:first-child {
-                margin-top: 0;
+            .tab-button-boxscore:hover {
+                background: rgba(4,30,65,0.1);
+            }
+
+            .tab-button=boxscore.active {
+                background: white;
+                border-bottom: 3px solid #bf0d3d;
+                color: #bf0d3d;
+            }
+
+            .tab-button-boxscore img {
+                width: 20px;
+                height: 20px;
+            }
+
+            /* Tab Content */
+            .tab-content {
+                display: none;
+                flex: 1;
+                overflow-y: auto;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(4,30,65,0.3) rgba(4,30,65,0.05);
+            }
+
+            .tab-content::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .tab-content::-webkit-scrollbar-track {
+                background: rgba(4,30,65,0.05);
+            }
+
+            .tab-content::-webkit-scrollbar-thumb {
+                background: rgba(4,30,65,0.3);
+                border-radius: 3px;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            /* Stats Tables */
+            .stats-table-wrapper {
+                padding: 12px;
+            }
+
+            .section-subtitle {
+                background: rgba(4,30,65,0.08);
+                padding: 8px 10px;
+                font-weight: 600;
+                font-size: 11px;
+                color: #041e41;
+                border-left: 3px solid #bf0d3d;
+                margin-bottom: 8px;
+            }
+
+            .section-subtitle:not(:first-child) {
+                margin-top: 16px;
             }
 
             .stats-table {
                 width: 100%;
                 border-collapse: collapse;
-                font-size: 11px;
+                font-size: 10px;
+                background: white;
+                border-radius: 6px;
+                overflow: hidden;
+                box-shadow: 0 1px 4px rgba(4,30,65,0.1);
             }
 
             .stats-table thead {
-                background: rgba(248,249,250,0.9);
-                backdrop-filter: blur(10px);
-                position: sticky;
-                top: 0;
-                z-index: 1;
+                background: rgba(4,30,65,0.08);
             }
 
             .stats-table th {
-                padding: 6px 2px;
+                padding: 7px 3px;
                 text-align: center;
                 font-weight: 600;
-                border-bottom: 2px solid rgba(4,30,65,0.2);
-                font-size: 8px;
+                font-size: 9px;
                 color: #041e41;
-                white-space: nowrap;
+                border-bottom: 2px solid rgba(4,30,65,0.15);
             }
 
             .stats-table td {
-                padding: 4px 2px;
+                padding: 6px 3px;
                 text-align: center;
-                border-bottom: 1px solid rgba(4,30,65,0.1);
+                border-bottom: 1px solid rgba(4,30,65,0.08);
                 font-weight: 500;
-                font-size: 9px;
-                white-space: nowrap;
+                font-size: 10px;
             }
 
-            .stats-table tr:hover {
-                background-color: rgba(191,13,61,0.1);
+            .stats-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .stats-table tbody tr:hover {
+                background-color: rgba(191,13,61,0.08);
             }
 
             .player-name-boxscore {
@@ -2238,49 +2168,23 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                font-size: 10px;
-                max-width: 80px;
-            }
-
-            /* Stats Table Column Widths */
-            .stats-table th:first-child,
-            .stats-table td:first-child {
-                width: 8%;
-                min-width: 20px;
-            }
-
-            .stats-table th:nth-child(2),
-            .stats-table td:nth-child(2) {
-                width: 25%;
-                text-align: left;
-            }
-
-            .stats-table th:nth-child(3),
-            .stats-table td:nth-child(3) {
-                width: 8%;
-                min-width: 25px;
-            }
-
-            .stats-table th:nth-child(n+4),
-            .stats-table td:nth-child(n+4) {
-                width: 7%;
-                min-width: 20px;
+                max-width: 110px;
             }
 
             .batting-order {
                 font-weight: bold;
                 color: #041e41;
-                background-color: rgba(4,30,65,0.1);
+                background-color: rgba(4,30,65,0.12);
             }
 
             .position {
                 font-weight: 600;
                 color: #041e41;
+                font-size: 9px;
             }
 
             .pitcher-row {
-                background-color: rgba(191,13,61,0.05);
-                border-top: 2px solid rgba(4,30,65,0.2);
+                background-color: rgba(191,13,61,0.04);
             }
 
             .pitcher-row .batting-order {
@@ -2289,40 +2193,55 @@ function createPitchingStatsRow(pitcher, teamStats) {
                 color: #041e41;
             }
 
-            .away-team .team-header {
-                background: rgba(255,255,255,0.9);
-                backdrop-filter: blur(15px);
-                border-left: 3px solid #041e41;
+            /* Column widths */
+            .stats-table th:first-child,
+            .stats-table td:first-child {
+                width: 8%;
             }
 
-            .away-team .team-header:hover {
-                background: rgba(248,249,250,0.95);
-                box-shadow: 0 2px 8px rgba(4,30,65,0.15);
+            .stats-table th:nth-child(2),
+            .stats-table td:nth-child(2) {
+                width: 28%;
+                text-align: left;
             }
 
-            .home-team .team-header {
-                background: rgba(255,255,255,0.9);
-                backdrop-filter: blur(15px);
-                border-left: 3px solid #bf0d3d;
+            .stats-table th:nth-child(3),
+            .stats-table td:nth-child(3) {
+                width: 8%;
             }
 
-            .home-team .team-header:hover {
-                background: rgba(248,249,250,0.95);
-                box-shadow: 0 2px 8px rgba(191,13,61,0.15);
-            }
-
-            @media (max-width: 600px) {
-                .teams-row {
-                    flex-direction: column;
+            /* Responsive adjustments */
+            @media (min-width: 450px) {
+                .boxscore-container {
+                    max-width: 500px;
                 }
                 
-                .team-section {
-                    width: 100%;
+                .player-name-boxscore {
+                    max-width: 140px;
+                }
+                
+                .stats-table {
+                    font-size: 11px;
+                }
+                
+                .stats-table th {
+                    font-size: 10px;
                 }
             }
-</style>
+
+            @media (min-width: 600px) {
+                .boxscore-container {
+                    max-width: 600px;
+                }
+                
+                .player-name-boxscore {
+                    max-width: 180px;
+                }
+            }
+        </style>
             
-            <div class="boxscore-container">
+        <div class="boxscore-container">
+            <div class="linescore-wrapper">
                 <table class="boxscore-table">
                     <thead>
                         <tr>
@@ -2334,7 +2253,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                     <tbody>
                         <tr>
                             <td class="team-name">
-                                <img src="https://www.mlbstatic.com/team-logos/${awayTeamId}.svg" alt="${awayAbbr} logo" class="team-logo-boxscore">
+                                <img src="https://www.mlbstatic.com/team-logos/${awayTeamId}.svg" alt="${awayAbbr}" class="team-logo-boxscore">
                             </td>
                             ${innings.map(inn => `<td class="inning-score">${inn.away?.runs ?? '-'}</td>`).join('')}
                             <td class="total-stats">${linescore.teams.away.runs}</td>
@@ -2343,7 +2262,7 @@ function createPitchingStatsRow(pitcher, teamStats) {
                         </tr>
                         <tr>
                             <td class="team-name">
-                                <img src="https://www.mlbstatic.com/team-logos/${homeTeamId}.svg" alt="${homeAbbr} logo" class="team-logo-boxscore">
+                                <img src="https://www.mlbstatic.com/team-logos/${homeTeamId}.svg" alt="${homeAbbr}" class="team-logo-boxscore">
                             </td>
                             ${innings.map(inn => `<td class="inning-score">${inn.home?.runs ?? '-'}</td>`).join('')}
                             <td class="total-stats">${linescore.teams.home.runs}</td>
@@ -2352,20 +2271,31 @@ function createPitchingStatsRow(pitcher, teamStats) {
                         </tr>
                     </tbody>
                 </table>
-
-                
-                <div class="teams-row">
-                    ${createTeamSection(awayTeam.name, awayTeam.id, awayLineup, awayStats, false)}
-                    ${createTeamSection(homeTeam.name, homeTeam.id, homeLineup, homeStats, true)}
-                </div>
             </div>
+
+            <div class="tab-navigation">
+                <button class="tab-button-boxscore active" data-tab="away">
+                    <img src="https://www.mlbstatic.com/team-logos/${awayTeamId}.svg" alt="${awayTeam.name}">
+                    <span>${awayTeam.name}</span>
+                </button>
+                <button class="tab-button-boxscore" data-tab="home">
+                    <img src="https://www.mlbstatic.com/team-logos/${homeTeamId}.svg" alt="${homeTeam.name}">
+                    <span>${homeTeam.name}</span>
+                </button>
+            </div>
+
+            <div class="tab-content active" id="away-content">
+                ${createTeamContent(awayLineup, awayStats)}
+            </div>
+
+            <div class="tab-content" id="home-content">
+                ${createTeamContent(homeLineup, homeStats)}
+            </div>
+        </div>
         `;
 
-        // Insert the HTML first
         boxScoreContainer.innerHTML = fullHTML;
-        
-        // Now that the DOM elements exist, set up the event listeners
-        setupToggleHandlers();
+        setupTabHandlers();
         
     } catch (error) {
         console.error("Error loading box score:", error);
@@ -2373,44 +2303,22 @@ function createPitchingStatsRow(pitcher, teamStats) {
     }
 }
 
-// Define the toggle function separately so it can be called after DOM creation
-function toggleTeam(contentId, toggleId) {
-    const content = document.getElementById(contentId);
-    const toggle = document.getElementById(toggleId);
-
-    if (content && toggle) {
-        if (content.classList.contains('collapsed')) {
-            content.classList.remove('collapsed');
-            toggle.textContent = '▼';
-            toggle.classList.remove('rotated');
-        } else {
-            content.classList.add('collapsed');
-            toggle.textContent = '▶';
-            toggle.classList.add('rotated');
-        }
-    }
-}
-
-// Set up event listeners after DOM is created
-// Modified version that initializes collapsed state
-function setupToggleHandlers() {
-    const teamHeaders = document.querySelectorAll('.team-header');
-    teamHeaders.forEach(header => {
-        const contentId = header.getAttribute('data-content-id');
-        const toggleId = header.getAttribute('data-toggle-id');
-        
-        // Initialize as collapsed
-        const content = document.getElementById(contentId);
-        const toggle = document.getElementById(toggleId);
-        if (content && toggle) {
-            content.classList.add('collapsed');
-            toggle.textContent = '▶';
-            toggle.classList.add('rotated');
-        }
-        
-        // Set up click handler
-        header.addEventListener('click', function() {
-            toggleTeam(contentId, toggleId);
+function setupTabHandlers() {
+    const tabButtons = document.querySelectorAll('.tab-button-boxscore');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Remove active class from all buttons and contents
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to clicked button and corresponding content
+            this.classList.add('active');
+            document.getElementById(`${targetTab}-content`).classList.add('active');
         });
     });
 }
