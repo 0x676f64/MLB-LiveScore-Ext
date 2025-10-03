@@ -644,8 +644,8 @@ toggleContainers(true);
    // ** When the Game is Over **    
    
 if (gameState === "Final" || gameState === "Game Over") {
-    awayPlayerStats.innerHTML = `<p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>` || "N/A" ;
-    homePlayerStats.innerHTML = `<p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>` || "N/A" ;
+    awayPlayerStats.innerHTML = `<img class="winning-pitcher-image" src=https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,h_100,c_fill,q_auto:best/v1/people/${data.liveData.decisions.winner.id}/headshot/67/current><p><span class="winning-pitcher">W:</span> ${data.liveData.decisions.winner.fullName}</p>` || "N/A" ;
+    homePlayerStats.innerHTML = `<img class="losing-pitcher-image" src=https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,h_100,c_fill,q_auto:best/v1/people/${data.liveData.decisions.loser.id}/headshot/67/current><p><span class="losing-pitcher">L:</span> ${data.liveData.decisions.loser.fullName}</p>` || "N/A" ;
     document.getElementById("scorebug-wrapper").style.display = "none";
 
     if (data.gameData.status.detailedState === "Final: Tied") {

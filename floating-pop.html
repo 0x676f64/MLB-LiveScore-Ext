@@ -29,8 +29,8 @@ body.dark-mode #popup-container {
 }
 
 #popup-container {
-    width: 600px;
-    height: 630px;
+    width: auto;
+    height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -385,8 +385,18 @@ body.dark-mode #popup-container {
 
 .winning-pitcher, .losing-pitcher {
     color: #bf0d3d;
-    font-weight: 500;
+    font-weight: 600;
 }
+
+.winning-pitcher-image, .losing-pitcher-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #bf0d3d;
+    margin-left: 20%;
+}
+
+
 
 #top-performers {
     text-align: center;
@@ -465,10 +475,10 @@ body.dark-mode #popup-container {
 }
 
 .performer-image {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    border: 3px solid #D7827E;
+    border: 3px solid #bf0d3d;
     object-fit: cover;
     margin-bottom: 8px;
     display: block;
@@ -937,6 +947,7 @@ h4 {
     #popup-container {
         width: 65%;
         padding: 8px;
+        height: auto;
     }
 
     #scoring-play-container {
@@ -982,6 +993,7 @@ h4 {
 
     .performer-name {
         font-size: 0.75rem !important;
+        font-weight: 600;
     }
 
     .performer-stats {
