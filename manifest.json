@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MLB Scoreboard",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "description": "View live scores, stats, and results for all things Baseball in real time.",
   "permissions": ["storage", "windows", "tabs"],
   "content_scripts": [

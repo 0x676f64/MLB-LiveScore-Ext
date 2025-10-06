@@ -137,6 +137,9 @@ async function fetchDetailedGameData(gamePk) {
             const linescore = data.liveData.linescore;
             const boxscore = data.liveData.boxscore;
             const decisions = data.liveData.decisions;
+            const allPlays = data.liveData.plays.allPlays;
+            const currentPlay = data.liveData.plays.currentPlay;
+            const inningState = linescore.inningHalf; 
             
             // Inning info
             const inningHalf = linescore.inningHalf === "Top" ? "TOP" : "BOT";
@@ -153,12 +156,10 @@ async function fetchDetailedGameData(gamePk) {
             // Line score by inning
             const innings = linescore.innings || [];
             
-            // Pitcher info
-            const awayTeamId = data.gameData.teams.away.id;
-            const homeTeamId = data.gameData.teams.home.id;
-            
             let awayPitcher = null;
             let homePitcher = null;
+            let awayBatter = null;
+            let homeBatter = null;
             let winningPitcher = null;
             let losingPitcher = null;
             let savePitcher = null;
@@ -185,51 +186,75 @@ async function fetchDetailedGameData(gamePk) {
                 }
             }
             
-           // Get current pitcher for live games
-            if (boxscore.teams && linescore.defense) {
-                const currentPitcherId = linescore.defense.pitcher?.id;
-                if (currentPitcherId) {
-                    const pitcherKey = `ID${currentPitcherId}`;
-                    const awayPlayers = boxscore.teams.away.players || {};
-                    const homePlayers = boxscore.teams.home.players || {};
-                    const pitcher = awayPlayers[pitcherKey] || homePlayers[pitcherKey];
-                    
-                    if (pitcher) {
-                        const isAway = awayPlayers[pitcherKey] !== undefined;
-                        const pitcherData = {
-                            id: currentPitcherId,
-                            name: pitcher.person.fullName,
-                            record: pitcher.seasonStats?.pitching ?
-                                `${pitcher.seasonStats.pitching.wins}-${pitcher.seasonStats.pitching.losses}` : '0-0',
-                            era: pitcher.seasonStats?.pitching?.era || '0.00',
-                            saves: pitcher.seasonStats?.pitching?.saves || 0
+            // Get current pitcher and batter for live games
+            if (currentPlay && currentPlay.matchup) {
+                const matchup = currentPlay.matchup;
+                const batter = matchup.batter;
+                const pitcher = matchup.pitcher;
+                
+                // Reset pitcher variables for live games (clear probable pitchers)
+                awayPitcher = null;
+                homePitcher = null;
+                
+                // Check if it's top or bottom of the inning to determine home/away
+                if (inningState === "Top") {
+                    // Away team batting, home team pitching
+                    if (batter) {
+                        const batterId = batter.id;
+                        const batterStats = batterId ? boxscore.teams.away.players[`ID${batterId}`]?.seasonStats?.batting : null;
+                        
+                        awayBatter = {
+                            id: batterId,
+                            name: batter.fullName,
+                            avg: batterStats?.avg || 'N/A',
+                            ops: batterStats?.ops || 'N/A',
+                            homeRuns: batterStats?.homeRuns || 'N/A',
+                            imageUrl: null
                         };
-                        if (isAway) awayPitcher = pitcherData;
-                        else homePitcher = pitcherData;
                     }
-                }
-            }
 
-            // Get current hitter for live games
-            if (boxscore.teams && linescore.offense) {
-                const currentHitterId = linescore.offense.batter?.id;
-                if (currentHitterId) {
-                    const hitterKey = `ID${currentHitterId}`;
-                    const awayPlayers = boxscore.teams.away.players || {};
-                    const homePlayers = boxscore.teams.home.players || {};
-                    const hitter = awayPlayers[hitterKey] || homePlayers[hitterKey];
-                    
-                    if (hitter) {
-                        const isAway = awayPlayers[hitterKey] !== undefined;
-                        const hitterData = {
-                            id: currentHitterId,
-                            name: hitter.person.fullName,
-                            avg: hitter.seasonStats?.batting?.avg || '.000',
-                            hr: hitter.seasonStats?.batting?.homeRuns || 0,
-                            ops: hitter.seasonStats?.batting?.ops || '.000'
+                    if (pitcher) {
+                        const pitcherId = pitcher.id;
+                        const pitcherStats = pitcherId ? boxscore.teams.home.players[`ID${pitcherId}`]?.seasonStats?.pitching : null;
+                        
+                        homePitcher = {
+                            id: pitcherId,
+                            name: pitcher.fullName,
+                            era: pitcherStats?.era || 'N/A',
+                            inningsPitched: pitcherStats?.inningsPitched || 'N/A',
+                            strikeOuts: pitcherStats?.strikeOuts || 'N/A',
+                            imageUrl: null
                         };
-                        if (isAway) awayHitter = hitterData;
-                        else homeHitter = hitterData;
+                    }
+                    
+                } else if (inningState === "Bottom") {
+                    // Home team batting, away team pitching
+                    if (pitcher) {
+                        const pitcherId = pitcher.id;
+                        const pitcherStats = pitcherId ? boxscore.teams.away.players[`ID${pitcherId}`]?.seasonStats?.pitching : null;
+                        
+                        awayPitcher = {
+                            id: pitcherId,
+                            name: pitcher.fullName,
+                            era: pitcherStats?.era || 'N/A',
+                            inningsPitched: pitcherStats?.inningsPitched || 'N/A',
+                            strikeOuts: pitcherStats?.strikeOuts || 'N/A',
+                            imageUrl: null
+                        };
+                    }
+
+                    if (batter) {
+                        const batterId = batter.id;
+                        const batterStats = batterId ? boxscore.teams.home.players[`ID${batterId}`]?.seasonStats?.batting : null;
+                        
+                        homeBatter = {
+                            id: batterId,
+                            name: batter.fullName,
+                            avg: batterStats?.avg || 'N/A',
+                            ops: batterStats?.ops || 'N/A',
+                            homeRuns: batterStats?.homeRuns || 'N/A',
+                            imageUrl: null
+                        };
                     }
                 }
             }
@@ -303,6 +328,8 @@ async function fetchDetailedGameData(gamePk) {
                 innings,
                 awayPitcher,
                 homePitcher,
+                awayBatter,
+                homeBatter,
                 winningPitcher,
                 losingPitcher,
                 savePitcher,
@@ -411,13 +438,11 @@ async function createCompactGameBox(game, detailedData) {
         let lineScoreHTML = '<div class="line-score-compact">';
         lineScoreHTML += '<table><thead><tr><th></th>';
         
-        // Inning headers
         for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
             lineScoreHTML += `<th>${i + 1}</th>`;
         }
         lineScoreHTML += '<th>R</th><th>H</th><th>E</th></tr></thead><tbody>';
         
-        // Away team row
         lineScoreHTML += `<tr><td class="team-cell">${awayTeamAbbr}</td>`;
         for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
             const runs = detailedData.innings[i]?.away?.runs ?? '-';
@@ -427,7 +452,6 @@ async function createCompactGameBox(game, detailedData) {
         lineScoreHTML += `<td>${detailedData.awayHits}</td>`;
         lineScoreHTML += `<td>${detailedData.awayErrors}</td></tr>`;
         
-        // Home team row
         lineScoreHTML += `<tr><td class="team-cell">${homeTeamAbbr}</td>`;
         for (let i = 0; i < Math.min(detailedData.innings.length, 9); i++) {
             const runs = detailedData.innings[i]?.home?.runs ?? '-';
@@ -438,6 +462,91 @@ async function createCompactGameBox(game, detailedData) {
         lineScoreHTML += `<td>${detailedData.homeErrors}</td></tr>`;
         
         lineScoreHTML += '</tbody></table></div>';
+        
+        // Build pitcher and batter display
+        let playerMatchupHTML = '<div class="player-matchup-container">';
+        
+        if (detailedData.awayPitcher) {
+            const pitcher = detailedData.awayPitcher;
+            playerMatchupHTML += `
+                <div class="player-card">
+                    <img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_40,h_40,c_fill/v1/people/${pitcher.id}/headshot/67/current" 
+                         alt="${pitcher.name}" 
+                         class="player-image">
+                    <div class="player-info">
+                        <div class="player-name">${pitcher.name}</div>
+                        <div class="player-position">Pitcher</div>
+                        <div class="player-stats">
+                            <span>ERA: ${pitcher.era}</span>
+                            <span>K: ${pitcher.strikeOuts}</span>
+                            <span>IP: ${pitcher.inningsPitched}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (detailedData.awayBatter) {
+            const batter = detailedData.awayBatter;
+            playerMatchupHTML += `
+                <div class="player-card">
+                    <img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_40,h_40,c_fill/v1/people/${batter.id}/headshot/67/current" 
+                         alt="${batter.name}" 
+                         class="player-image">
+                    <div class="player-info">
+                        <div class="player-name">${batter.name}</div>
+                        <div class="player-position">Batter</div>
+                        <div class="player-stats">
+                            <span>AVG: ${batter.avg}</span>
+                            <span>HR: ${batter.homeRuns}</span>
+                            <span>OPS: ${batter.ops}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (detailedData.homePitcher) {
+            const pitcher = detailedData.homePitcher;
+            playerMatchupHTML += `
+                <div class="player-card">
+                    <img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_40,h_40,c_fill/v1/people/${pitcher.id}/headshot/67/current" 
+                         alt="${pitcher.name}" 
+                         class="player-image">
+                    <div class="player-info">
+                        <div class="player-name">${pitcher.name}</div>
+                        <div class="player-position">Pitcher</div>
+                        <div class="player-stats">
+                            <span>ERA: ${pitcher.era}</span>
+                            <span>K: ${pitcher.strikeOuts}</span>
+                            <span>IP: ${pitcher.inningsPitched}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (detailedData.homeBatter) {
+            const batter = detailedData.homeBatter;
+            playerMatchupHTML += `
+                <div class="player-card">
+                    <img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_40,h_40,c_fill/v1/people/${batter.id}/headshot/67/current" 
+                         alt="${batter.name}" 
+                         class="player-image">
+                    <div class="player-info">
+                        <div class="player-name">${batter.name}</div>
+                        <div class="player-position">Batter</div>
+                        <div class="player-stats">
+                            <span>AVG: ${batter.avg}</span>
+                            <span>HR: ${batter.homeRuns}</span>
+                            <span>OPS: ${batter.ops}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        playerMatchupHTML += '</div>';
         
         return `
             <div class="compact-game-box live-game" data-game-pk="${game.gamePk}">
@@ -460,7 +569,7 @@ async function createCompactGameBox(game, detailedData) {
                     </div>
                 </div>
                 ${lineScoreHTML}
-                <div class="pitchers-live-row"></div>
+                ${playerMatchupHTML}
                 <div class="venue-info"><img src="https://www.mlbstatic.com/team-logos/${game.teams.home.team.id}.svg" alt="Home Team Logo" class="team-logo-venue"/>${detailedData.venue}</div>
             </div>
         `;
@@ -638,6 +747,7 @@ async function fetchGameData(selectedDate) {
         const response = await fetch(apiUrl);
         const data = await response.json();
 
+        // Clear container first
         gamesContainer.innerHTML = "";
 
         if (!data.dates.length || !data.dates[0].games.length) {
@@ -647,33 +757,45 @@ async function fetchGameData(selectedDate) {
 
         const isCompact = isCompactMode();
         
-        const gameBoxes = await Promise.all(data.dates[0].games.map(async (game) => {
-            let gameBoxHTML;
-            
-            if (isCompact) {
-                // Fetch detailed data for compact layout
-                const detailedData = await fetchDetailedGameData(game.gamePk);
-                gameBoxHTML = await createCompactGameBox(game, detailedData);
-            } else {
-                // Original layout for wider screens
-                gameBoxHTML = await createStandardGameBox(game);
-            }
-            
-            const gameBox = document.createElement("div");
-            gameBox.innerHTML = gameBoxHTML;
-            const content = gameBox.firstElementChild;
-            
-            content.addEventListener("click", () => {
-                window.location.href = `floating-pop.html?gamePk=${game.gamePk}`;
-            });
-            
-            return {
-                element: content,
-                isLive: game.status.statusCode === 'I' || game.status.statusCode === 'IP',
-                isFinal: game.status.statusCode === 'F' || game.status.statusCode === 'FR',
-                gameDate: new Date(game.gameDate)
-            };
-        }));
+        // Use a Set to track unique game PKs and prevent duplicates
+        const seenGamePks = new Set();
+        
+        const gameBoxes = await Promise.all(data.dates[0].games
+            .filter(game => {
+                // Filter out duplicate gamePks
+                if (seenGamePks.has(game.gamePk)) {
+                    return false;
+                }
+                seenGamePks.add(game.gamePk);
+                return true;
+            })
+            .map(async (game) => {
+                let gameBoxHTML;
+                
+                if (isCompact) {
+                    const detailedData = await fetchDetailedGameData(game.gamePk);
+                    gameBoxHTML = await createCompactGameBox(game, detailedData);
+                } else {
+                    gameBoxHTML = await createStandardGameBox(game);
+                }
+                
+                // Create a temporary container to parse the HTML string
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = gameBoxHTML.trim();
+                const content = tempDiv.firstElementChild;
+                
+                // Add click listener
+                content.addEventListener("click", () => {
+                    window.location.href = `floating-pop.html?gamePk=${game.gamePk}`;
+                });
+                
+                return {
+                    element: content,
+                    isLive: game.status.statusCode === 'I' || game.status.statusCode === 'IP',
+                    isFinal: game.status.statusCode === 'F' || game.status.statusCode === 'FR',
+                    gameDate: new Date(game.gameDate)
+                };
+            }));
 
         // Sort: Live first, then scheduled, then final
         gameBoxes.sort((a, b) => {
@@ -785,27 +907,4 @@ document.addEventListener("DOMContentLoaded", async () => {
             fetchGameData(selectedDate);
         }
     }, 30000);
-    
-    // Dark mode toggle
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        const isDark = await window.darkModeManager?.isDarkModeEnabled();
-        if (isDark) {
-            darkModeToggle.classList.add('active');
-        }
-
-        darkModeToggle.addEventListener('click', async () => {
-            await window.darkModeManager?.toggle();
-            // Refresh to update team logos
-            const selectedDate = dateInput?.value || getCurrentBaseballDate();
-            fetchGameData(selectedDate);
-        });
-    }
-
-    document.addEventListener('darkModeChanged', (event) => {
-        console.log('Dark mode changed:', event.detail.isDark);
-        // Refresh to update team logos
-        const selectedDate = dateInput?.value || getCurrentBaseballDate();
-        fetchGameData(selectedDate);
-    });
 });
