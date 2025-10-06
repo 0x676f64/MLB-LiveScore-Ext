@@ -27,11 +27,13 @@ The MLB Scoreboard Add-on delivers live MLB game updates, stats, and results dir
 
 <img width="608" height="548" alt="Screenshot 3" src="https://github.com/user-attachments/assets/03052f04-7525-4b4d-99a8-cef02ec4e42b" /> 
 
-<img width="605" height="602" alt="Screenshot 4" src="https://github.com/user-attachments/assets/ce8eff05-456f-459c-b7dc-9304547d31a4" /> 
+<img width="600" height="601" alt="Screenshot 2025-10-05 211419" src="https://github.com/user-attachments/assets/1e4f63d9-337f-4bf7-a95f-25ff6e7595c6" /> 
 
 <img width="606" height="600" alt="Screenshot 5" src="https://github.com/user-attachments/assets/63317b6c-b627-4025-817a-1ffa82f2155d" /> 
 
 <img width="606" height="606" alt="Screenshot 6" src="https://github.com/user-attachments/assets/e34d270f-c6b1-44bd-b3b9-7904652ccde9" /> 
+
+<img width="388" height="769" alt="Screenshot 2025-10-05 211014" src="https://github.com/user-attachments/assets/95428615-f17e-4d27-bc06-e15be73e7386" />
 
 <img width="705" height="504" alt="Screenshot 7" src="https://github.com/user-attachments/assets/fd0a5b7d-b081-4725-bbd0-1b661f36d06f" /> 
 
