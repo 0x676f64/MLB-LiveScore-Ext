@@ -342,7 +342,8 @@ setInterval(() => {
     const activeTab = document.querySelector('.tab-button.active');
     
     if (activeTab && activeTab.id === 'dynamic-tab') {
-        // Only refresh when dynamic tab is active
+        // Refresh both game details (scores) and game data (scorebug, players, pitch data)
+        fetchGameDetails(gamePk);
         if (typeof fetchGameData === 'function') {
             fetchGameData(gamePk);
         } else {
