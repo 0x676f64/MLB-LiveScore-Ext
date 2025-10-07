@@ -27,8 +27,6 @@ The MLB Scoreboard Add-on delivers live MLB game updates, stats, and results dir
 
 <img width="608" height="548" alt="Screenshot 3" src="https://github.com/user-attachments/assets/03052f04-7525-4b4d-99a8-cef02ec4e42b" /> 
 
-<img width="605" height="602" alt="Screenshot 4" src="https://github.com/user-attachments/assets/ce8eff05-456f-459c-b7dc-9304547d31a4" /> 
-
 <img width="606" height="600" alt="Screenshot 5" src="https://github.com/user-attachments/assets/63317b6c-b627-4025-817a-1ffa82f2155d" /> 
 
 <img width="606" height="606" alt="Screenshot 6" src="https://github.com/user-attachments/assets/e34d270f-c6b1-44bd-b3b9-7904652ccde9" /> 
@@ -38,6 +36,11 @@ The MLB Scoreboard Add-on delivers live MLB game updates, stats, and results dir
 <img width="506" height="562" alt="Screenshot 8" src="https://github.com/user-attachments/assets/24fe88e0-2ada-4f38-bb31-d4685893215c" /> 
 
 <img width="705" height="606" alt="Screenshot 9" src="https://github.com/user-attachments/assets/31ba21fd-3acf-4e9f-bdc6-9dfe39108799" />
+
+<img width="600" height="601" alt="Screenshot 2025-10-05 211419" src="https://github.com/user-attachments/assets/e08e7290-459a-4489-bfea-a91853ed1870" />
+<br>
+<img width="386" height="851" alt="Screenshot 2025-10-06 202039" src="https://github.com/user-attachments/assets/482018f6-c13d-468d-adfb-0b17672d609d" />
+
 
 🚀 Installation
 
